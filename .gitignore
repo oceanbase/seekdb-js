@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+.env.local
+.qoder
+coverage/
+.nyc_output/
+pyseekdb-code
+pyseekdb-docs
