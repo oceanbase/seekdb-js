@@ -528,12 +528,14 @@ export class Collection {
     try {
       const tableName = `c$v1$${this.name}`;
       
-      // Set search_parm variable
+      // Set search_parm variable (like Python SDK does)
       const setVarSql = SQLBuilder.buildSetVariable('search_parm', searchParmJson);
+      console.log('[DEBUG] SET SQL:', setVarSql.substring(0, 100), '...');
       await this.execute(setVarSql);
 
       // Get SQL query from DBMS_HYBRID_SEARCH.GET_SQL
       const getSqlQuery = SQLBuilder.buildHybridSearchGetSql(tableName);
+      console.log('[DEBUG] GET_SQL query:', getSqlQuery);
       const getSqlResult = await this.execute(getSqlQuery);
 
       if (!getSqlResult || getSqlResult.length === 0 || !getSqlResult[0].query_sql) {
@@ -595,9 +597,16 @@ export class Collection {
     } catch (error: any) {
       // Handle DBMS_HYBRID_SEARCH not supported or SQL errors
       const errorMsg = error.message || '';
+      
+      // 添加详细错误日志用于调试
+      console.error('[DEBUG] Hybrid search error:', errorMsg);
+      console.error('[DEBUG] Error code:', error.code);
+      console.error('[DEBUG] Error errno:', error.errno);
+      
       if (errorMsg.includes('Not supported feature or function') || 
           errorMsg.includes('SQL syntax') ||
-          errorMsg.includes('DBMS_HYBRID_SEARCH')) {
+          errorMsg.includes('DBMS_HYBRID_SEARCH') ||
+          errorMsg.includes('Unknown database function')) {
         console.warn('DBMS_HYBRID_SEARCH is not supported on this database version');
         console.warn('Falling back to empty result. Please use query() for vector search instead.');
         return {

@@ -334,6 +334,7 @@ export class SQLBuilder {
    * Build hybrid search GET_SQL query
    */
   static buildHybridSearchGetSql(tableName: string): string {
+    // Following Python SDK pattern: use user variable @search_parm
     return `SELECT DBMS_HYBRID_SEARCH.GET_SQL('${tableName}', @search_parm) as query_sql FROM dual`;
   }
 }

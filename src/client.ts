@@ -46,7 +46,10 @@ export class SeekDBClient {
     const user = args.user ?? DEFAULT_USER;
     const password = args.password ?? process.env.SEEKDB_PASSWORD ?? '';
     const charset = args.charset ?? DEFAULT_CHARSET;
-    const fullUser = `${user}@${this.tenant}`;
+    
+    // SeekDB 单机版不使用租户，只有指定了非空 tenant 时才添加 @tenant 后缀
+    // 这样可以同时支持 SeekDB 和 OceanBase
+    const fullUser = this.tenant ? `${user}@${this.tenant}` : user;
 
     // Initialize connection manager
     this.connectionManager = new Connection({
@@ -238,6 +241,11 @@ export class SeekDBClient {
    * Delete a collection
    */
   async deleteCollection(name: string): Promise<void> {
+    // Check if collection exists first
+    const exists = await this.hasCollection(name);
+    if (!exists) {
+      throw new Error(`Collection '${name}' does not exist`);
+    }
     const sql = SQLBuilder.buildDropTable(name);
     await this.execute(sql);
   }

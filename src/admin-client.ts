@@ -27,7 +27,9 @@ export class SeekDBAdminClient {
     const user = args.user ?? DEFAULT_USER;
     const password = args.password ?? process.env.SEEKDB_PASSWORD ?? '';
     const charset = args.charset ?? DEFAULT_CHARSET;
-    const fullUser = `${user}@${this.tenant}`;
+    
+    // SeekDB 单机版不使用租户，只有指定了非空 tenant 时才添加 @tenant 后缀
+    const fullUser = this.tenant ? `${user}@${this.tenant}` : user;
 
     // Initialize connection manager (no database specified for admin client)
     this.connectionManager = new Connection({
