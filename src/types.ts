@@ -104,6 +104,15 @@ export interface SeekDBClientArgs {
   charset?: string;
 }
 
+export interface SeekDBAdminClientArgs {
+  host: string;
+  port?: number;
+  tenant?: string;
+  user?: string;
+  password?: string;
+  charset?: string;
+}
+
 // ==================== Collection Options ====================
 
 export interface CreateCollectionOptions {
@@ -194,9 +203,4 @@ export interface HybridSearchOptions {
 
 // ==================== Database Types ====================
 
-export interface Database {
-  name: string;
-  tenant: string | null;
-  charset: string;
-  collation: string;
-}
+export type { Database } from './database.js';

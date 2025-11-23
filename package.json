@@ -2,18 +2,18 @@
   "name": "seekdb-node-sdk",
   "version": "0.1.0",
   "description": "A unified Node.js client for SeekDB that supports Server mode and OceanBase mode",
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/esm/index.mjs",
-  "types": "./dist/types/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/esm/index.mjs"
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
       },
       "require": {
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/cjs/index.cjs"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
       }
     }
   },
@@ -21,6 +21,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest",
+    "test:verify": "npm run build && npx tsx tests/verify-all.ts",
+    "examples": "npm run build && npx tsx examples/run-all.ts",
     "type-check": "tsc --noEmit"
   },
   "keywords": [
@@ -36,11 +38,13 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@xenova/transformers": "^2.17.2",
     "mysql2": "^3.11.5"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "tsup": "^8.3.5",
+    "tsx": "^4.20.6",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }
