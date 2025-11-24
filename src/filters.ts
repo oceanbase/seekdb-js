@@ -7,19 +7,19 @@
  * - Document filters: $contains, $regex
  */
 
-import type { Where, WhereDocument } from './types.js';
+import type { Where, WhereDocument } from "./types.js";
 
 /**
  * Format a value for SQL - escape strings and handle other types
  */
 function formatSqlValue(value: unknown): string {
   if (value === null) {
-    return 'NULL';
+    return "NULL";
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return `'${value.replace(/'/g, "''")}'`;
   }
-  if (typeof value === 'number' || typeof value === 'boolean') {
+  if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
   }
   // For other types, convert to JSON string
@@ -54,16 +54,16 @@ export interface SearchFilterCondition {
 export class FilterBuilder {
   // Comparison operators mapping
   private static readonly COMPARISON_OPS: Record<string, string> = {
-    $eq: '=',
-    $lt: '<',
-    $gt: '>',
-    $lte: '<=',
-    $gte: '>=',
-    $ne: '!=',
+    $eq: "=",
+    $lt: "<",
+    $gt: ">",
+    $lte: "<=",
+    $gte: ">=",
+    $ne: "!=",
   };
 
   // Logical operators
-  private static readonly LOGICAL_OPS = ['$and', '$or', '$not'];
+  private static readonly LOGICAL_OPS = ["$and", "$or", "$not"];
 
   /**
    * Build WHERE clause for metadata filtering
@@ -81,10 +81,10 @@ export class FilterBuilder {
    */
   static buildMetadataFilter(
     where?: Where,
-    metadataColumn: string = 'metadata'
+    metadataColumn: string = "metadata",
   ): FilterResult {
     if (!where) {
-      return { clause: '', params: [] };
+      return { clause: "", params: [] };
     }
 
     return this._buildCondition(where, metadataColumn, []);
@@ -106,10 +106,10 @@ export class FilterBuilder {
    */
   static buildDocumentFilter(
     whereDocument?: WhereDocument,
-    documentColumn: string = 'document'
+    documentColumn: string = "document",
   ): FilterResult {
     if (!whereDocument) {
-      return { clause: '', params: [] };
+      return { clause: "", params: [] };
     }
 
     return this._buildDocumentCondition(whereDocument, documentColumn, []);
@@ -121,52 +121,76 @@ export class FilterBuilder {
   private static _buildCondition(
     condition: Where,
     metadataColumn: string,
-    params: unknown[]
+    params: unknown[],
   ): FilterResult {
     const clauses: string[] = [];
 
     for (const [key, value] of Object.entries(condition)) {
       if (this.LOGICAL_OPS.includes(key)) {
         // Handle logical operators
-        if (key === '$and' && Array.isArray(value)) {
+        if (key === "$and" && Array.isArray(value)) {
           const subClauses: string[] = [];
           for (const subCondition of value) {
-            const result = this._buildCondition(subCondition, metadataColumn, params);
+            const result = this._buildCondition(
+              subCondition,
+              metadataColumn,
+              params,
+            );
             subClauses.push(result.clause);
           }
-          clauses.push(`(${subClauses.join(' AND ')})`);
-        } else if (key === '$or' && Array.isArray(value)) {
+          clauses.push(`(${subClauses.join(" AND ")})`);
+        } else if (key === "$or" && Array.isArray(value)) {
           const subClauses: string[] = [];
           for (const subCondition of value) {
-            const result = this._buildCondition(subCondition, metadataColumn, params);
+            const result = this._buildCondition(
+              subCondition,
+              metadataColumn,
+              params,
+            );
             subClauses.push(result.clause);
           }
-          clauses.push(`(${subClauses.join(' OR ')})`);
-        } else if (key === '$not') {
-          const result = this._buildCondition(value as Where, metadataColumn, params);
+          clauses.push(`(${subClauses.join(" OR ")})`);
+        } else if (key === "$not") {
+          const result = this._buildCondition(
+            value as Where,
+            metadataColumn,
+            params,
+          );
           clauses.push(`NOT (${result.clause})`);
         }
-      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      } else if (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
         // Handle comparison operators
         for (const [op, opValue] of Object.entries(value)) {
           if (op in this.COMPARISON_OPS) {
             const sqlOp = this.COMPARISON_OPS[op];
-            clauses.push(`JSON_EXTRACT(${metadataColumn}, '$.${key}') ${sqlOp} ${formatSqlValue(opValue)}`);
-          } else if (op === '$in' && Array.isArray(opValue)) {
-            const values = opValue.map(v => formatSqlValue(v)).join(', ');
-            clauses.push(`JSON_EXTRACT(${metadataColumn}, '$.${key}') IN (${values})`);
-          } else if (op === '$nin' && Array.isArray(opValue)) {
-            const values = opValue.map(v => formatSqlValue(v)).join(', ');
-            clauses.push(`JSON_EXTRACT(${metadataColumn}, '$.${key}') NOT IN (${values})`);
+            clauses.push(
+              `JSON_EXTRACT(${metadataColumn}, '$.${key}') ${sqlOp} ${formatSqlValue(opValue)}`,
+            );
+          } else if (op === "$in" && Array.isArray(opValue)) {
+            const values = opValue.map((v) => formatSqlValue(v)).join(", ");
+            clauses.push(
+              `JSON_EXTRACT(${metadataColumn}, '$.${key}') IN (${values})`,
+            );
+          } else if (op === "$nin" && Array.isArray(opValue)) {
+            const values = opValue.map((v) => formatSqlValue(v)).join(", ");
+            clauses.push(
+              `JSON_EXTRACT(${metadataColumn}, '$.${key}') NOT IN (${values})`,
+            );
           }
         }
       } else {
         // Direct equality comparison
-        clauses.push(`JSON_EXTRACT(${metadataColumn}, '$.${key}') = ${formatSqlValue(value)}`);
+        clauses.push(
+          `JSON_EXTRACT(${metadataColumn}, '$.${key}') = ${formatSqlValue(value)}`,
+        );
       }
     }
 
-    const clause = clauses.length > 0 ? clauses.join(' AND ') : '1=1';
+    const clause = clauses.length > 0 ? clauses.join(" AND ") : "1=1";
     return { clause, params };
   }
 
@@ -176,35 +200,45 @@ export class FilterBuilder {
   private static _buildDocumentCondition(
     condition: WhereDocument,
     documentColumn: string,
-    params: unknown[]
+    params: unknown[],
   ): FilterResult {
     const clauses: string[] = [];
 
     for (const [key, value] of Object.entries(condition)) {
-      if (key === '$contains') {
+      if (key === "$contains") {
         // Full-text search using MATCH AGAINST
-        clauses.push(`MATCH(${documentColumn}) AGAINST (${formatSqlValue(value)} IN NATURAL LANGUAGE MODE)`);
-      } else if (key === '$regex') {
+        clauses.push(
+          `MATCH(${documentColumn}) AGAINST (${formatSqlValue(value)} IN NATURAL LANGUAGE MODE)`,
+        );
+      } else if (key === "$regex") {
         // Regular expression matching
         clauses.push(`${documentColumn} REGEXP ${formatSqlValue(value)}`);
-      } else if (key === '$and' && Array.isArray(value)) {
+      } else if (key === "$and" && Array.isArray(value)) {
         const subClauses: string[] = [];
         for (const subCondition of value) {
-          const result = this._buildDocumentCondition(subCondition, documentColumn, params);
+          const result = this._buildDocumentCondition(
+            subCondition,
+            documentColumn,
+            params,
+          );
           subClauses.push(result.clause);
         }
-        clauses.push(`(${subClauses.join(' AND ')})`);
-      } else if (key === '$or' && Array.isArray(value)) {
+        clauses.push(`(${subClauses.join(" AND ")})`);
+      } else if (key === "$or" && Array.isArray(value)) {
         const subClauses: string[] = [];
         for (const subCondition of value) {
-          const result = this._buildDocumentCondition(subCondition, documentColumn, params);
+          const result = this._buildDocumentCondition(
+            subCondition,
+            documentColumn,
+            params,
+          );
           subClauses.push(result.clause);
         }
-        clauses.push(`(${subClauses.join(' OR ')})`);
+        clauses.push(`(${subClauses.join(" OR ")})`);
       }
     }
 
-    const clause = clauses.length > 0 ? clauses.join(' AND ') : '1=1';
+    const clause = clauses.length > 0 ? clauses.join(" AND ") : "1=1";
     return { clause, params };
   }
 
@@ -217,7 +251,7 @@ export class FilterBuilder {
    */
   static combineFilters(
     metadataFilter: FilterResult,
-    documentFilter: FilterResult
+    documentFilter: FilterResult,
   ): FilterResult {
     const clauses: string[] = [];
     const allParams: unknown[] = [];
@@ -234,11 +268,11 @@ export class FilterBuilder {
 
     if (clauses.length > 0) {
       return {
-        clause: clauses.join(' AND '),
+        clause: clauses.join(" AND "),
         params: allParams,
       };
     } else {
-      return { clause: '', params: [] };
+      return { clause: "", params: [] };
     }
   }
 
@@ -260,7 +294,26 @@ export class FilterBuilder {
       return null;
     }
 
-    const filterCondition = this._buildSearchFilterCondition(where);
+    const filterCondition = this._buildSearchFilterCondition(where, false);
+    if (filterCondition) {
+      return [filterCondition];
+    }
+    return null;
+  }
+
+  /**
+   * Build search_params filter with JSON_EXTRACT format for hybrid search
+   * Uses (JSON_EXTRACT(metadata, '$.field')) format for field names
+   * 
+   * @param where - Filter dictionary with operators
+   * @returns List of filter conditions with JSON_EXTRACT format
+   */
+  static buildHybridSearchFilter(where?: Where): SearchFilterCondition[] | null {
+    if (!where) {
+      return null;
+    }
+
+    const filterCondition = this._buildSearchFilterCondition(where, true);
     if (filterCondition) {
       return [filterCondition];
     }
@@ -271,17 +324,21 @@ export class FilterBuilder {
    * Recursively build search_params filter condition from nested dictionary
    */
   private static _buildSearchFilterCondition(
-    condition: Where
+    condition: Where,
+    useJsonExtract = false,
   ): SearchFilterCondition | null {
     if (!condition) {
       return null;
     }
 
     // Handle logical operators
-    if ('$and' in condition && Array.isArray(condition.$and)) {
+    if ("$and" in condition && Array.isArray(condition.$and)) {
       const mustConditions: SearchFilterCondition[] = [];
       for (const subCondition of condition.$and) {
-        const subFilter = this._buildSearchFilterCondition(subCondition as Where);
+        const subFilter = this._buildSearchFilterCondition(
+          subCondition as Where,
+          useJsonExtract,
+        );
         if (subFilter) {
           mustConditions.push(subFilter);
         }
@@ -292,10 +349,13 @@ export class FilterBuilder {
       return null;
     }
 
-    if ('$or' in condition && Array.isArray(condition.$or)) {
+    if ("$or" in condition && Array.isArray(condition.$or)) {
       const shouldConditions: SearchFilterCondition[] = [];
       for (const subCondition of condition.$or) {
-        const subFilter = this._buildSearchFilterCondition(subCondition as Where);
+        const subFilter = this._buildSearchFilterCondition(
+          subCondition as Where,
+          useJsonExtract,
+        );
         if (subFilter) {
           shouldConditions.push(subFilter);
         }
@@ -306,8 +366,11 @@ export class FilterBuilder {
       return null;
     }
 
-    if ('$not' in condition) {
-      const notFilter = this._buildSearchFilterCondition(condition.$not as Where);
+    if ("$not" in condition) {
+      const notFilter = this._buildSearchFilterCondition(
+        condition.$not as Where,
+        useJsonExtract,
+      );
       if (notFilter) {
         return { bool: { must_not: [notFilter] } };
       }
@@ -329,9 +392,16 @@ export class FilterBuilder {
         continue;
       }
 
-      const fieldName = `metadata.${key}`;
+      // Use JSON_EXTRACT format for hybrid search, simple format otherwise
+      const fieldName = useJsonExtract 
+        ? `(JSON_EXTRACT(metadata, '$.${key}'))`
+        : `metadata.${key}`;
 
-      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
         // Handle comparison operators
         const rangeConditions: Record<string, any> = {};
         const termConditions: SearchFilterCondition[] = [];
@@ -339,30 +409,32 @@ export class FilterBuilder {
         const ninConditions: SearchFilterCondition[] = [];
 
         for (const [op, opValue] of Object.entries(value)) {
-          if (op === '$eq') {
+          if (op === "$eq") {
             termConditions.push({ term: { [fieldName]: { value: opValue } } });
             hasConditions = true;
-          } else if (op === '$ne') {
-            result.bool!.must_not!.push({ term: { [fieldName]: { value: opValue } } });
+          } else if (op === "$ne") {
+            result.bool!.must_not!.push({
+              term: { [fieldName]: { value: opValue } },
+            });
             hasConditions = true;
-          } else if (op === '$lt') {
+          } else if (op === "$lt") {
             rangeConditions.lt = opValue;
             hasConditions = true;
-          } else if (op === '$lte') {
+          } else if (op === "$lte") {
             rangeConditions.lte = opValue;
             hasConditions = true;
-          } else if (op === '$gt') {
+          } else if (op === "$gt") {
             rangeConditions.gt = opValue;
             hasConditions = true;
-          } else if (op === '$gte') {
+          } else if (op === "$gte") {
             rangeConditions.gte = opValue;
             hasConditions = true;
-          } else if (op === '$in' && Array.isArray(opValue)) {
+          } else if (op === "$in" && Array.isArray(opValue)) {
             for (const val of opValue) {
               inConditions.push({ term: { [fieldName]: { value: val } } });
             }
             hasConditions = true;
-          } else if (op === '$nin' && Array.isArray(opValue)) {
+          } else if (op === "$nin" && Array.isArray(opValue)) {
             for (const val of opValue) {
               ninConditions.push({ term: { [fieldName]: { value: val } } });
             }
@@ -407,7 +479,7 @@ export class FilterBuilder {
     // If only one type of condition, simplify
     const boolKeys = Object.keys(result.bool!);
     if (boolKeys.length === 1) {
-      const key = boolKeys[0] as 'must' | 'should' | 'must_not';
+      const key = boolKeys[0] as "must" | "should" | "must_not";
       const conditions = result.bool![key]!;
       if (conditions.length === 1) {
         return conditions[0];

@@ -1,7 +1,7 @@
-import { pipeline } from '@xenova/transformers';
-import type { EmbeddingFunction, EmbeddingDocuments } from './types.js';
+import { pipeline } from "@xenova/transformers";
+import type { EmbeddingFunction, EmbeddingDocuments } from "./types.js";
 
-const MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
+const MODEL_NAME = "Xenova/all-MiniLM-L6-v2";
 const DIMENSION = 384;
 
 export function DefaultEmbeddingFunction(): EmbeddingFunction {
@@ -9,37 +9,42 @@ export function DefaultEmbeddingFunction(): EmbeddingFunction {
 
   const ensureModel = async () => {
     if (!model) {
-      model = await pipeline('feature-extraction', MODEL_NAME);
+      model = await pipeline("feature-extraction", MODEL_NAME);
     }
     return model;
   };
 
-  const embeddingFn: EmbeddingFunction = async (input: EmbeddingDocuments): Promise<number[][]> => {
+  const embeddingFn: EmbeddingFunction = async (
+    input: EmbeddingDocuments,
+  ): Promise<number[][]> => {
     const currentModel = await ensureModel();
     const texts = Array.isArray(input) ? input : [input];
-    
+
     if (texts.length === 0) {
       return [];
     }
 
     const embeddings: number[][] = [];
     for (const text of texts) {
-      const output = await currentModel(text, { pooling: 'mean', normalize: true });
+      const output = await currentModel(text, {
+        pooling: "mean",
+        normalize: true,
+      });
       embeddings.push(Array.from(output.data));
     }
 
     return embeddings;
   };
 
-  Object.defineProperty(embeddingFn, 'name', { 
-    value: 'DefaultEmbeddingFunction',
-    configurable: true 
+  Object.defineProperty(embeddingFn, "name", {
+    value: "DefaultEmbeddingFunction",
+    configurable: true,
   });
 
-  Object.defineProperty(embeddingFn, 'dimension', { 
+  Object.defineProperty(embeddingFn, "dimension", {
     value: DIMENSION,
     writable: false,
-    enumerable: true
+    enumerable: true,
   });
 
   return embeddingFn;
@@ -53,4 +58,3 @@ export function getDefaultEmbeddingFunction(): EmbeddingFunction {
   }
   return defaultEmbeddingFunction;
 }
-

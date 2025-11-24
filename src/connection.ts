@@ -3,9 +3,12 @@
  * Manages database connections for SeekDB clients
  */
 
-import mysql from 'mysql2/promise';
-import type { Connection as MySQLConnection, RowDataPacket } from 'mysql2/promise';
-import { SeekDBConnectionError } from './errors.js';
+import mysql from "mysql2/promise";
+import type {
+  Connection as MySQLConnection,
+  RowDataPacket,
+} from "mysql2/promise";
+import { SeekDBConnectionError } from "./errors.js";
 
 /**
  * Configuration for MySQL connection
@@ -48,7 +51,7 @@ export class Connection {
       } catch (error) {
         throw new SeekDBConnectionError(
           `Failed to connect to ${this.config.host}:${this.config.port}`,
-          error
+          error,
         );
       }
     }
@@ -73,10 +76,10 @@ export class Connection {
 
     // Return rows for SELECT-like queries
     if (
-      sqlUpper.startsWith('SELECT') ||
-      sqlUpper.startsWith('SHOW') ||
-      sqlUpper.startsWith('DESCRIBE') ||
-      sqlUpper.startsWith('DESC')
+      sqlUpper.startsWith("SELECT") ||
+      sqlUpper.startsWith("SHOW") ||
+      sqlUpper.startsWith("DESCRIBE") ||
+      sqlUpper.startsWith("DESC")
     ) {
       const [rows] = await conn.query<RowDataPacket[]>(sql);
       return rows;
@@ -121,7 +124,7 @@ export class Connection {
     try {
       await conn.beginTransaction();
     } catch (error) {
-      throw new SeekDBConnectionError('Failed to begin transaction', error);
+      throw new SeekDBConnectionError("Failed to begin transaction", error);
     }
   }
 
@@ -134,7 +137,7 @@ export class Connection {
     try {
       await conn.commit();
     } catch (error) {
-      throw new SeekDBConnectionError('Failed to commit transaction', error);
+      throw new SeekDBConnectionError("Failed to commit transaction", error);
     }
   }
 
@@ -147,7 +150,7 @@ export class Connection {
     try {
       await conn.rollback();
     } catch (error) {
-      throw new SeekDBConnectionError('Failed to rollback transaction', error);
+      throw new SeekDBConnectionError("Failed to rollback transaction", error);
     }
   }
 
@@ -157,7 +160,7 @@ export class Connection {
    * @param callback - Function to execute within the transaction
    * @returns The result of the callback function
    * @throws {SeekDBConnectionError} If transaction fails
-   * 
+   *
    * @example
    * ```typescript
    * const result = await connection.transaction(async () => {
@@ -169,7 +172,7 @@ export class Connection {
    */
   async transaction<T>(callback: () => Promise<T>): Promise<T> {
     await this.beginTransaction();
-    
+
     try {
       const result = await callback();
       await this.commit();
@@ -180,4 +183,3 @@ export class Connection {
     }
   }
 }
-

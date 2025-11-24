@@ -2,12 +2,12 @@
  * Collection class - represents a collection of documents with vector embeddings
  */
 
-import type { RowDataPacket } from 'mysql2/promise';
-import type { SeekDBClient } from './client.js';
-import { SQLBuilder } from './sql-builder.js';
-import { SeekDBValueError } from './errors.js';
-import { CollectionFieldNames } from './utils.js';
-import { FilterBuilder } from './filters.js';
+import type { RowDataPacket } from "mysql2/promise";
+import type { SeekDBClient } from "./client.js";
+import { SQLBuilder } from "./sql-builder.js";
+import { SeekDBValueError } from "./errors.js";
+import { CollectionFieldNames } from "./utils.js";
+import { FilterBuilder } from "./filters.js";
 import type {
   EmbeddingFunction,
   Metadata,
@@ -21,7 +21,7 @@ import type {
   GetResult,
   QueryResult,
   DistanceMetric,
-} from './types.js';
+} from "./types.js";
 
 export interface CollectionConfig {
   name: string;
@@ -90,13 +90,15 @@ export class Collection {
         embeddingsArray = await this.embeddingFunction(documentsArray);
       } else {
         throw new SeekDBValueError(
-          'Documents provided but no embeddings and no embedding function'
+          "Documents provided but no embeddings and no embedding function",
         );
       }
     }
 
     if (!embeddingsArray) {
-      throw new SeekDBValueError('Either embeddings or documents must be provided');
+      throw new SeekDBValueError(
+        "Either embeddings or documents must be provided",
+      );
     }
 
     // Build INSERT SQL using SQLBuilder
@@ -143,25 +145,29 @@ export class Collection {
     // Validate that at least one field is being updated
     if (!embeddingsArray && !metadatasArray && !documentsArray) {
       throw new SeekDBValueError(
-        'At least one of embeddings, metadatas, or documents must be provided'
+        "At least one of embeddings, metadatas, or documents must be provided",
       );
     }
 
     // Validate lengths
     if (documentsArray && documentsArray.length !== idsArray.length) {
-      throw new SeekDBValueError('Length mismatch: documents vs ids');
+      throw new SeekDBValueError("Length mismatch: documents vs ids");
     }
     if (metadatasArray && metadatasArray.length !== idsArray.length) {
-      throw new SeekDBValueError('Length mismatch: metadatas vs ids');
+      throw new SeekDBValueError("Length mismatch: metadatas vs ids");
     }
     if (embeddingsArray && embeddingsArray.length !== idsArray.length) {
-      throw new SeekDBValueError('Length mismatch: embeddings vs ids');
+      throw new SeekDBValueError("Length mismatch: embeddings vs ids");
     }
 
     // Update each item
     for (let i = 0; i < idsArray.length; i++) {
       const id = idsArray[i];
-      const updates: { document?: string; embedding?: number[]; metadata?: Metadata } = {};
+      const updates: {
+        document?: string;
+        embedding?: number[];
+        metadata?: Metadata;
+      } = {};
 
       if (documentsArray && documentsArray[i]) {
         updates.document = documentsArray[i];
@@ -214,7 +220,7 @@ export class Collection {
     // Validate that at least one field is provided
     if (!embeddingsArray && !metadatasArray && !documentsArray) {
       throw new SeekDBValueError(
-        'At least one of embeddings, metadatas, or documents must be provided'
+        "At least one of embeddings, metadatas, or documents must be provided",
       );
     }
 
@@ -225,7 +231,7 @@ export class Collection {
       // Check if record exists
       const existing = await this.get({
         ids: [id],
-        include: ['documents', 'metadatas', 'embeddings'],
+        include: ["documents", "metadatas", "embeddings"],
       });
 
       const doc = documentsArray?.[i];
@@ -234,7 +240,11 @@ export class Collection {
 
       if (existing.ids.length > 0) {
         // Update existing record
-        const updates: { document?: string; embedding?: number[]; metadata?: Metadata } = {};
+        const updates: {
+          document?: string;
+          embedding?: number[];
+          metadata?: Metadata;
+        } = {};
 
         if (doc !== undefined) {
           updates.document = doc;
@@ -271,7 +281,7 @@ export class Collection {
     // Validate at least one filter
     if (!ids && !where && !whereDocument) {
       throw new SeekDBValueError(
-        'At least one of ids, where, or whereDocument must be provided'
+        "At least one of ids, where, or whereDocument must be provided",
       );
     }
 
@@ -288,12 +298,25 @@ export class Collection {
   /**
    * Get data from collection
    */
-  async get<TMeta extends Metadata = Metadata>(options: GetOptions = {}): Promise<GetResult<TMeta>> {
-    const { ids: filterIds, limit, offset, include, where, whereDocument } = options;
+  async get<TMeta extends Metadata = Metadata>(
+    options: GetOptions = {},
+  ): Promise<GetResult<TMeta>> {
+    const {
+      ids: filterIds,
+      limit,
+      offset,
+      include,
+      where,
+      whereDocument,
+    } = options;
 
     // Build SELECT SQL using SQLBuilder
     const sql = SQLBuilder.buildSelect(this.name, {
-      ids: filterIds ? (Array.isArray(filterIds) ? filterIds : [filterIds]) : undefined,
+      ids: filterIds
+        ? Array.isArray(filterIds)
+          ? filterIds
+          : [filterIds]
+        : undefined,
       where,
       whereDocument,
       limit,
@@ -313,27 +336,36 @@ export class Collection {
       for (const row of rows) {
         resultIds.push(row[CollectionFieldNames.ID].toString());
 
-        if (!include || include.includes('documents')) {
+        if (!include || include.includes("documents")) {
           resultDocuments.push(row[CollectionFieldNames.DOCUMENT]);
         }
 
-        if (!include || include.includes('metadatas')) {
+        if (!include || include.includes("metadatas")) {
           const meta = row[CollectionFieldNames.METADATA];
-          resultMetadatas.push(meta ? (typeof meta === 'string' ? JSON.parse(meta) : meta) : null);
+          resultMetadatas.push(
+            meta ? (typeof meta === "string" ? JSON.parse(meta) : meta) : null,
+          );
         }
 
-        if (!include || include.includes('embeddings')) {
+        if (!include || include.includes("embeddings")) {
           const vec = row[CollectionFieldNames.EMBEDDING];
-          resultEmbeddings.push(vec ? (typeof vec === 'string' ? JSON.parse(vec) : vec) : null);
+          resultEmbeddings.push(
+            vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null,
+          );
         }
       }
     }
 
     const result: GetResult<TMeta> = {
       ids: resultIds,
-      documents: (!include || include.includes('documents')) ? resultDocuments : undefined,
-      metadatas: (!include || include.includes('metadatas')) ? resultMetadatas : undefined,
-      embeddings: (!include || include.includes('embeddings')) ? resultEmbeddings : undefined,
+      documents:
+        !include || include.includes("documents") ? resultDocuments : undefined,
+      metadatas:
+        !include || include.includes("metadatas") ? resultMetadatas : undefined,
+      embeddings:
+        !include || include.includes("embeddings")
+          ? resultEmbeddings
+          : undefined,
     };
 
     return result;
@@ -343,25 +375,34 @@ export class Collection {
    * Query collection with vector similarity search
    */
   async query<TMeta extends Metadata = Metadata>(
-    options: QueryOptions
+    options: QueryOptions,
   ): Promise<QueryResult<TMeta>> {
-    let { queryEmbeddings, queryTexts, nResults = 10, where, whereDocument, include } = options;
+    let {
+      queryEmbeddings,
+      queryTexts,
+      nResults = 10,
+      where,
+      whereDocument,
+      include,
+    } = options;
 
     // Handle embedding generation
     if (!queryEmbeddings && queryTexts) {
       if (this.embeddingFunction) {
-        const textsArray = Array.isArray(queryTexts) ? queryTexts : [queryTexts];
+        const textsArray = Array.isArray(queryTexts)
+          ? queryTexts
+          : [queryTexts];
         queryEmbeddings = await this.embeddingFunction(textsArray);
       } else {
         throw new SeekDBValueError(
-          'queryTexts provided but no queryEmbeddings and no embedding function'
+          "queryTexts provided but no queryEmbeddings and no embedding function",
         );
       }
     }
 
     if (!queryEmbeddings) {
       throw new SeekDBValueError(
-        'Either queryEmbeddings or queryTexts must be provided'
+        "Either queryEmbeddings or queryTexts must be provided",
       );
     }
 
@@ -379,11 +420,16 @@ export class Collection {
     // Query for each vector
     for (const queryVector of embeddingsArray) {
       // Build vector query SQL using SQLBuilder
-      const sql = SQLBuilder.buildVectorQuery(this.name, queryVector, nResults, {
-        where,
-        whereDocument,
-        include: include as string[] | undefined,
-      });
+      const sql = SQLBuilder.buildVectorQuery(
+        this.name,
+        queryVector,
+        nResults,
+        {
+          where,
+          whereDocument,
+          include: include as string[] | undefined,
+        },
+      );
 
       const rows = await this.execute(sql);
 
@@ -397,18 +443,26 @@ export class Collection {
         for (const row of rows) {
           queryIds.push(row[CollectionFieldNames.ID].toString());
 
-          if (!include || include.includes('documents')) {
+          if (!include || include.includes("documents")) {
             queryDocuments.push(row[CollectionFieldNames.DOCUMENT] || null);
           }
 
-          if (!include || include.includes('metadatas')) {
+          if (!include || include.includes("metadatas")) {
             const meta = row[CollectionFieldNames.METADATA];
-            queryMetadatas.push(meta ? (typeof meta === 'string' ? JSON.parse(meta) : meta) : null);
+            queryMetadatas.push(
+              meta
+                ? typeof meta === "string"
+                  ? JSON.parse(meta)
+                  : meta
+                : null,
+            );
           }
 
-          if (include?.includes('embeddings')) {
+          if (include?.includes("embeddings")) {
             const vec = row[CollectionFieldNames.EMBEDDING];
-            queryEmbeddings.push(vec ? (typeof vec === 'string' ? JSON.parse(vec) : vec) : null);
+            queryEmbeddings.push(
+              vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null,
+            );
           }
 
           queryDistances.push(row.distance);
@@ -416,13 +470,13 @@ export class Collection {
       }
 
       allIds.push(queryIds);
-      if (!include || include.includes('documents')) {
+      if (!include || include.includes("documents")) {
         allDocuments.push(queryDocuments);
       }
-      if (!include || include.includes('metadatas')) {
+      if (!include || include.includes("metadatas")) {
         allMetadatas.push(queryMetadatas);
       }
-      if (include?.includes('embeddings')) {
+      if (include?.includes("embeddings")) {
         allEmbeddings.push(queryEmbeddings);
       }
       allDistances.push(queryDistances);
@@ -431,19 +485,115 @@ export class Collection {
     const result: QueryResult<TMeta> = {
       ids: allIds,
       distances: allDistances,
-      documents: (!include || include.includes('documents')) ? allDocuments : undefined,
-      metadatas: (!include || include.includes('metadatas')) ? allMetadatas : undefined,
-      embeddings: include?.includes('embeddings') ? allEmbeddings : undefined,
+      documents:
+        !include || include.includes("documents") ? allDocuments : undefined,
+      metadatas:
+        !include || include.includes("metadatas") ? allMetadatas : undefined,
+      embeddings: include?.includes("embeddings") ? allEmbeddings : undefined,
     };
 
     return result;
   }
 
   /**
+   * Build knn expression from knn options
+   * 
+   * @param knn Vector search configuration with:
+   *   - queryTexts: Query text(s) to be embedded (optional if queryEmbeddings provided)
+   *   - queryEmbeddings: Query vector(s) (optional if queryTexts provided)
+   *   - where: Metadata filter conditions (optional)
+   *   - nResults: Number of results for vector search (optional, default 10)
+   * @returns knn expression object with optional filter
+   * @private
+   */
+  private async _buildKnnExpression(
+    knn: HybridSearchOptions["knn"],
+  ): Promise<any | null> {
+    if (!knn) {
+      return null;
+    }
+
+    const queryTexts = knn.queryTexts;
+    const queryEmbeddings = knn.queryEmbeddings;
+    const where = knn.where;
+    const nResults = knn.nResults || 10;
+
+    // Handle vector generation logic:
+    // 1. If queryEmbeddings are provided, use them directly without embedding
+    // 2. If queryEmbeddings are not provided but queryTexts are provided:
+    //    - If embeddingFunction is provided, use it to generate embeddings from queryTexts
+    //    - If embeddingFunction is not provided, raise an error
+    // 3. If neither queryEmbeddings nor queryTexts are provided, raise an error
+
+    let queryVector: number[] | null = null;
+
+    if (queryEmbeddings) {
+      // Query embeddings provided, use them directly without embedding
+      if (Array.isArray(queryEmbeddings) && queryEmbeddings.length > 0) {
+        if (Array.isArray(queryEmbeddings[0])) {
+          queryVector = queryEmbeddings[0]; // Use first vector
+        } else {
+          queryVector = queryEmbeddings as number[];
+        }
+      }
+    } else if (queryTexts) {
+      // Query embeddings not provided but queryTexts are provided, check for embeddingFunction
+      if (this.embeddingFunction) {
+        try {
+          const textsArray = Array.isArray(queryTexts)
+            ? queryTexts
+            : [queryTexts];
+          const embeddings = await this.embeddingFunction(textsArray);
+          if (embeddings && embeddings.length > 0) {
+            queryVector = embeddings[0];
+          }
+        } catch (error) {
+          throw new SeekDBValueError(
+            `Failed to generate embeddings from queryTexts: ${error}`,
+          );
+        }
+      } else {
+        throw new SeekDBValueError(
+          "knn.queryTexts provided but no knn.queryEmbeddings and no embedding function. " +
+            "Either:\n" +
+            "  1. Provide knn.queryEmbeddings directly, or\n" +
+            "  2. Provide embedding function to auto-generate embeddings from knn.queryTexts.",
+        );
+      }
+    } else {
+      // Neither queryEmbeddings nor queryTexts provided, raise an error
+      throw new SeekDBValueError(
+        "knn requires either queryEmbeddings or queryTexts. " +
+          "Please provide either:\n" +
+          "  1. knn.queryEmbeddings directly, or\n" +
+          "  2. knn.queryTexts with embedding function to generate embeddings.",
+      );
+    }
+
+    if (!queryVector) {
+      return null;
+    }
+
+    // Build knn expression - field order matches Python SDK
+    const knnExpr: any = {
+      field: "embedding",
+      k: nResults,
+      query_vector: queryVector,
+    };
+
+    // Add filter if where conditions provided
+    if (where) {
+      knnExpr.filter = this.buildMetadataFilter(where);
+    }
+
+    return knnExpr;
+  }
+
+  /**
    * Hybrid search (full-text + vector)
    */
   async hybridSearch<TMeta extends Metadata = Metadata>(
-    options: HybridSearchOptions
+    options: HybridSearchOptions,
   ): Promise<QueryResult<TMeta>> {
     const { query, knn, rank, nResults = 10, include } = options;
 
@@ -459,52 +609,22 @@ export class Collection {
     }
 
     // Handle knn (vector search)
-    if (knn) {
-      let queryEmbeddings = knn.queryEmbeddings;
-
-      // Generate embeddings from query texts if needed
-      if (!queryEmbeddings && knn.queryTexts) {
-        if (this.embeddingFunction) {
-          const textsArray = Array.isArray(knn.queryTexts)
-            ? knn.queryTexts
-            : [knn.queryTexts];
-          queryEmbeddings = await this.embeddingFunction(textsArray);
-        } else {
-          throw new SeekDBValueError(
-            'knn.queryTexts provided but no embedding function'
-          );
-        }
-      }
-
-      if (!queryEmbeddings) {
-        throw new SeekDBValueError(
-          'knn must include either queryEmbeddings or queryTexts'
-        );
-      }
-
-      // Normalize to 2D array
-      const embeddingsArray = Array.isArray(queryEmbeddings[0])
-        ? (queryEmbeddings as number[][])
-        : [queryEmbeddings as number[]];
-
-      const knnObj: any = {
-        query_vector: embeddingsArray[0], // Use first vector
-      };
-
-      if (knn.where) {
-        knnObj.filter = this.buildMetadataFilter(knn.where);
-      }
-      if (knn.nResults) {
-        knnObj.k = knn.nResults;
-      }
-
-      searchParm.knn = knnObj;
+    const knnExpr = await this._buildKnnExpression(knn);
+    if (knnExpr) {
+      searchParm.knn = knnExpr;
     }
 
-    // Handle rank (RRF)
+    // Handle rank (RRF) - convert camelCase to snake_case for server
     if (rank?.rrf) {
+      const rrfConfig: any = {};
+      if (rank.rrf.rankWindowSize !== undefined) {
+        rrfConfig.rank_window_size = rank.rrf.rankWindowSize;
+      }
+      if (rank.rrf.rankConstant !== undefined) {
+        rrfConfig.rank_constant = rank.rrf.rankConstant;
+      }
       searchParm.rank = {
-        rrf: rank.rrf,
+        rrf: rrfConfig,
       };
     }
 
@@ -515,71 +635,89 @@ export class Collection {
 
     // Execute hybrid search using DBMS_HYBRID_SEARCH
     const searchParmJson = JSON.stringify(searchParm);
-      const tableName = `c$v1$${this.name}`;
-      
+    const tableName = `c$v1$${this.name}`;
+
     // Set search_parm variable
-      const setVarSql = SQLBuilder.buildSetVariable('search_parm', searchParmJson);
-      await this.execute(setVarSql);
+    const setVarSql = SQLBuilder.buildSetVariable(
+      "search_parm",
+      searchParmJson,
+    );
+    await this.execute(setVarSql);
 
-      // Get SQL query from DBMS_HYBRID_SEARCH.GET_SQL
-      const getSqlQuery = SQLBuilder.buildHybridSearchGetSql(tableName);
-      const getSqlResult = await this.execute(getSqlQuery);
+    // Get SQL query from DBMS_HYBRID_SEARCH.GET_SQL
+    const getSqlQuery = SQLBuilder.buildHybridSearchGetSql(tableName);
+    const getSqlResult = await this.execute(getSqlQuery);
 
-      if (!getSqlResult || getSqlResult.length === 0 || !getSqlResult[0].query_sql) {
-        return {
-          ids: [[]],
-          distances: [[]],
-          metadatas: [[]],
-          documents: [[]],
-          embeddings: [[]],
-        };
-      }
+    if (
+      !getSqlResult ||
+      getSqlResult.length === 0 ||
+      !getSqlResult[0].query_sql
+    ) {
+      return {
+        ids: [[]],
+        distances: [[]],
+        metadatas: [[]],
+        documents: [[]],
+        embeddings: [[]],
+      };
+    }
 
-      // Execute the returned SQL query
-      const querySql = getSqlResult[0].query_sql.trim().replace(/^['"]|['"]$/g, '');
-      const resultRows = await this.execute(querySql);
+    // Execute the returned SQL query
+    const querySql = getSqlResult[0].query_sql
+      .trim()
+      .replace(/^['"]|['"]$/g, "");
+    const resultRows = await this.execute(querySql);
 
-      // Transform results
-      const ids: string[] = [];
-      const documents: (string | null)[] = [];
-      const metadatas: (TMeta | null)[] = [];
-      const embeddings: number[][] = [];
-      const distances: number[] = [];
+    // Transform results
+    const ids: string[] = [];
+    const documents: (string | null)[] = [];
+    const metadatas: (TMeta | null)[] = [];
+    const embeddings: number[][] = [];
+    const distances: number[] = [];
 
-      if (resultRows) {
-        for (const row of resultRows) {
-          ids.push(row[CollectionFieldNames.ID].toString());
+    if (resultRows) {
+      for (const row of resultRows) {
+        ids.push(row[CollectionFieldNames.ID].toString());
 
-          if (!include || include.includes('documents')) {
-            documents.push(row[CollectionFieldNames.DOCUMENT] || null);
-          }
+        if (!include || include.includes("documents")) {
+          documents.push(row[CollectionFieldNames.DOCUMENT] || null);
+        }
 
-          if (!include || include.includes('metadatas')) {
-            const meta = row[CollectionFieldNames.METADATA];
-            metadatas.push(meta ? (typeof meta === 'string' ? JSON.parse(meta) : meta) : null);
-          }
+        if (!include || include.includes("metadatas")) {
+          const meta = row[CollectionFieldNames.METADATA];
+          metadatas.push(
+            meta ? (typeof meta === "string" ? JSON.parse(meta) : meta) : null,
+          );
+        }
 
-          if (include?.includes('embeddings')) {
-            const vec = row[CollectionFieldNames.EMBEDDING];
-            embeddings.push(vec ? (typeof vec === 'string' ? JSON.parse(vec) : vec) : null);
-          }
+        if (include?.includes("embeddings")) {
+          const vec = row[CollectionFieldNames.EMBEDDING];
+          embeddings.push(
+            vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null,
+          );
+        }
 
-          if (row.distance !== undefined) {
-            distances.push(row.distance);
-          }
+        // Distance field might be named "_distance" or "distance"
+        if (row._distance !== undefined) {
+          distances.push(row._distance);
+        } else if (row.distance !== undefined) {
+          distances.push(row.distance);
         }
       }
+    }
 
-      // Return in query-compatible format (nested arrays)
-      const result: QueryResult<TMeta> = {
-        ids: [ids],
-        distances: [distances],
-        documents: (!include || include.includes('documents')) ? [documents] : undefined,
-        metadatas: (!include || include.includes('metadatas')) ? [metadatas] : undefined,
-        embeddings: include?.includes('embeddings') ? [embeddings] : undefined,
-      };
+    // Return in query-compatible format (nested arrays)
+    const result: QueryResult<TMeta> = {
+      ids: [ids],
+      distances: [distances],
+      documents:
+        !include || include.includes("documents") ? [documents] : undefined,
+      metadatas:
+        !include || include.includes("metadatas") ? [metadatas] : undefined,
+      embeddings: include?.includes("embeddings") ? [embeddings] : undefined,
+    };
 
-      return result;
+    return result;
   }
 
   /**
@@ -596,7 +734,7 @@ export class Collection {
     if (whereDocument.$contains) {
       return {
         query_string: {
-          fields: ['document'],
+          fields: ["document"],
           query: whereDocument.$contains,
         },
       };
@@ -613,8 +751,8 @@ export class Collection {
       if (containsQueries.length > 0) {
         return {
           query_string: {
-            fields: ['document'],
-            query: containsQueries.join(' '), // Space = AND in query_string
+            fields: ["document"],
+            query: containsQueries.join(" "), // Space = AND in query_string
           },
         };
       }
@@ -631,8 +769,8 @@ export class Collection {
       if (containsQueries.length > 0) {
         return {
           query_string: {
-            fields: ['document'],
-            query: containsQueries.join(' OR '), // Explicit OR operator
+            fields: ["document"],
+            query: containsQueries.join(" OR "), // Explicit OR operator
           },
         };
       }
@@ -648,10 +786,10 @@ export class Collection {
     }
 
     // Default case for string (treat as $contains)
-    if (typeof whereDocument === 'string') {
+    if (typeof whereDocument === "string") {
       return {
         query_string: {
-          fields: ['document'],
+          fields: ["document"],
           query: whereDocument,
         },
       };
@@ -701,12 +839,12 @@ export class Collection {
 
         if (filterConditions && filterConditions.length > 0) {
           // Full-text search + metadata filtering
-      return {
-        bool: {
+          return {
+            bool: {
               must: [docQuery],
               filter: filterConditions,
-        },
-      };
+            },
+          };
         } else {
           // Full-text search only
           return docQuery;
@@ -718,7 +856,8 @@ export class Collection {
   }
 
   /**
-   * Build metadata filter for search_parm
+   * Build metadata filter for search_parm in hybrid search
+   * Uses JSON_EXTRACT format for field names
    * @private
    */
   private buildMetadataFilter(where: any): any {
@@ -726,7 +865,7 @@ export class Collection {
       return {};
     }
 
-    const filterConditions = FilterBuilder.buildSearchFilter(where);
+    const filterConditions = FilterBuilder.buildHybridSearchFilter(where);
     if (filterConditions && filterConditions.length > 0) {
       return filterConditions;
     }
@@ -745,9 +884,9 @@ export class Collection {
 
   /**
    * Get detailed collection information
-   * 
+   *
    * @returns Object containing collection metadata
-   * 
+   *
    * @example
    * ```typescript
    * const info = await collection.describe();
@@ -770,10 +909,10 @@ export class Collection {
 
   /**
    * Peek at first N items in collection
-   * 
+   *
    * @param limit - Number of items to preview (default: 10)
    * @returns GetResult containing preview data
-   * 
+   *
    * @example
    * ```typescript
    * const preview = await collection.peek(5);
@@ -782,7 +921,12 @@ export class Collection {
    * }
    * ```
    */
-  async peek<TMeta extends Metadata = Metadata>(limit: number = 10): Promise<GetResult<TMeta>> {
-    return this.get<TMeta>({ limit, include: ['documents', 'metadatas', 'embeddings'] });
+  async peek<TMeta extends Metadata = Metadata>(
+    limit: number = 10,
+  ): Promise<GetResult<TMeta>> {
+    return this.get<TMeta>({
+      limit,
+      include: ["documents", "metadatas", "embeddings"],
+    });
   }
 }

@@ -2,8 +2,8 @@
  * Utility functions for SeekDB SDK
  */
 
-import { SeekDBValueError } from './errors.js';
-import type { Metadata } from './types.js';
+import { SeekDBValueError } from "./errors.js";
+import type { Metadata } from "./types.js";
 
 /**
  * Normalize input to array
@@ -15,12 +15,14 @@ export function toArray<T>(input: T | T[]): T[] {
 /**
  * Normalize embeddings to 2D array
  */
-export function normalizeEmbeddings(embeddings: number[] | number[][]): number[][] {
+export function normalizeEmbeddings(
+  embeddings: number[] | number[][],
+): number[][] {
   if (embeddings.length === 0) {
     return [];
   }
   // Check if it's a 1D array (single embedding)
-  if (typeof embeddings[0] === 'number') {
+  if (typeof embeddings[0] === "number") {
     return [embeddings as number[]];
   }
   return embeddings as number[][];
@@ -49,7 +51,7 @@ export function validateRecordSetLengthConsistency(recordSet: {
         embeddings: recordSet.embeddings?.length,
         metadatas: recordSet.metadatas?.length,
         documents: recordSet.documents?.length,
-      })}`
+      })}`,
     );
   }
 }
@@ -59,12 +61,12 @@ export function validateRecordSetLengthConsistency(recordSet: {
  */
 export function validateIDs(ids: string[]): void {
   if (ids.length === 0) {
-    throw new SeekDBValueError('IDs cannot be empty');
+    throw new SeekDBValueError("IDs cannot be empty");
   }
 
   const uniqueIds = new Set(ids);
   if (uniqueIds.size !== ids.length) {
-    throw new SeekDBValueError('IDs must be unique');
+    throw new SeekDBValueError("IDs must be unique");
   }
 }
 
@@ -97,7 +99,7 @@ export function escapeSqlString(value: string): string {
  * Convert vector array to SQL string format
  */
 export function vectorToSqlString(vector: number[]): string {
-  return '[' + vector.join(',') + ']';
+  return "[" + vector.join(",") + "]";
 }
 
 /**
@@ -113,19 +115,19 @@ export class CollectionNames {
  * Collection field names
  */
 export class CollectionFieldNames {
-  static readonly ID = '_id';
-  static readonly DOCUMENT = 'document';
-  static readonly METADATA = 'metadata';
-  static readonly EMBEDDING = 'embedding';
+  static readonly ID = "_id";
+  static readonly DOCUMENT = "document";
+  static readonly METADATA = "metadata";
+  static readonly EMBEDDING = "embedding";
 }
 
 /**
  * Default constants
  */
 export const DEFAULT_VECTOR_DIMENSION = 384;
-export const DEFAULT_DISTANCE_METRIC = 'cosine';
-export const DEFAULT_TENANT = 'sys'; // SeekDB Server default tenant
-export const DEFAULT_DATABASE = 'test';
+export const DEFAULT_DISTANCE_METRIC = "cosine";
+export const DEFAULT_TENANT = "sys"; // SeekDB Server default tenant
+export const DEFAULT_DATABASE = "test";
 export const DEFAULT_PORT = 2881;
-export const DEFAULT_USER = 'root';
-export const DEFAULT_CHARSET = 'utf8mb4';
+export const DEFAULT_USER = "root";
+export const DEFAULT_CHARSET = "utf8mb4";

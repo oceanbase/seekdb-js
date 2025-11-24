@@ -7,7 +7,13 @@
 /**
  * Metadata type - supports primitive values, arrays, and nested objects
  */
-export type MetadataValue = string | number | boolean | null | MetadataValue[] | { [key: string]: MetadataValue };
+export type MetadataValue =
+  | string
+  | number
+  | boolean
+  | null
+  | MetadataValue[]
+  | { [key: string]: MetadataValue };
 export type Metadata = Record<string, MetadataValue>;
 
 export type EmbeddingDocuments = string | string[];
@@ -34,7 +40,9 @@ export interface WhereLogical {
   $or?: Where[];
 }
 
-export type Where = WhereLogical | Record<string, MetadataValue | WhereOperator>;
+export type Where =
+  | WhereLogical
+  | Record<string, MetadataValue | WhereOperator>;
 
 // ==================== Document Filter Types ====================
 
@@ -78,7 +86,7 @@ export interface QueryResult<TMeta extends Metadata = Metadata> {
 
 // ==================== Collection Configuration ====================
 
-export type DistanceMetric = 'l2' | 'cosine' | 'inner_product';
+export type DistanceMetric = "l2" | "cosine" | "inner_product";
 
 export interface HNSWConfiguration {
   dimension: number;
@@ -161,7 +169,7 @@ export interface GetOptions {
   whereDocument?: WhereDocument;
   limit?: number;
   offset?: number;
-  include?: readonly ('documents' | 'metadatas' | 'embeddings')[];
+  include?: readonly ("documents" | "metadatas" | "embeddings")[];
 }
 
 export interface QueryOptions {
@@ -170,7 +178,7 @@ export interface QueryOptions {
   nResults?: number;
   where?: Where;
   whereDocument?: WhereDocument;
-  include?: readonly ('documents' | 'metadatas' | 'embeddings' | 'distances')[];
+  include?: readonly ("documents" | "metadatas" | "embeddings" | "distances")[];
 }
 
 export interface HybridSearchQuery {
@@ -198,9 +206,9 @@ export interface HybridSearchOptions {
   knn?: HybridSearchKNN;
   rank?: HybridSearchRank;
   nResults?: number;
-  include?: readonly ('documents' | 'metadatas' | 'embeddings' | 'distances')[];
+  include?: readonly ("documents" | "metadatas" | "embeddings" | "distances")[];
 }
 
 // ==================== Database Types ====================
 
-export type { Database } from './database.js';
+export type { Database } from "./database.js";

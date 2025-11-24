@@ -2,7 +2,6 @@
 
 根据 pyseekdb 的文档（seekdb-docs目录）和源代码（pyseekdb-code）开发 Node.js SDK。
 
-
 This document provides an in-depth analysis of the SeekDB JavaScript SDK implementation to serve as a reference for developing similar SDKs.
 
 ## Project Overview
@@ -53,17 +52,20 @@ SeekDB SDK adopts a clear layered architecture:
 1. Application Layer
 
 2. Business Logic Layer
- - SeekDBClient
- - Collection
- - AdminClient
+
+- SeekDBClient
+- Collection
+- AdminClient
 
 3. API Client Layer
- - @hey-api/client-fetch
- - Auto-generated API methods
+
+- @hey-api/client-fetch
+- Auto-generated API methods
 
 4. Network Layer
- - seekdbFetch (custom fetch)
- - Error handling
+
+- seekdbFetch (custom fetch)
+- Error handling
 
 ### 2. Modular Design
 
@@ -93,15 +95,16 @@ export class SeekDBClient {
   }
 
   // Core methods
-  async createCollection(options): Promise<Collection>
-  async getCollection(options): Promise<Collection>
-  async listCollections(args?): Promise<Collection[]>
-  async deleteCollection(options): Promise<void>
-  async reset(): Promise<void>
+  async createCollection(options): Promise<Collection>;
+  async getCollection(options): Promise<Collection>;
+  async listCollections(args?): Promise<Collection[]>;
+  async deleteCollection(options): Promise<void>;
+  async reset(): Promise<void>;
 }
 ```
 
 **Design Highlights**:
+
 - Supports environment variable configuration (`SEEKDB_TENANT`, `SEEKDB_DATABASE`)
 - Backward compatibility handling (deprecated parameter warnings)
 - Lazy path resolution (`_path()` method)
@@ -136,6 +139,7 @@ export interface Collection {
 ```
 
 **Design Highlights**:
+
 - Generic support (`<TMeta>` for type-safe metadata)
 - Flexible query interface
 - Automatic embedding processing
@@ -159,6 +163,7 @@ SeekDBError (base)
 ```
 
 **Error Handling Strategy**:
+
 - Custom error classes inheriting from `Error`
 - Unified HTTP error handling in `seekdbFetch`
 - Detailed error messages with error cause chains (`cause`)
@@ -182,6 +187,7 @@ export interface EmbeddingFunction {
 ```
 
 **Design Highlights**:
+
 - Extensible interface design
 - Configuration serialization/deserialization support
 - Query-specific embedding method (`generateForQueries`)
@@ -217,6 +223,7 @@ export const seekdbFetch: typeof fetch = async (input, init) => {
 ```
 
 **Design Highlights**:
+
 - Unified error transformation
 - Special handling of network errors
 - HTTP status code to error class mapping
@@ -226,11 +233,13 @@ export const seekdbFetch: typeof fetch = async (input, init) => {
 ### 1. Client Pattern
 
 **Implementation**:
+
 - Single entry point (`SeekDBClient`)
 - Encapsulates all API calls
 - Manages connection state and configuration
 
 **Advantages**:
+
 - Simplifies API usage
 - Centralized configuration management
 - Easy to add middleware and interceptors
@@ -238,17 +247,20 @@ export const seekdbFetch: typeof fetch = async (input, init) => {
 ### 2. Resource Pattern
 
 **Implementation**:
+
 - `Collection` as resource object
 - Resource methods return resource instances
 - Resource instances contain operation methods
 
 **Example**:
+
 ```typescript
 const collection = await client.getCollection({ name: "my_collection" });
 await collection.add({ ids: ["1"], documents: ["text"] });
 ```
 
 **Advantages**:
+
 - Object-oriented API design
 - Method chaining
 - Resource state management
@@ -256,10 +268,12 @@ await collection.add({ ids: ["1"], documents: ["text"] });
 ### 3. Factory Pattern
 
 **Implementation**:
+
 - `getEmbeddingFunction()` creates embedding functions based on configuration
 - `Schema.deserializeFromJSON()` creates Schema instances
 
 **Advantages**:
+
 - Decouples creation logic
 - Supports multiple implementations
 - Configuration-driven instantiation
@@ -267,10 +281,12 @@ await collection.add({ ids: ["1"], documents: ["text"] });
 ### 4. Adapter Pattern
 
 **Implementation**:
+
 - `seekdbFetch` adapts native `fetch`
 - Environment compatibility layers (`deno.ts`, `next.ts`)
 
 **Advantages**:
+
 - Cross-platform compatibility
 - Unified interface
 - Feature enhancement
@@ -278,10 +294,12 @@ await collection.add({ ids: ["1"], documents: ["text"] });
 ### 5. Strategy Pattern
 
 **Implementation**:
+
 - Pluggable `EmbeddingFunction`
 - Different vector space calculation strategies
 
 **Advantages**:
+
 - Flexible extension
 - Runtime strategy selection
 - Easy to test
@@ -291,15 +309,18 @@ await collection.add({ ids: ["1"], documents: ["text"] });
 ### 1. API Client Generation
 
 **Tech Stack**:
+
 - `@hey-api/openapi-ts`: Generate TypeScript types from OpenAPI specifications
 - `@hey-api/client-fetch`: Generate type-safe API client
 
 **Workflow**:
+
 ```
 OpenAPI Spec → Code Generation → API Client → Type Definitions
 ```
 
 **Advantages**:
+
 - Type safety
 - Automatic API change synchronization
 - Reduced manual maintenance cost
@@ -307,6 +328,7 @@ OpenAPI Spec → Code Generation → API Client → Type Definitions
 ### 2. Type System Design
 
 **Type Hierarchy**:
+
 ```typescript
 // Basic types
 Metadata = Record<string, any>
@@ -331,6 +353,7 @@ GetResult<TMeta> = {
 ```
 
 **Design Principles**:
+
 - Generics support type inference
 - Optional fields use `?`
 - Union types support multiple input formats
@@ -338,6 +361,7 @@ GetResult<TMeta> = {
 ### 3. Serialization/Deserialization
 
 **Metadata Serialization**:
+
 ```typescript
 // Serialize: Object → JSON string
 serializeMetadata(metadata: Metadata): string
@@ -347,6 +371,7 @@ deserializeMetadata(metadata: string): Metadata
 ```
 
 **Design Considerations**:
+
 - Handle special values (`null`, `undefined`)
 - Support nested objects
 - Type-safe conversion
@@ -354,15 +379,17 @@ deserializeMetadata(metadata: string): Metadata
 ### 4. Validation Mechanism
 
 **Validation Functions**:
+
 ```typescript
-validateRecordSetLengthConsistency(recordSet)
-validateIDs(ids)
-validateWhere(where)
-validateMetadata(metadata)
-validateMaxBatchSize(batchSize)
+validateRecordSetLengthConsistency(recordSet);
+validateIDs(ids);
+validateWhere(where);
+validateMetadata(metadata);
+validateMaxBatchSize(batchSize);
 ```
 
 **Validation Strategy**:
+
 - Input validation at method entry
 - Clear error messages
 - Fail-fast approach
@@ -370,11 +397,13 @@ validateMaxBatchSize(batchSize)
 ### 5. Build Configuration
 
 **tsup Configuration** (inferred from package.json):
+
 - Multi-format output (ESM, CJS)
 - TypeScript declaration file generation
 - Code splitting and optimization
 
 **Export Configuration**:
+
 ```json
 {
   "exports": {
@@ -393,6 +422,7 @@ validateMaxBatchSize(batchSize)
 ```
 
 **Advantages**:
+
 - Supports both ESM and CJS
 - Separate type definitions
 - Conditional exports
@@ -402,12 +432,14 @@ validateMaxBatchSize(batchSize)
 ### 1. Project Organization
 
 ✅ **Recommended**:
+
 - Clear directory structure
 - Single responsibility principle
 - Modular design
 - Unified naming conventions
 
 ❌ **Avoid**:
+
 - Overly deep nesting
 - Circular dependencies
 - Files with unclear responsibilities
@@ -415,12 +447,14 @@ validateMaxBatchSize(batchSize)
 ### 2. Type Design
 
 ✅ **Recommended**:
+
 - Use TypeScript strict mode
 - Generics for type flexibility
 - Interface definitions for contracts
 - Export types for user consumption
 
 ❌ **Avoid**:
+
 - Overuse of `any`
 - Incomplete type definitions
 - Missing JSDoc comments
@@ -428,12 +462,14 @@ validateMaxBatchSize(batchSize)
 ### 3. Error Handling
 
 ✅ **Recommended**:
+
 - Custom error classes
 - Error class hierarchy
 - Detailed error messages
 - Error cause chains (`cause`)
 
 ❌ **Avoid**:
+
 - Throwing raw errors
 - Unclear error messages
 - Missing error types
@@ -441,12 +477,14 @@ validateMaxBatchSize(batchSize)
 ### 4. API Design
 
 ✅ **Recommended**:
+
 - Consistent naming conventions
 - Use objects for optional parameters
 - Method chaining
 - Backward compatibility
 
 ❌ **Avoid**:
+
 - Parameter order dependencies
 - Breaking changes
 - Inconsistent API styles
@@ -454,12 +492,14 @@ validateMaxBatchSize(batchSize)
 ### 5. Configuration Management
 
 ✅ **Recommended**:
+
 - Environment variable support
 - Provide defaults
 - Configuration validation
 - Backward compatibility warnings
 
 ❌ **Avoid**:
+
 - Hardcoded configurations
 - Missing defaults
 - Insufficient configuration validation
@@ -467,6 +507,7 @@ validateMaxBatchSize(batchSize)
 ### 6. Testing Strategy
 
 ✅ **Recommended**:
+
 - Unit tests covering core logic
 - Integration tests verifying APIs
 - Mock external dependencies
@@ -475,6 +516,7 @@ validateMaxBatchSize(batchSize)
 ### 7. Documentation and Comments
 
 ✅ **Recommended**:
+
 - JSDoc comments for all public APIs
 - README with usage examples
 - Self-documenting type definitions
@@ -483,6 +525,7 @@ validateMaxBatchSize(batchSize)
 ### 8. Build and Publishing
 
 ✅ **Recommended**:
+
 - Multi-format output (ESM/CJS)
 - Type definition files
 - Version management
@@ -546,7 +589,10 @@ export class MyClient {
 ```typescript
 // errors.ts
 export class MyError extends Error {
-  constructor(message: string, public readonly cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
     super(message);
     this.name = this.constructor.name;
   }
@@ -590,4 +636,3 @@ The SeekDB SDK implementation demonstrates best practices for modern TypeScript 
 6. **Compatibility**: Multi-format output, environment adaptation
 
 These design patterns and best practices can be directly applied to similar SDK development, helping to build high-quality, maintainable client libraries.
-

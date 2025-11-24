@@ -2,12 +2,12 @@
  * Client creation and connection tests - testing connection and query execution for Server mode
  * Supports configuring connection parameters via environment variables
  */
-import { describe, test, expect, beforeAll, afterAll } from 'vitest';
-import { SeekDBClient } from '../src/client.js';
-import { HNSWConfiguration } from '../src/types.js';
-import { TEST_CONFIG, generateCollectionName } from './test-utils.js';
+import { describe, test, expect, beforeAll, afterAll } from "vitest";
+import { SeekDBClient } from "../src/client.js";
+import { HNSWConfiguration } from "../src/types.js";
+import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
 
-describe('Client Creation and Collection Management', () => {
+describe("Client Creation and Collection Management", () => {
   let client: SeekDBClient;
 
   beforeAll(async () => {
@@ -18,14 +18,14 @@ describe('Client Creation and Collection Management', () => {
     await client.close();
   });
 
-  describe('Collection Management', () => {
-    test('create_collection - create a new collection', async () => {
-      const testCollectionName = generateCollectionName('test_collection');
+  describe("Collection Management", () => {
+    test("create_collection - create a new collection", async () => {
+      const testCollectionName = generateCollectionName("test_collection");
       const testDimension = 128;
 
       const config: HNSWConfiguration = {
         dimension: testDimension,
-        distance: 'cosine',
+        distance: "cosine",
       };
 
       const collection = await client.createCollection({
@@ -42,13 +42,13 @@ describe('Client Creation and Collection Management', () => {
       await client.deleteCollection(testCollectionName);
     });
 
-    test('get_collection - get the collection we just created', async () => {
-      const testCollectionName = generateCollectionName('test_collection');
+    test("get_collection - get the collection we just created", async () => {
+      const testCollectionName = generateCollectionName("test_collection");
       const testDimension = 128;
 
       const config: HNSWConfiguration = {
         dimension: testDimension,
-        distance: 'cosine',
+        distance: "cosine",
       };
 
       await client.createCollection({
@@ -70,18 +70,20 @@ describe('Client Creation and Collection Management', () => {
       await client.deleteCollection(testCollectionName);
     });
 
-    test('has_collection - should return false for non-existent collection', async () => {
-      const nonExistentName = generateCollectionName('test_collection_nonexistent');
+    test("has_collection - should return false for non-existent collection", async () => {
+      const nonExistentName = generateCollectionName(
+        "test_collection_nonexistent",
+      );
       const exists = await client.hasCollection(nonExistentName);
       expect(exists).toBe(false);
     });
 
-    test('has_collection - should return true for existing collection', async () => {
-      const testCollectionName = generateCollectionName('test_collection');
-      
+    test("has_collection - should return true for existing collection", async () => {
+      const testCollectionName = generateCollectionName("test_collection");
+
       await client.createCollection({
         name: testCollectionName,
-        configuration: { dimension: 64, distance: 'l2' },
+        configuration: { dimension: 64, distance: "l2" },
         embeddingFunction: null,
       });
 
@@ -92,11 +94,11 @@ describe('Client Creation and Collection Management', () => {
       await client.deleteCollection(testCollectionName);
     });
 
-    test('get_or_create_collection - should get existing collection', async () => {
-      const testCollectionName = generateCollectionName('test_collection');
+    test("get_or_create_collection - should get existing collection", async () => {
+      const testCollectionName = generateCollectionName("test_collection");
       const config: HNSWConfiguration = {
         dimension: 128,
-        distance: 'cosine',
+        distance: "cosine",
       };
 
       await client.createCollection({
@@ -119,11 +121,11 @@ describe('Client Creation and Collection Management', () => {
       await client.deleteCollection(testCollectionName);
     });
 
-    test('get_or_create_collection - should create new collection', async () => {
-      const testCollectionName = generateCollectionName('test_collection_mgmt');
+    test("get_or_create_collection - should create new collection", async () => {
+      const testCollectionName = generateCollectionName("test_collection_mgmt");
       const config: HNSWConfiguration = {
         dimension: 128,
-        distance: 'cosine',
+        distance: "cosine",
       };
 
       const newCollection = await client.getOrCreateCollection({
@@ -140,19 +142,19 @@ describe('Client Creation and Collection Management', () => {
       await client.deleteCollection(testCollectionName);
     });
 
-    test('list_collections - should include our collections', async () => {
-      const testCollectionName1 = generateCollectionName('test_collection_1');
-      const testCollectionName2 = generateCollectionName('test_collection_2');
+    test("list_collections - should include our collections", async () => {
+      const testCollectionName1 = generateCollectionName("test_collection_1");
+      const testCollectionName2 = generateCollectionName("test_collection_2");
 
       await client.createCollection({
         name: testCollectionName1,
-        configuration: { dimension: 64, distance: 'cosine' },
+        configuration: { dimension: 64, distance: "cosine" },
         embeddingFunction: null,
       });
 
       await client.createCollection({
         name: testCollectionName2,
-        configuration: { dimension: 64, distance: 'cosine' },
+        configuration: { dimension: 64, distance: "cosine" },
         embeddingFunction: null,
       });
 
@@ -166,12 +168,12 @@ describe('Client Creation and Collection Management', () => {
       await client.deleteCollection(testCollectionName2);
     });
 
-    test('delete_collection - should delete the collection', async () => {
-      const testCollectionName = generateCollectionName('test_collection_mgmt');
+    test("delete_collection - should delete the collection", async () => {
+      const testCollectionName = generateCollectionName("test_collection_mgmt");
 
       await client.createCollection({
         name: testCollectionName,
-        configuration: { dimension: 64, distance: 'cosine' },
+        configuration: { dimension: 64, distance: "cosine" },
         embeddingFunction: null,
       });
 
@@ -180,16 +182,20 @@ describe('Client Creation and Collection Management', () => {
       expect(exists).toBe(false);
     });
 
-    test('delete_collection - should raise error for non-existent collection', async () => {
-      const testCollectionName = generateCollectionName('test_collection_nonexistent');
+    test("delete_collection - should raise error for non-existent collection", async () => {
+      const testCollectionName = generateCollectionName(
+        "test_collection_nonexistent",
+      );
 
       await expect(async () => {
         await client.deleteCollection(testCollectionName);
       }).rejects.toThrow();
     });
 
-    test('get_or_create_collection without configuration - should use default configuration', async () => {
-      const testCollectionName = generateCollectionName('test_collection_default');
+    test("get_or_create_collection without configuration - should use default configuration", async () => {
+      const testCollectionName = generateCollectionName(
+        "test_collection_default",
+      );
 
       const defaultCollection = await client.getOrCreateCollection({
         name: testCollectionName,
@@ -203,35 +209,35 @@ describe('Client Creation and Collection Management', () => {
       await client.deleteCollection(testCollectionName);
     });
 
-    test('count_collection - count the number of collections', async () => {
+    test("count_collection - count the number of collections", async () => {
       const collectionCount = await client.countCollection();
-      expect(typeof collectionCount).toBe('number');
+      expect(typeof collectionCount).toBe("number");
       expect(collectionCount).toBeGreaterThanOrEqual(0);
     });
 
-    test('collection.count() - count items in collection (should be 0 for empty collection)', async () => {
-      const testCollectionName = generateCollectionName('test_collection');
+    test("collection.count() - count items in collection (should be 0 for empty collection)", async () => {
+      const testCollectionName = generateCollectionName("test_collection");
 
       const collection = await client.createCollection({
         name: testCollectionName,
-        configuration: { dimension: 128, distance: 'cosine' },
+        configuration: { dimension: 128, distance: "cosine" },
         embeddingFunction: null,
       });
 
       const itemCount = await collection.count();
-      expect(typeof itemCount).toBe('number');
+      expect(typeof itemCount).toBe("number");
       expect(itemCount).toBe(0);
 
       // Cleanup
       await client.deleteCollection(testCollectionName);
     });
 
-    test('collection.peek() - preview items in empty collection', async () => {
-      const testCollectionName = generateCollectionName('test_collection');
+    test("collection.peek() - preview items in empty collection", async () => {
+      const testCollectionName = generateCollectionName("test_collection");
 
       const collection = await client.createCollection({
         name: testCollectionName,
-        configuration: { dimension: 128, distance: 'cosine' },
+        configuration: { dimension: 128, distance: "cosine" },
         embeddingFunction: null,
       });
 
@@ -244,17 +250,17 @@ describe('Client Creation and Collection Management', () => {
       await client.deleteCollection(testCollectionName);
     });
 
-    test('collection.count() and peek() - with data', async () => {
-      const testCollectionName = generateCollectionName('test_collection');
+    test("collection.count() and peek() - with data", async () => {
+      const testCollectionName = generateCollectionName("test_collection");
 
       const collection = await client.createCollection({
         name: testCollectionName,
-        configuration: { dimension: 128, distance: 'cosine' },
+        configuration: { dimension: 128, distance: "cosine" },
         embeddingFunction: null,
       });
 
       // Add some test data
-      const testIds = ['id1', 'id2', 'id3'];
+      const testIds = ["id1", "id2", "id3"];
       const embeddings = [
         Array.from({ length: 128 }, () => Math.random()),
         Array.from({ length: 128 }, () => Math.random()),
@@ -264,7 +270,7 @@ describe('Client Creation and Collection Management', () => {
       await collection.add({
         ids: testIds,
         embeddings,
-        documents: ['Test document 0', 'Test document 1', 'Test document 2'],
+        documents: ["Test document 0", "Test document 1", "Test document 2"],
         metadatas: [{ index: 0 }, { index: 1 }, { index: 2 }],
       });
 
@@ -280,9 +286,15 @@ describe('Client Creation and Collection Management', () => {
       expect(previewWithData.metadatas).toBeDefined();
       expect(previewWithData.embeddings).toBeDefined();
       expect(previewWithData.ids.length).toBe(2);
-      expect(previewWithData.ids.length).toBe(previewWithData.documents!.length);
-      expect(previewWithData.ids.length).toBe(previewWithData.metadatas!.length);
-      expect(previewWithData.ids.length).toBe(previewWithData.embeddings!.length);
+      expect(previewWithData.ids.length).toBe(
+        previewWithData.documents!.length,
+      );
+      expect(previewWithData.ids.length).toBe(
+        previewWithData.metadatas!.length,
+      );
+      expect(previewWithData.ids.length).toBe(
+        previewWithData.embeddings!.length,
+      );
 
       // Test peek with different limit
       const previewAll = await collection.peek(10);
@@ -293,4 +305,3 @@ describe('Client Creation and Collection Management', () => {
     });
   });
 });
-

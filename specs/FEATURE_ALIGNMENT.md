@@ -46,14 +46,14 @@ ls pyseekdb/examples/*.py
 
 ### Level 1: AdminClient（数据库管理）
 
-| 功能 | Python SDK | Node SDK | 状态 | 优先级 |
-|------|-----------|----------|------|--------|
-| `AdminClient()` 工厂函数 | ✅ | ❌ | **缺失** | P0 |
-| `create_database(name, tenant?)` | ✅ | ❌ | **缺失** | P0 |
-| `get_database(name, tenant?)` | ✅ | ❌ | **缺失** | P0 |
-| `delete_database(name, tenant?)` | ✅ | ❌ | **缺失** | P0 |
-| `list_databases(limit?, offset?, tenant?)` | ✅ | ❌ | **缺失** | P0 |
-| `Database` 对象 | ✅ | ❌ | **缺失** | P1 |
+| 功能                                       | Python SDK | Node SDK | 状态     | 优先级 |
+| ------------------------------------------ | ---------- | -------- | -------- | ------ |
+| `AdminClient()` 工厂函数                   | ✅         | ❌       | **缺失** | P0     |
+| `create_database(name, tenant?)`           | ✅         | ❌       | **缺失** | P0     |
+| `get_database(name, tenant?)`              | ✅         | ❌       | **缺失** | P0     |
+| `delete_database(name, tenant?)`           | ✅         | ❌       | **缺失** | P0     |
+| `list_databases(limit?, offset?, tenant?)` | ✅         | ❌       | **缺失** | P0     |
+| `Database` 对象                            | ✅         | ❌       | **缺失** | P1     |
 
 **测试文件**: `test_admin_database_management.py` (Python)
 
@@ -61,25 +61,25 @@ ls pyseekdb/examples/*.py
 
 ### Level 2: Client（Collection 管理）
 
-| 功能 | Python SDK | Node SDK | 状态 | 备注 |
-|------|-----------|----------|------|------|
-| `Client()` 工厂函数 | ✅ | ✅ (`SeekDBClient`) | ✅ | 已实现 |
-| **连接模式** |
-| - Embedded mode (`path`) | ✅ | ❌ | **缺失** | P2（后续实现）|
-| - Remote server mode (`host/port`) | ✅ | ✅ | ✅ | 已实现 |
-| - OceanBase mode (`tenant`) | ✅ | ✅ | ✅ | 已实现 |
-| **Collection 管理方法** |
-| `create_collection()` | ✅ | ✅ | ✅ | 已实现 |
-| `get_collection()` | ✅ | ✅ | ✅ | 已实现 |
-| `delete_collection()` | ✅ | ✅ | ✅ | 已实现 |
-| `list_collections()` | ✅ | ✅ | ✅ | 已实现 |
-| `has_collection()` | ✅ | ✅ | ✅ | 已实现 |
-| `get_or_create_collection()` | ✅ | ✅ | ✅ | 已实现 |
-| `count_collection()` | ✅ | ✅ | ✅ | 已实现 |
-| **连接管理** |
-| `execute(sql)` | ✅ | ✅ | ✅ | 已实现 |
-| `close()` | ✅ | ✅ | ✅ | 已实现 |
-| `isConnected()` | ✅ | ✅ | ✅ | 已实现 |
+| 功能                               | Python SDK | Node SDK            | 状态     | 备注           |
+| ---------------------------------- | ---------- | ------------------- | -------- | -------------- |
+| `Client()` 工厂函数                | ✅         | ✅ (`SeekDBClient`) | ✅       | 已实现         |
+| **连接模式**                       |
+| - Embedded mode (`path`)           | ✅         | ❌                  | **缺失** | P2（后续实现） |
+| - Remote server mode (`host/port`) | ✅         | ✅                  | ✅       | 已实现         |
+| - OceanBase mode (`tenant`)        | ✅         | ✅                  | ✅       | 已实现         |
+| **Collection 管理方法**            |
+| `create_collection()`              | ✅         | ✅                  | ✅       | 已实现         |
+| `get_collection()`                 | ✅         | ✅                  | ✅       | 已实现         |
+| `delete_collection()`              | ✅         | ✅                  | ✅       | 已实现         |
+| `list_collections()`               | ✅         | ✅                  | ✅       | 已实现         |
+| `has_collection()`                 | ✅         | ✅                  | ✅       | 已实现         |
+| `get_or_create_collection()`       | ✅         | ✅                  | ✅       | 已实现         |
+| `count_collection()`               | ✅         | ✅                  | ✅       | 已实现         |
+| **连接管理**                       |
+| `execute(sql)`                     | ✅         | ✅                  | ✅       | 已实现         |
+| `close()`                          | ✅         | ✅                  | ✅       | 已实现         |
+| `isConnected()`                    | ✅         | ✅                  | ✅       | 已实现         |
 
 **测试文件**: `test_client_creation.py` (Python)
 
@@ -89,74 +89,75 @@ ls pyseekdb/examples/*.py
 
 #### 3.1 DML 操作
 
-| 功能 | Python SDK | Node SDK | 状态 | 备注 |
-|------|-----------|----------|------|------|
-| `add()` | ✅ | ✅ | ✅ | 已实现 |
-| - 支持单个/批量数据 | ✅ | ✅ | ✅ | |
-| - embeddings 参数 | ✅ | ✅ | ✅ | |
-| - documents 参数 | ✅ | ✅ | ✅ | |
-| - metadatas 参数 | ✅ | ✅ | ✅ | |
-| - 自动生成 embeddings | ✅ | ✅ | ✅ | |
-| `update()` | ✅ | ✅ | ✅ | 已实现 |
-| - 仅更新 metadata | ✅ | ✅ | ✅ | |
-| - 更新 embeddings | ✅ | ✅ | ✅ | |
-| - 更新 documents | ✅ | ✅ | ✅ | |
-| `upsert()` | ✅ | ✅ | ✅ | 已实现 |
-| `delete()` | ✅ | ✅ | ✅ | 已实现 |
-| - 按 IDs 删除 | ✅ | ✅ | ✅ | |
-| - 按 where 删除 | ✅ | ✅ | ✅ | |
-| - 按 where_document 删除 | ✅ | ✅ | ✅ | |
+| 功能                     | Python SDK | Node SDK | 状态 | 备注   |
+| ------------------------ | ---------- | -------- | ---- | ------ |
+| `add()`                  | ✅         | ✅       | ✅   | 已实现 |
+| - 支持单个/批量数据      | ✅         | ✅       | ✅   |        |
+| - embeddings 参数        | ✅         | ✅       | ✅   |        |
+| - documents 参数         | ✅         | ✅       | ✅   |        |
+| - metadatas 参数         | ✅         | ✅       | ✅   |        |
+| - 自动生成 embeddings    | ✅         | ✅       | ✅   |        |
+| `update()`               | ✅         | ✅       | ✅   | 已实现 |
+| - 仅更新 metadata        | ✅         | ✅       | ✅   |        |
+| - 更新 embeddings        | ✅         | ✅       | ✅   |        |
+| - 更新 documents         | ✅         | ✅       | ✅   |        |
+| `upsert()`               | ✅         | ✅       | ✅   | 已实现 |
+| `delete()`               | ✅         | ✅       | ✅   | 已实现 |
+| - 按 IDs 删除            | ✅         | ✅       | ✅   |        |
+| - 按 where 删除          | ✅         | ✅       | ✅   |        |
+| - 按 where_document 删除 | ✅         | ✅       | ✅   |        |
 
 **测试文件**: `test_collection_dml.py` (Python)
 
 #### 3.2 DQL 操作
 
-| 功能 | Python SDK | Node SDK | 状态 | 备注 |
-|------|-----------|----------|------|------|
-| `query()` - 向量相似搜索 | ✅ | ✅ | ✅ | 已实现 |
-| - query_embeddings 参数 | ✅ | ✅ | ✅ | |
-| - query_texts 参数 | ✅ | ✅ | ✅ | |
-| - n_results 参数 | ✅ | ✅ | ✅ | |
-| - where 过滤 | ✅ | ✅ | ✅ | |
-| - where_document 过滤 | ✅ | ✅ | ✅ | |
-| - include 参数 | ✅ | ✅ | ✅ | |
-| - 批量查询（多个 query vectors）| ✅ | ✅ | ✅ | |
-| `get()` - 按 ID/过滤获取 | ✅ | ✅ | ✅ | 已实现 |
-| - ids 参数 | ✅ | ✅ | ✅ | |
-| - where 过滤 | ✅ | ✅ | ✅ | |
-| - where_document 过滤 | ✅ | ✅ | ✅ | |
-| - limit/offset 分页 | ✅ | ✅ | ✅ | |
-| - include 参数 | ✅ | ✅ | ✅ | |
-| `hybrid_search()` - 混合搜索 | ✅ | ✅ | ✅ | 已实现 |
-| - query 参数（全文搜索）| ✅ | ✅ | ✅ | |
-| - knn 参数（向量搜索）| ✅ | ✅ | ✅ | |
-| - rank 参数（RRF）| ✅ | ✅ | ✅ | |
-| - n_results 参数 | ✅ | ✅ | ✅ | |
+| 功能                             | Python SDK | Node SDK | 状态 | 备注   |
+| -------------------------------- | ---------- | -------- | ---- | ------ |
+| `query()` - 向量相似搜索         | ✅         | ✅       | ✅   | 已实现 |
+| - query_embeddings 参数          | ✅         | ✅       | ✅   |        |
+| - query_texts 参数               | ✅         | ✅       | ✅   |        |
+| - n_results 参数                 | ✅         | ✅       | ✅   |        |
+| - where 过滤                     | ✅         | ✅       | ✅   |        |
+| - where_document 过滤            | ✅         | ✅       | ✅   |        |
+| - include 参数                   | ✅         | ✅       | ✅   |        |
+| - 批量查询（多个 query vectors） | ✅         | ✅       | ✅   |        |
+| `get()` - 按 ID/过滤获取         | ✅         | ✅       | ✅   | 已实现 |
+| - ids 参数                       | ✅         | ✅       | ✅   |        |
+| - where 过滤                     | ✅         | ✅       | ✅   |        |
+| - where_document 过滤            | ✅         | ✅       | ✅   |        |
+| - limit/offset 分页              | ✅         | ✅       | ✅   |        |
+| - include 参数                   | ✅         | ✅       | ✅   |        |
+| `hybrid_search()` - 混合搜索     | ✅         | ✅       | ✅   | 已实现 |
+| - query 参数（全文搜索）         | ✅         | ✅       | ✅   |        |
+| - knn 参数（向量搜索）           | ✅         | ✅       | ✅   |        |
+| - rank 参数（RRF）               | ✅         | ✅       | ✅   |        |
+| - n_results 参数                 | ✅         | ✅       | ✅   |        |
 
-**测试文件**: 
+**测试文件**:
+
 - `test_collection_query.py` (Python)
 - `test_collection_get.py` (Python)
 - `test_collection_hybrid_search.py` (Python)
 
 #### 3.3 Collection 信息方法
 
-| 功能 | Python SDK | Node SDK | 状态 | 备注 |
-|------|-----------|----------|------|------|
-| `count()` | ✅ | ✅ | ✅ | 已实现 |
-| `describe()` | ✅ | ✅ | ✅ | 已实现 |
-| `peek(limit?)` | ✅ | ✅ | ✅ | 已实现 |
+| 功能           | Python SDK | Node SDK | 状态 | 备注   |
+| -------------- | ---------- | -------- | ---- | ------ |
+| `count()`      | ✅         | ✅       | ✅   | 已实现 |
+| `describe()`   | ✅         | ✅       | ✅   | 已实现 |
+| `peek(limit?)` | ✅         | ✅       | ✅   | 已实现 |
 
 #### 3.4 Collection 属性
 
-| 属性 | Python SDK | Node SDK | 状态 | 备注 |
-|------|-----------|----------|------|------|
-| `name` | ✅ | ✅ | ✅ | 已实现 |
-| `id` | ✅ | ✅ | ✅ | 已实现 |
-| `dimension` | ✅ | ✅ | ✅ | 已实现 |
-| `distance` | ✅ | ✅ | ✅ | 已实现 |
-| `embedding_function` | ✅ | ✅ | ✅ | 已实现 |
-| `metadata` | ✅ | ✅ | ✅ | 已实现 |
-| `client` | ✅ | ✅ | ✅ | 已实现 |
+| 属性                 | Python SDK | Node SDK | 状态 | 备注   |
+| -------------------- | ---------- | -------- | ---- | ------ |
+| `name`               | ✅         | ✅       | ✅   | 已实现 |
+| `id`                 | ✅         | ✅       | ✅   | 已实现 |
+| `dimension`          | ✅         | ✅       | ✅   | 已实现 |
+| `distance`           | ✅         | ✅       | ✅   | 已实现 |
+| `embedding_function` | ✅         | ✅       | ✅   | 已实现 |
+| `metadata`           | ✅         | ✅       | ✅   | 已实现 |
+| `client`             | ✅         | ✅       | ✅   | 已实现 |
 
 ---
 
@@ -164,47 +165,48 @@ ls pyseekdb/examples/*.py
 
 #### 4.1 过滤器（Filters）
 
-| 功能 | Python SDK | Node SDK | 状态 | 备注 |
-|------|-----------|----------|------|------|
-| **Metadata 过滤器 (where)** |
-| `$eq` (相等) | ✅ | ✅ | ✅ | |
-| 简化形式 `{key: value}` | ✅ | ✅ | ✅ | |
-| `$ne` (不等于) | ✅ | ✅ | ✅ | |
-| `$gt` (大于) | ✅ | ✅ | ✅ | |
-| `$gte` (大于等于) | ✅ | ✅ | ✅ | |
-| `$lt` (小于) | ✅ | ✅ | ✅ | |
-| `$lte` (小于等于) | ✅ | ✅ | ✅ | |
-| `$in` (在数组中) | ✅ | ✅ | ✅ | |
-| `$nin` (不在数组中) | ✅ | ✅ | ✅ | |
-| `$or` (逻辑或) | ✅ | ✅ | ✅ | |
-| `$and` (逻辑与) | ✅ | ✅ | ✅ | |
+| 功能                                 | Python SDK | Node SDK | 状态 | 备注   |
+| ------------------------------------ | ---------- | -------- | ---- | ------ |
+| **Metadata 过滤器 (where)**          |
+| `$eq` (相等)                         | ✅         | ✅       | ✅   |        |
+| 简化形式 `{key: value}`              | ✅         | ✅       | ✅   |        |
+| `$ne` (不等于)                       | ✅         | ✅       | ✅   |        |
+| `$gt` (大于)                         | ✅         | ✅       | ✅   |        |
+| `$gte` (大于等于)                    | ✅         | ✅       | ✅   |        |
+| `$lt` (小于)                         | ✅         | ✅       | ✅   |        |
+| `$lte` (小于等于)                    | ✅         | ✅       | ✅   |        |
+| `$in` (在数组中)                     | ✅         | ✅       | ✅   |        |
+| `$nin` (不在数组中)                  | ✅         | ✅       | ✅   |        |
+| `$or` (逻辑或)                       | ✅         | ✅       | ✅   |        |
+| `$and` (逻辑与)                      | ✅         | ✅       | ✅   |        |
 | **Document 过滤器 (where_document)** |
-| `$contains` (包含) | ✅ | ✅ | ✅ | |
-| `$regex` (正则) | ✅ | ✅ | ✅ | 已实现 |
-| `$or` (逻辑或) | ✅ | ✅ | ✅ | |
-| `$and` (逻辑与) | ✅ | ✅ | ✅ | |
+| `$contains` (包含)                   | ✅         | ✅       | ✅   |        |
+| `$regex` (正则)                      | ✅         | ✅       | ✅   | 已实现 |
+| `$or` (逻辑或)                       | ✅         | ✅       | ✅   |        |
+| `$and` (逻辑与)                      | ✅         | ✅       | ✅   |        |
 
 #### 4.2 Embedding Functions
 
-| 功能 | Python SDK | Node SDK | 状态 | 备注 |
-|------|-----------|----------|------|------|
-| `DefaultEmbeddingFunction` | ✅ | ❌ | **缺失** | P1 |
-| 自定义 `EmbeddingFunction` 协议 | ✅ | ✅ | ✅ | 已支持 |
-| `dimension` 属性 | ✅ | ✅ | ✅ | 已支持 |
-| `__call__()` 方法 | ✅ | ✅ | ✅ | 已支持 |
+| 功能                            | Python SDK | Node SDK | 状态     | 备注   |
+| ------------------------------- | ---------- | -------- | -------- | ------ |
+| `DefaultEmbeddingFunction`      | ✅         | ❌       | **缺失** | P1     |
+| 自定义 `EmbeddingFunction` 协议 | ✅         | ✅       | ✅       | 已支持 |
+| `dimension` 属性                | ✅         | ✅       | ✅       | 已支持 |
+| `__call__()` 方法               | ✅         | ✅       | ✅       | 已支持 |
 
-**测试文件**: 
+**测试文件**:
+
 - `test_collection_embedding_function.py` (Python)
 - `test_default_embedding_function.py` (Python)
 
 #### 4.3 配置对象
 
-| 功能 | Python SDK | Node SDK | 状态 | 备注 |
-|------|-----------|----------|------|------|
-| `HNSWConfiguration` | ✅ | ✅ | ✅ | 已实现 |
-| - dimension 参数 | ✅ | ✅ | ✅ | |
-| - distance 参数 | ✅ | ✅ | ✅ | |
-| `Database` 对象 | ✅ | ❌ | **缺失** | P1 |
+| 功能                | Python SDK | Node SDK | 状态     | 备注   |
+| ------------------- | ---------- | -------- | -------- | ------ |
+| `HNSWConfiguration` | ✅         | ✅       | ✅       | 已实现 |
+| - dimension 参数    | ✅         | ✅       | ✅       |        |
+| - distance 参数     | ✅         | ✅       | ✅       |        |
+| `Database` 对象     | ✅         | ❌       | **缺失** | P1     |
 
 ---
 
@@ -269,4 +271,3 @@ ls pyseekdb/examples/*.py
 - Python SDK README: `pyseekdb/README.md`
 - Python SDK 测试: `pyseekdb/tests/`
 - Python SDK 示例: `pyseekdb/examples/`
-

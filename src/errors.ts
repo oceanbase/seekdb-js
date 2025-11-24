@@ -2,7 +2,10 @@
  * Base error class for SeekDB errors
  */
 export class SeekDBError extends Error {
-  constructor(message: string, public readonly cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
     super(message);
     this.name = this.constructor.name;
     // Maintain proper stack trace for where our error was thrown (only available on V8)

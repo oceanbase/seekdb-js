@@ -4,14 +4,14 @@
 
 ### 代码规模对比
 
-| 文件 | 重构前 (行数) | 重构后 (行数) | 变化 |
-|------|--------------|--------------|------|
-| **client.ts** | **1,142** | **284** | **-75% ✅** |
-| **collection.ts** | 137 | 686 | +400% (功能扩展) |
-| admin-client.ts | 135 | ~100 | -26% |
-| **新增文件** | - | - | - |
-| connection/mysql-connection.ts | 0 | ~80 | 新增 |
-| builders/sql-builder.ts | 0 | ~310 | 新增 |
+| 文件                           | 重构前 (行数) | 重构后 (行数) | 变化             |
+| ------------------------------ | ------------- | ------------- | ---------------- |
+| **client.ts**                  | **1,142**     | **284**       | **-75% ✅**      |
+| **collection.ts**              | 137           | 686           | +400% (功能扩展) |
+| admin-client.ts                | 135           | ~100          | -26%             |
+| **新增文件**                   | -             | -             | -                |
+| connection/mysql-connection.ts | 0             | ~80           | 新增             |
+| builders/sql-builder.ts        | 0             | ~310          | 新增             |
 
 ### 总体效果
 
@@ -68,13 +68,13 @@ src/
 
 #### 2. **职责单一**
 
-| 模块 | 职责 |
-|------|------|
-| **SeekDBClient** | Collection 生命周期管理（创建、获取、删除） |
-| **Collection** | 所有数据操作（add, get, update, delete, query） |
-| **MySQLConnection** | 连接建立、维护、关闭 |
-| **SQLBuilder** | 统一的 SQL 语句构建 |
-| **FilterBuilder** | 过滤条件和查询表达式构建 |
+| 模块                | 职责                                            |
+| ------------------- | ----------------------------------------------- |
+| **SeekDBClient**    | Collection 生命周期管理（创建、获取、删除）     |
+| **Collection**      | 所有数据操作（add, get, update, delete, query） |
+| **MySQLConnection** | 连接建立、维护、关闭                            |
+| **SQLBuilder**      | 统一的 SQL 语句构建                             |
+| **FilterBuilder**   | 过滤条件和查询表达式构建                        |
 
 #### 3. **易于扩展**
 
@@ -90,11 +90,13 @@ src/
 **目标**：将连接管理逻辑独立出来
 
 **实施内容**：
+
 - 创建 `MySQLConnection` 类
 - 重构 `SeekDBClient` 使用 `MySQLConnection`
 - 重构 `SeekDBAdminClient` 使用 `MySQLConnection`
 
 **优势**：
+
 - 连接逻辑可被多个客户端复用
 - 易于添加新的连接类型（如 HTTP、WebSocket）
 - 统一的连接管理接口
@@ -104,15 +106,18 @@ src/
 **目标**：统一所有 SQL 语句的构建逻辑
 
 **实施内容**：
+
 - 创建 `SQLBuilder` 类，包含所有 SQL 构建方法
 - 重构 `client.ts` 中的 SQL 构建代码使用 `SQLBuilder`
 
 **优势**：
+
 - 消除重复的 SQL 构建代码
 - SQL 语句集中管理，易于优化和调试
 - 类型安全的 SQL 构建
 
 **SQLBuilder 方法列表**：
+
 - `buildCreateTable()` - CREATE TABLE
 - `buildShowTable()` - SHOW TABLES LIKE
 - `buildDescribeTable()` - DESCRIBE TABLE
@@ -131,16 +136,19 @@ src/
 **目标**：将所有数据操作移到 Collection 类中
 
 **实施内容**：
+
 - 扩展 `Collection` 类，添加所有操作方法的完整实现
 - 简化 `SeekDBClient`，删除所有 `_collection*` 内部方法
 - 只保留 Collection 管理方法
 
 **优势**：
+
 - Collection 类自包含，可独立使用
 - client.ts 只负责 Collection 管理，代码量大减
 - 符合面向对象设计原则
 
 **Collection 方法列表**：
+
 - `add()` - 添加数据
 - `update()` - 更新数据
 - `upsert()` - 插入或更新
@@ -154,11 +162,13 @@ src/
 ### Phase 4: 更新导出和验证 ✅
 
 **实施内容**：
+
 - 验证 `index.ts` 导出正确
 - 运行 Linter 检查
 - 确保无类型错误
 
 **结果**：
+
 - ✅ 所有模块正确导出
 - ✅ 无 Linter 错误
 - ✅ 类型检查通过
@@ -178,6 +188,7 @@ src/
 ### SeekDB 的实现
 
 我们采纳了以下设计：
+
 - ✅ Collection 自包含所有操作
 - ✅ 依赖注入模式（Collection 持有 Client 引用）
 - ✅ SQL 构建器集中管理
@@ -245,9 +256,9 @@ src/
 ```typescript
 // 使用方式完全相同
 const client = new SeekDBClient({ host, port, user, password });
-const collection = await client.createCollection({ name: 'test' });
-await collection.add({ ids: ['1'], documents: ['hello'] });
-const results = await collection.query({ queryTexts: ['world'] });
+const collection = await client.createCollection({ name: "test" });
+await collection.add({ ids: ["1"], documents: ["hello"] });
+const results = await collection.query({ queryTexts: ["world"] });
 ```
 
 ### 性能影响
@@ -257,6 +268,7 @@ const results = await collection.query({ queryTexts: ['world'] });
 ### 维护性提升
 
 ✅ **显著提升**：
+
 - 单个文件行数减少 75%
 - 模块职责清晰
 - 代码复用性提高
@@ -266,4 +278,3 @@ const results = await collection.query({ queryTexts: ['world'] });
 
 **重构完成日期**: 2025-11-23  
 **版本**: feat-beta 分支
-

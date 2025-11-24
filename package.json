@@ -23,7 +23,8 @@
     "test": "vitest",
     "test:verify": "npm run build && npx tsx tests/verify-all.ts",
     "examples": "npm run build && npx tsx examples/run-all.ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prettier": "prettier --write ."
   },
   "keywords": [
     "seekdb",
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "prettier": "^3.6.2",
     "tsup": "^8.3.5",
     "tsx": "^4.20.6",
     "typescript": "^5.7.2",

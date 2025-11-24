@@ -3,14 +3,11 @@
  * Supports both SeekDB Server and OceanBase Server
  */
 
-import type { RowDataPacket } from 'mysql2/promise';
-import { Collection } from './collection.js';
-import { Connection } from './connection.js';
-import { SQLBuilder } from './sql-builder.js';
-import {
-  SeekDBValueError,
-  InvalidCollectionError,
-} from './errors.js';
+import type { RowDataPacket } from "mysql2/promise";
+import { Collection } from "./collection.js";
+import { Connection } from "./connection.js";
+import { SQLBuilder } from "./sql-builder.js";
+import { SeekDBValueError, InvalidCollectionError } from "./errors.js";
 import {
   CollectionFieldNames,
   DEFAULT_TENANT,
@@ -20,7 +17,7 @@ import {
   DEFAULT_CHARSET,
   DEFAULT_VECTOR_DIMENSION,
   DEFAULT_DISTANCE_METRIC,
-} from './utils.js';
+} from "./utils.js";
 import type {
   SeekDBClientArgs,
   CreateCollectionOptions,
@@ -28,7 +25,7 @@ import type {
   HNSWConfiguration,
   EmbeddingFunction,
   DistanceMetric,
-} from './types.js';
+} from "./types.js";
 
 /**
  * SeekDB Client for remote server connections
@@ -44,9 +41,9 @@ export class SeekDBClient {
     this.tenant = args.tenant ?? DEFAULT_TENANT;
     this.database = args.database ?? DEFAULT_DATABASE;
     const user = args.user ?? DEFAULT_USER;
-    const password = args.password ?? process.env.SEEKDB_PASSWORD ?? '';
+    const password = args.password ?? process.env.SEEKDB_PASSWORD ?? "";
     const charset = args.charset ?? DEFAULT_CHARSET;
-    
+
     const fullUser = this.tenant ? `${user}@${this.tenant}` : user;
 
     // Initialize connection manager
@@ -87,7 +84,7 @@ export class SeekDBClient {
    * Create a new collection
    */
   async createCollection(
-    options: CreateCollectionOptions
+    options: CreateCollectionOptions,
   ): Promise<Collection> {
     const { name } = options;
     const configuration = options.configuration ?? null;
@@ -107,7 +104,7 @@ export class SeekDBClient {
 
     // Auto-calculate dimension from embedding function if config not provided
     if (config === null && ef !== null) {
-      const testEmbeddings = await ef('seekdb');
+      const testEmbeddings = await ef("seekdb");
       const dimension = testEmbeddings[0].length;
       config = {
         dimension,
@@ -117,18 +114,18 @@ export class SeekDBClient {
 
     // Validate dimension matches if both provided
     if (config !== null && ef !== null) {
-      const testEmbeddings = await ef('seekdb');
+      const testEmbeddings = await ef("seekdb");
       const actualDimension = testEmbeddings[0].length;
       if (config.dimension !== actualDimension) {
         throw new SeekDBValueError(
-          `Configuration dimension (${config.dimension}) does not match embedding function dimension (${actualDimension})`
+          `Configuration dimension (${config.dimension}) does not match embedding function dimension (${actualDimension})`,
         );
       }
     }
 
     if (config === null) {
       throw new SeekDBValueError(
-        'Cannot determine dimension: either provide configuration or embeddingFunction'
+        "Cannot determine dimension: either provide configuration or embeddingFunction",
       );
     }
 
@@ -166,17 +163,17 @@ export class SeekDBClient {
 
     if (!schema) {
       throw new InvalidCollectionError(
-        `Unable to retrieve schema for collection: ${name}`
+        `Unable to retrieve schema for collection: ${name}`,
       );
     }
 
     // Parse embedding field to get dimension
     const embeddingField = schema.find(
-      (row: any) => row.Field === CollectionFieldNames.EMBEDDING
+      (row: any) => row.Field === CollectionFieldNames.EMBEDDING,
     );
     if (!embeddingField) {
       throw new InvalidCollectionError(
-        `Collection ${name} does not have embedding field`
+        `Collection ${name} does not have embedding field`,
       );
     }
 
@@ -184,7 +181,7 @@ export class SeekDBClient {
     const match = embeddingField.Type.match(/VECTOR\((\d+)\)/i);
     if (!match) {
       throw new InvalidCollectionError(
-        `Invalid embedding type: ${embeddingField.Type}`
+        `Invalid embedding type: ${embeddingField.Type}`,
       );
     }
 
@@ -193,9 +190,9 @@ export class SeekDBClient {
     // Get distance metric from VECTOR INDEX
     const indexSql = SQLBuilder.buildShowIndex(name);
     const indexResult = await this.execute(indexSql);
-    
+
     let distance: DistanceMetric = DEFAULT_DISTANCE_METRIC;
-    
+
     // Try to extract distance from index comment or use default
     if (indexResult && indexResult.length > 0) {
       // For now, we'll use the default distance metric
@@ -217,12 +214,12 @@ export class SeekDBClient {
    * List all collections
    */
   async listCollections(): Promise<string[]> {
-    const sql = 'SHOW TABLES';
+    const sql = "SHOW TABLES";
     const result = await this.execute(sql);
 
     if (!result) return [];
 
-    const prefix = 'c$v1$';
+    const prefix = "c$v1$";
     const collections: string[] = [];
 
     for (const row of result) {
@@ -261,7 +258,7 @@ export class SeekDBClient {
    * Get or create collection
    */
   async getOrCreateCollection(
-    options: CreateCollectionOptions
+    options: CreateCollectionOptions,
   ): Promise<Collection> {
     if (await this.hasCollection(options.name)) {
       return this.getCollection({
@@ -293,9 +290,9 @@ export class SeekDBClient {
   /**
    * Begin a transaction
    * All subsequent operations will be part of this transaction until commit() or rollback() is called
-   * 
+   *
    * @throws {SeekDBConnectionError} If connection fails or transaction cannot be started
-   * 
+   *
    * @example
    * ```typescript
    * await client.beginTransaction();
@@ -316,7 +313,7 @@ export class SeekDBClient {
   /**
    * Commit current transaction
    * Saves all changes made since beginTransaction() was called
-   * 
+   *
    * @throws {SeekDBConnectionError} If commit fails
    */
   async commit(): Promise<void> {
@@ -326,7 +323,7 @@ export class SeekDBClient {
   /**
    * Rollback current transaction
    * Discards all changes made since beginTransaction() was called
-   * 
+   *
    * @throws {SeekDBConnectionError} If rollback fails
    */
   async rollback(): Promise<void> {
@@ -336,11 +333,11 @@ export class SeekDBClient {
   /**
    * Execute a function within a transaction
    * Automatically commits on success and rolls back on error
-   * 
+   *
    * @param callback - Function to execute within the transaction context
    * @returns The result of the callback function
    * @throws Throws any error from the callback after rolling back the transaction
-   * 
+   *
    * @example
    * ```typescript
    * const result = await client.transaction(async () => {

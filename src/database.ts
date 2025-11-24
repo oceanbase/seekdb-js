@@ -8,9 +8,9 @@ export class Database {
   constructor(
     name: string,
     tenant: string | null = null,
-    charset: string = '',
-    collation: string = '',
-    metadata: Record<string, any> = {}
+    charset: string = "",
+    collation: string = "",
+    metadata: Record<string, any> = {},
   ) {
     this.name = name;
     this.tenant = tenant;
@@ -27,4 +27,3 @@ export class Database {
     return this.name === other.name && this.tenant === other.tenant;
   }
 }
-
