@@ -100,8 +100,13 @@ export class Connection {
    */
   async close(): Promise<void> {
     if (this.connection) {
-      await this.connection.end();
-      this.connection = null;
+      try {
+        await this.connection.end();
+      } catch {
+        this.connection.destroy();
+      } finally {
+        this.connection = null;
+      }
     }
   }
 

@@ -47,8 +47,6 @@ export class SeekDBClient {
     const password = args.password ?? process.env.SEEKDB_PASSWORD ?? '';
     const charset = args.charset ?? DEFAULT_CHARSET;
     
-    // SeekDB 单机版不使用租户，只有指定了非空 tenant 时才添加 @tenant 后缀
-    // 这样可以同时支持 SeekDB 和 OceanBase
     const fullUser = this.tenant ? `${user}@${this.tenant}` : user;
 
     // Initialize connection manager

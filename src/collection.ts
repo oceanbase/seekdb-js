@@ -450,21 +450,12 @@ export class Collection {
     // Build search_parm JSON
     const searchParm: any = {};
 
-    // Handle query (full-text search)
+    // Handle query (full-text search and/or metadata filtering)
     if (query) {
-      const queryObj: any = {};
-      if (query.whereDocument) {
-        // Build query expression from whereDocument
-        queryObj.query = this.buildQueryExpression(query.whereDocument);
+      const queryExpr = this.buildCompleteQueryExpression(query);
+      if (queryExpr) {
+        searchParm.query = queryExpr;
       }
-      if (query.where) {
-        // Build filter from metadata conditions
-        queryObj.filter = this.buildMetadataFilter(query.where);
-      }
-      if (query.nResults) {
-        queryObj.size = query.nResults;
-      }
-      searchParm.query = queryObj;
     }
 
     // Handle knn (vector search)
@@ -524,22 +515,17 @@ export class Collection {
 
     // Execute hybrid search using DBMS_HYBRID_SEARCH
     const searchParmJson = JSON.stringify(searchParm);
-
-    try {
       const tableName = `c$v1$${this.name}`;
       
-      // Set search_parm variable (like Python SDK does)
+    // Set search_parm variable
       const setVarSql = SQLBuilder.buildSetVariable('search_parm', searchParmJson);
-      console.log('[DEBUG] SET SQL:', setVarSql.substring(0, 100), '...');
       await this.execute(setVarSql);
 
       // Get SQL query from DBMS_HYBRID_SEARCH.GET_SQL
       const getSqlQuery = SQLBuilder.buildHybridSearchGetSql(tableName);
-      console.log('[DEBUG] GET_SQL query:', getSqlQuery);
       const getSqlResult = await this.execute(getSqlQuery);
 
       if (!getSqlResult || getSqlResult.length === 0 || !getSqlResult[0].query_sql) {
-        console.warn('No SQL query returned from GET_SQL');
         return {
           ids: [[]],
           distances: [[]],
@@ -594,45 +580,65 @@ export class Collection {
       };
 
       return result;
-    } catch (error: any) {
-      // Handle DBMS_HYBRID_SEARCH not supported or SQL errors
-      const errorMsg = error.message || '';
-      
-      // 添加详细错误日志用于调试
-      console.error('[DEBUG] Hybrid search error:', errorMsg);
-      console.error('[DEBUG] Error code:', error.code);
-      console.error('[DEBUG] Error errno:', error.errno);
-      
-      if (errorMsg.includes('Not supported feature or function') || 
-          errorMsg.includes('SQL syntax') ||
-          errorMsg.includes('DBMS_HYBRID_SEARCH') ||
-          errorMsg.includes('Unknown database function')) {
-        console.warn('DBMS_HYBRID_SEARCH is not supported on this database version');
-        console.warn('Falling back to empty result. Please use query() for vector search instead.');
-        return {
-          ids: [[]],
-          distances: [[]],
-          metadatas: include?.includes('metadatas') ? [[]] : undefined,
-          documents: include?.includes('documents') ? [[]] : undefined,
-          embeddings: include?.includes('embeddings') ? [[]] : undefined,
-        };
-      }
-      throw error;
-    }
   }
 
   /**
-   * Build query expression from whereDocument filter
+   * Build document query from whereDocument filter
+   * Converts whereDocument conditions into query_string format compatible with DBMS_HYBRID_SEARCH
    * @private
    */
-  private buildQueryExpression(whereDocument: any): any {
+  private buildDocumentQuery(whereDocument: any): any {
+    if (!whereDocument) {
+      return null;
+    }
+
+    // Handle simple $contains
     if (whereDocument.$contains) {
       return {
         query_string: {
+          fields: ['document'],
           query: whereDocument.$contains,
         },
       };
     }
+
+    // Handle $and with $contains - merge into single query_string with space (AND semantic)
+    if (whereDocument.$and && Array.isArray(whereDocument.$and)) {
+      const containsQueries: string[] = [];
+      for (const condition of whereDocument.$and) {
+        if (condition && condition.$contains) {
+          containsQueries.push(condition.$contains);
+        }
+      }
+      if (containsQueries.length > 0) {
+        return {
+          query_string: {
+            fields: ['document'],
+            query: containsQueries.join(' '), // Space = AND in query_string
+          },
+        };
+      }
+    }
+
+    // Handle $or with $contains - merge into single query_string with OR
+    if (whereDocument.$or && Array.isArray(whereDocument.$or)) {
+      const containsQueries: string[] = [];
+      for (const condition of whereDocument.$or) {
+        if (condition && condition.$contains) {
+          containsQueries.push(condition.$contains);
+        }
+      }
+      if (containsQueries.length > 0) {
+        return {
+          query_string: {
+            fields: ['document'],
+            query: containsQueries.join(' OR '), // Explicit OR operator
+          },
+        };
+      }
+    }
+
+    // Handle $regex
     if (whereDocument.$regex) {
       return {
         regexp: {
@@ -640,22 +646,75 @@ export class Collection {
         },
       };
     }
-    // Handle logical operators
-    if (whereDocument.$and && Array.isArray(whereDocument.$and)) {
+
+    // Default case for string (treat as $contains)
+    if (typeof whereDocument === 'string') {
       return {
-        bool: {
-          must: whereDocument.$and.map((cond: any) => this.buildQueryExpression(cond)),
+        query_string: {
+          fields: ['document'],
+          query: whereDocument,
         },
       };
     }
-    if (whereDocument.$or && Array.isArray(whereDocument.$or)) {
+
+    return null;
+  }
+
+  /**
+   * Build complete query expression from query object
+   * Handles both metadata filtering (where) and full-text search (whereDocument)
+   * @private
+   */
+  private buildCompleteQueryExpression(query: any): any {
+    if (!query) {
+      return null;
+    }
+
+    const whereDocument = query.whereDocument;
+    const where = query.where;
+
+    // Case 1: Metadata filtering only (no full-text search)
+    if (!whereDocument && where) {
+      const filterConditions = this.buildMetadataFilter(where);
+      if (filterConditions && filterConditions.length > 0) {
+        // Optimize for single condition
+        if (filterConditions.length === 1) {
+          const cond = filterConditions[0];
+          // Check if it's a simple range or term query
+          if (cond.range && !cond.term && !cond.bool) {
+            return { range: cond.range };
+          } else if (cond.term && !cond.range && !cond.bool) {
+            return { term: cond.term };
+          } else {
+            return { bool: { filter: filterConditions } };
+          }
+        }
+        return { bool: { filter: filterConditions } };
+      }
+    }
+
+    // Case 2: Full-text search (with or without metadata filtering)
+    if (whereDocument) {
+      const docQuery = this.buildDocumentQuery(whereDocument);
+      if (docQuery) {
+        const filterConditions = this.buildMetadataFilter(where);
+
+        if (filterConditions && filterConditions.length > 0) {
+          // Full-text search + metadata filtering
       return {
         bool: {
-          should: whereDocument.$or.map((cond: any) => this.buildQueryExpression(cond)),
+              must: [docQuery],
+              filter: filterConditions,
         },
       };
+        } else {
+          // Full-text search only
+          return docQuery;
+        }
+      }
     }
-    return {};
+
+    return null;
   }
 
   /**

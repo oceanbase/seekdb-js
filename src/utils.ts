@@ -124,7 +124,7 @@ export class CollectionFieldNames {
  */
 export const DEFAULT_VECTOR_DIMENSION = 384;
 export const DEFAULT_DISTANCE_METRIC = 'cosine';
-export const DEFAULT_TENANT = ''; // SeekDB 单机版不使用租户，设为空字符串
+export const DEFAULT_TENANT = 'sys'; // SeekDB Server default tenant
 export const DEFAULT_DATABASE = 'test';
 export const DEFAULT_PORT = 2881;
 export const DEFAULT_USER = 'root';
