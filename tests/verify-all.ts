@@ -893,22 +893,22 @@ async function main() {
     }
 
     // P0 和 P1 功能测试
-    // await testAdminClientP0(adminClient);
-    // await testDefaultEmbeddingFunctionP1(client);
+    await testAdminClientP0(adminClient);
+    await testDefaultEmbeddingFunctionP1(client);
 
     // // P2 功能测试
-    // await testP2Features(client);
-    // await testRegexFilter(client);
+    await testP2Features(client);
+    await testRegexFilter(client);
 
     // 执行所有测试
-    // await testClientManagement(client);
-    // await testCollectionCRUD(client);
-    // await testCollectionQuery(client);
-    // await testFilters(client);
+    await testClientManagement(client);
+    await testCollectionCRUD(client);
+    await testCollectionQuery(client);
+    await testFilters(client);
     await testHybridSearch(client);
-    // await testEmbeddingFunction(client);
-    // await testEdgeCases(client);
-    // await testErrorHandling(client);
+    await testEmbeddingFunction(client);
+    await testEdgeCases(client);
+    await testErrorHandling(client);
 
     // 最终清理
     console.log("\nCleaning up test data...");

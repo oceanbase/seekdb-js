@@ -50,8 +50,8 @@ export class SeekDBAdminClient {
    * Execute SQL query
    * @internal
    */
-  private async execute(sql: string): Promise<RowDataPacket[] | null> {
-    return this.connectionManager.execute(sql);
+  private async execute(sql: string, params?: unknown[]): Promise<RowDataPacket[] | null> {
+    return this.connectionManager.execute(sql, params);
   }
 
   async createDatabase(
@@ -66,8 +66,8 @@ export class SeekDBAdminClient {
     name: string,
     _tenant: string = DEFAULT_TENANT,
   ): Promise<Database> {
-    const sql = `SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${name}'`;
-    const rows = await this.execute(sql);
+    const sql = `SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?`;
+    const rows = await this.execute(sql, [name]);
 
     if (!rows || rows.length === 0) {
       throw new SeekDBValueError(`Database not found: ${name}`);
@@ -95,18 +95,29 @@ export class SeekDBAdminClient {
     offset?: number,
     _tenant: string = DEFAULT_TENANT,
   ): Promise<Database[]> {
+    // Validate parameters to prevent SQL injection
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 0)) {
+      throw new SeekDBValueError("limit must be a non-negative integer");
+    }
+    if (offset !== undefined && (!Number.isInteger(offset) || offset < 0)) {
+      throw new SeekDBValueError("offset must be a non-negative integer");
+    }
+
     let sql =
       "SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA";
+    const params: number[] = [];
 
     if (limit !== undefined) {
       if (offset !== undefined) {
-        sql += ` LIMIT ${offset}, ${limit}`;
+        sql += ` LIMIT ?, ?`;
+        params.push(offset, limit);
       } else {
-        sql += ` LIMIT ${limit}`;
+        sql += ` LIMIT ?`;
+        params.push(limit);
       }
     }
 
-    const rows = await this.execute(sql);
+    const rows = await this.execute(sql, params);
 
     const databases: Database[] = [];
     if (rows) {

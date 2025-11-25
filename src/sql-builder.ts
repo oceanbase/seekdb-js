@@ -6,7 +6,6 @@
 import {
   CollectionNames,
   CollectionFieldNames,
-  escapeSqlString,
   vectorToSqlString,
   serializeMetadata,
 } from "./utils.js";
@@ -17,6 +16,11 @@ import type {
   WhereDocument,
   DistanceMetric,
 } from "./types.js";
+
+export interface SQLResult {
+  sql: string;
+  params: unknown[];
+}
 
 /**
  * SQL Builder class
@@ -86,28 +90,29 @@ export class SQLBuilder {
       embeddings: number[][];
       metadatas?: (Metadata | null)[];
     },
-  ): string {
+  ): SQLResult {
     const tableName = CollectionNames.tableName(collectionName);
     const valuesList: string[] = [];
+    const params: unknown[] = [];
     const numItems = data.ids.length;
 
     for (let i = 0; i < numItems; i++) {
       const id = data.ids[i];
-      const doc = data.documents?.[i];
-      const meta = data.metadatas?.[i];
+      const doc = data.documents?.[i] ?? null;
+      const meta = data.metadatas?.[i] ?? null;
       const vec = data.embeddings[i];
 
-      const idSql = `CAST('${escapeSqlString(id)}' AS BINARY)`;
-      const docSql = doc ? `'${escapeSqlString(doc)}'` : "NULL";
-      const metaSql = meta
-        ? `'${escapeSqlString(serializeMetadata(meta))}'`
-        : "NULL";
-      const vecSql = `'${vectorToSqlString(vec)}'`;
-
-      valuesList.push(`(${idSql}, ${docSql}, ${metaSql}, ${vecSql})`);
+      valuesList.push(`(CAST(? AS BINARY), ?, ?, ?)`);
+      params.push(
+        id,
+        doc,
+        meta ? serializeMetadata(meta) : null,
+        vectorToSqlString(vec),
+      );
     }
 
-    return `INSERT INTO \`${tableName}\` (${CollectionFieldNames.ID}, ${CollectionFieldNames.DOCUMENT}, ${CollectionFieldNames.METADATA}, ${CollectionFieldNames.EMBEDDING}) VALUES ${valuesList.join(", ")}`;
+    const sql = `INSERT INTO \`${tableName}\` (${CollectionFieldNames.ID}, ${CollectionFieldNames.DOCUMENT}, ${CollectionFieldNames.METADATA}, ${CollectionFieldNames.EMBEDDING}) VALUES ${valuesList.join(", ")}`;
+    return { sql, params };
   }
 
   /**
@@ -123,9 +128,10 @@ export class SQLBuilder {
       offset?: number;
       include?: string[];
     },
-  ): string {
+  ): SQLResult {
     const tableName = CollectionNames.tableName(collectionName);
     const { ids, where, whereDocument, limit, offset, include } = options;
+    const params: unknown[] = [];
 
     // Build SELECT clause
     let sql = `SELECT ${CollectionFieldNames.ID}`;
@@ -148,10 +154,10 @@ export class SQLBuilder {
     if (ids) {
       const idsArray = Array.isArray(ids) ? ids : [ids];
       const idConditions = idsArray.map(
-        (id) =>
-          `${CollectionFieldNames.ID} = CAST('${escapeSqlString(id)}' AS BINARY)`,
+        () => `${CollectionFieldNames.ID} = CAST(? AS BINARY)`,
       );
       whereClauses.push(`(${idConditions.join(" OR ")})`);
+      params.push(...idsArray);
     }
 
     if (where) {
@@ -161,6 +167,7 @@ export class SQLBuilder {
       );
       if (metaFilter.clause && metaFilter.clause !== "1=1") {
         whereClauses.push(`(${metaFilter.clause})`);
+        params.push(...metaFilter.params);
       }
     }
 
@@ -171,6 +178,7 @@ export class SQLBuilder {
       );
       if (docFilter.clause && docFilter.clause !== "1=1") {
         whereClauses.push(`(${docFilter.clause})`);
+        params.push(...docFilter.params);
       }
     }
 
@@ -179,13 +187,15 @@ export class SQLBuilder {
     }
 
     if (limit) {
-      sql += ` LIMIT ${limit}`;
+      sql += ` LIMIT ?`;
+      params.push(limit);
     }
     if (offset) {
-      sql += ` OFFSET ${offset}`;
+      sql += ` OFFSET ?`;
+      params.push(offset);
     }
 
-    return sql;
+    return { sql, params };
   }
 
   /**
@@ -207,32 +217,30 @@ export class SQLBuilder {
       embedding?: number[];
       metadata?: Metadata;
     },
-  ): string {
+  ): SQLResult {
     const tableName = CollectionNames.tableName(collectionName);
     const setClauses: string[] = [];
+    const params: unknown[] = [];
 
     if (updates.document !== undefined) {
-      setClauses.push(
-        `${CollectionFieldNames.DOCUMENT} = '${escapeSqlString(updates.document)}'`,
-      );
+      setClauses.push(`${CollectionFieldNames.DOCUMENT} = ?`);
+      params.push(updates.document);
     }
 
     if (updates.metadata !== undefined) {
-      setClauses.push(
-        `${CollectionFieldNames.METADATA} = '${escapeSqlString(
-          serializeMetadata(updates.metadata),
-        )}'`,
-      );
+      setClauses.push(`${CollectionFieldNames.METADATA} = ?`);
+      params.push(serializeMetadata(updates.metadata));
     }
 
     if (updates.embedding !== undefined) {
-      setClauses.push(
-        `${CollectionFieldNames.EMBEDDING} = '${vectorToSqlString(updates.embedding)}'`,
-      );
+      setClauses.push(`${CollectionFieldNames.EMBEDDING} = ?`);
+      params.push(vectorToSqlString(updates.embedding));
     }
 
-    const idSql = `CAST('${escapeSqlString(id)}' AS BINARY)`;
-    return `UPDATE \`${tableName}\` SET ${setClauses.join(", ")} WHERE ${CollectionFieldNames.ID} = ${idSql}`;
+    // WHERE clause
+    params.push(id);
+    const sql = `UPDATE \`${tableName}\` SET ${setClauses.join(", ")} WHERE ${CollectionFieldNames.ID} = CAST(? AS BINARY)`;
+    return { sql, params };
   }
 
   /**
@@ -245,18 +253,19 @@ export class SQLBuilder {
       where?: Where;
       whereDocument?: WhereDocument;
     },
-  ): string {
+  ): SQLResult {
     const tableName = CollectionNames.tableName(collectionName);
     const { ids, where, whereDocument } = options;
     const whereClauses: string[] = [];
+    const params: unknown[] = [];
 
     if (ids) {
       const idsArray = Array.isArray(ids) ? ids : [ids];
       const idConditions = idsArray.map(
-        (id) =>
-          `${CollectionFieldNames.ID} = CAST('${escapeSqlString(id)}' AS BINARY)`,
+        () => `${CollectionFieldNames.ID} = CAST(? AS BINARY)`,
       );
       whereClauses.push(`(${idConditions.join(" OR ")})`);
+      params.push(...idsArray);
     }
 
     if (where) {
@@ -266,6 +275,7 @@ export class SQLBuilder {
       );
       if (metaFilter.clause && metaFilter.clause !== "1=1") {
         whereClauses.push(`(${metaFilter.clause})`);
+        params.push(...metaFilter.params);
       }
     }
 
@@ -276,12 +286,13 @@ export class SQLBuilder {
       );
       if (docFilter.clause && docFilter.clause !== "1=1") {
         whereClauses.push(`(${docFilter.clause})`);
+        params.push(...docFilter.params);
       }
     }
 
     const whereClause =
       whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
-    return `DELETE FROM \`${tableName}\` ${whereClause}`;
+    return { sql: `DELETE FROM \`${tableName}\` ${whereClause}`, params };
   }
 
   /**
@@ -296,9 +307,10 @@ export class SQLBuilder {
       whereDocument?: WhereDocument;
       include?: string[];
     },
-  ): string {
+  ): SQLResult {
     const tableName = CollectionNames.tableName(collectionName);
     const { where, whereDocument, include } = options;
+    const params: unknown[] = [];
 
     // Build SELECT clause
     const selectFields = [CollectionFieldNames.ID];
@@ -322,6 +334,7 @@ export class SQLBuilder {
       );
       if (metaFilter.clause && metaFilter.clause !== "1=1") {
         whereClauses.push(`(${metaFilter.clause})`);
+        params.push(...metaFilter.params);
       }
     }
 
@@ -332,6 +345,7 @@ export class SQLBuilder {
       );
       if (docFilter.clause && docFilter.clause !== "1=1") {
         whereClauses.push(`(${docFilter.clause})`);
+        params.push(...docFilter.params);
       }
     }
 
@@ -339,22 +353,29 @@ export class SQLBuilder {
       whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
     const vectorStr = vectorToSqlString(queryVector);
 
-    return `
+    const sql = `
       SELECT ${selectFields.join(", ")},
              l2_distance(${CollectionFieldNames.EMBEDDING}, '${vectorStr}') AS distance
       FROM \`${tableName}\`
       ${whereClause}
       ORDER BY l2_distance(${CollectionFieldNames.EMBEDDING}, '${vectorStr}')
       APPROXIMATE
-      LIMIT ${nResults}
+      LIMIT ?
     `.trim();
+    
+    params.push(nResults);
+
+    return { sql, params };
   }
 
   /**
    * Build SET variable SQL for hybrid search
    */
-  static buildSetVariable(name: string, value: string): string {
-    return `SET @${name} = '${escapeSqlString(value)}'`;
+  static buildSetVariable(name: string, value: string): SQLResult {
+    return {
+      sql: `SET @${name} = ?`,
+      params: [value],
+    };
   }
 
   /**

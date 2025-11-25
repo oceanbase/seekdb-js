@@ -68,9 +68,10 @@ export class Connection {
   /**
    * Execute SQL query
    * @param sql - SQL statement to execute
+   * @param params - Parameters for the query
    * @returns Query results for SELECT/SHOW/DESCRIBE statements, null for others
    */
-  async execute(sql: string): Promise<RowDataPacket[] | null> {
+  async execute(sql: string, params?: unknown[]): Promise<RowDataPacket[] | null> {
     const conn = await this.ensureConnection();
     const sqlUpper = sql.trim().toUpperCase();
 
@@ -81,12 +82,12 @@ export class Connection {
       sqlUpper.startsWith("DESCRIBE") ||
       sqlUpper.startsWith("DESC")
     ) {
-      const [rows] = await conn.query<RowDataPacket[]>(sql);
+      const [rows] = await conn.query<RowDataPacket[]>(sql, params);
       return rows;
     }
 
     // Execute without returning rows for DDL/DML statements
-    await conn.query(sql);
+    await conn.query(sql, params);
     return null;
   }
 

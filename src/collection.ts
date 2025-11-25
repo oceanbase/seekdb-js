@@ -56,8 +56,55 @@ export class Collection {
    * Execute SQL query via client
    * @internal
    */
-  private async execute(sql: string): Promise<RowDataPacket[] | null> {
-    return (this.client as any).execute(sql);
+  private async execute(sql: string, params?: unknown[]): Promise<RowDataPacket[] | null> {
+    return (this.client as any).execute(sql, params);
+  }
+
+  /**
+   * Validate dynamic SQL query to prevent SQL injection
+   * This is used specifically for hybrid search where SQL is returned from stored procedure
+   * @internal
+   */
+  private validateDynamicSql(sql: string): void {
+    if (!sql || typeof sql !== 'string') {
+      throw new SeekDBValueError("Invalid SQL query: must be a non-empty string");
+    }
+
+    // Remove SQL comments for analysis (but don't reject them as they're valid)
+    // This helps us analyze the actual SQL without comment noise
+    let cleanSql = sql
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')  // Remove /* */ comments
+      .replace(/--.*$/gm, ' ')             // Remove -- comments
+      .replace(/#.*$/gm, ' ')              // Remove # comments
+      .trim();
+
+    const upperSql = cleanSql.toUpperCase();
+
+    // Must start with SELECT
+    if (!upperSql.startsWith('SELECT')) {
+      throw new SeekDBValueError("Invalid SQL query: must start with SELECT");
+    }
+
+    // Check for dangerous keywords that should not appear in hybrid search results
+    const dangerousKeywords = [
+      'DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 
+      'GRANT', 'REVOKE', 'TRUNCATE', 'REPLACE', 'RENAME',
+      'LOAD_FILE', 'OUTFILE', 'DUMPFILE', 'INTO OUTFILE', 'INTO DUMPFILE'
+    ];
+
+    for (const keyword of dangerousKeywords) {
+      // Use word boundary to avoid false positives (e.g., "UPDATE_TIME" column)
+      const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+      if (regex.test(cleanSql)) {
+        throw new SeekDBValueError(`Dangerous SQL keyword detected: ${keyword}`);
+      }
+    }
+
+    // Check for multiple statements (semicolon followed by more SQL)
+    const statements = cleanSql.split(';').filter(s => s.trim().length > 0);
+    if (statements.length > 1) {
+      throw new SeekDBValueError("Multiple SQL statements are not allowed");
+    }
   }
 
   /**
@@ -102,14 +149,14 @@ export class Collection {
     }
 
     // Build INSERT SQL using SQLBuilder
-    const sql = SQLBuilder.buildInsert(this.name, {
+    const { sql, params } = SQLBuilder.buildInsert(this.name, {
       ids: idsArray,
       documents: documentsArray ?? undefined,
       embeddings: embeddingsArray,
       metadatas: metadatasArray ?? undefined,
     });
 
-    await this.execute(sql);
+    await this.execute(sql, params);
   }
 
   /**
@@ -183,8 +230,8 @@ export class Collection {
         continue;
       }
 
-      const sql = SQLBuilder.buildUpdate(this.name, id, updates);
-      await this.execute(sql);
+      const { sql, params } = SQLBuilder.buildUpdate(this.name, id, updates);
+      await this.execute(sql, params);
     }
   }
 
@@ -257,8 +304,8 @@ export class Collection {
         }
 
         if (Object.keys(updates).length > 0) {
-          const sql = SQLBuilder.buildUpdate(this.name, id, updates);
-          await this.execute(sql);
+          const { sql, params } = SQLBuilder.buildUpdate(this.name, id, updates);
+          await this.execute(sql, params);
         }
       } else {
         // Insert new record using add method
@@ -286,13 +333,13 @@ export class Collection {
     }
 
     // Build DELETE SQL using SQLBuilder
-    const sql = SQLBuilder.buildDelete(this.name, {
+    const { sql, params } = SQLBuilder.buildDelete(this.name, {
       ids: ids ? (Array.isArray(ids) ? ids : [ids]) : undefined,
       where,
       whereDocument,
     });
 
-    await this.execute(sql);
+    await this.execute(sql, params);
   }
 
   /**
@@ -311,7 +358,7 @@ export class Collection {
     } = options;
 
     // Build SELECT SQL using SQLBuilder
-    const sql = SQLBuilder.buildSelect(this.name, {
+    const { sql, params } = SQLBuilder.buildSelect(this.name, {
       ids: filterIds
         ? Array.isArray(filterIds)
           ? filterIds
@@ -324,7 +371,7 @@ export class Collection {
       include: include as string[] | undefined,
     });
 
-    const rows = await this.execute(sql);
+    const rows = await this.execute(sql, params);
 
     // Use mutable arrays internally, then return as readonly
     const resultIds: string[] = [];
@@ -420,7 +467,7 @@ export class Collection {
     // Query for each vector
     for (const queryVector of embeddingsArray) {
       // Build vector query SQL using SQLBuilder
-      const sql = SQLBuilder.buildVectorQuery(
+      const { sql, params } = SQLBuilder.buildVectorQuery(
         this.name,
         queryVector,
         nResults,
@@ -431,7 +478,7 @@ export class Collection {
         },
       );
 
-      const rows = await this.execute(sql);
+      const rows = await this.execute(sql, params);
 
       const queryIds: string[] = [];
       const queryDocuments: (string | null)[] = [];
@@ -638,11 +685,11 @@ export class Collection {
     const tableName = `c$v1$${this.name}`;
 
     // Set search_parm variable
-    const setVarSql = SQLBuilder.buildSetVariable(
+    const { sql: setVarSql, params: setVarParams } = SQLBuilder.buildSetVariable(
       "search_parm",
       searchParmJson,
     );
-    await this.execute(setVarSql);
+    await this.execute(setVarSql, setVarParams);
 
     // Get SQL query from DBMS_HYBRID_SEARCH.GET_SQL
     const getSqlQuery = SQLBuilder.buildHybridSearchGetSql(tableName);
@@ -662,10 +709,14 @@ export class Collection {
       };
     }
 
-    // Execute the returned SQL query
+    // Execute the returned SQL query with security validation
     const querySql = getSqlResult[0].query_sql
       .trim()
       .replace(/^['"]|['"]$/g, "");
+    
+    // Security check: Validate the SQL query before execution
+    this.validateDynamicSql(querySql);
+    
     const resultRows = await this.execute(querySql);
 
     // Transform results

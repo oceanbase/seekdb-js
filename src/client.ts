@@ -67,8 +67,8 @@ export class SeekDBClient {
   /**
    * Execute SQL query
    */
-  async execute(sql: string): Promise<RowDataPacket[] | null> {
-    return this.connectionManager.execute(sql);
+  async execute(sql: string, params?: unknown[]): Promise<RowDataPacket[] | null> {
+    return this.connectionManager.execute(sql, params);
   }
 
   /**
@@ -279,14 +279,6 @@ export class SeekDBClient {
   async countCollection(): Promise<number> {
     const collections = await this.listCollections();
     return collections.length;
-  }
-
-  /**
-   * Execute SQL query
-   * @internal - Used by Collection instances
-   */
-  async _execute(sql: string): Promise<RowDataPacket[] | null> {
-    return this.execute(sql);
   }
 
   // ==================== Transaction Support ====================

@@ -10,23 +10,6 @@
 import type { Where, WhereDocument } from "./types.js";
 
 /**
- * Format a value for SQL - escape strings and handle other types
- */
-function formatSqlValue(value: unknown): string {
-  if (value === null) {
-    return "NULL";
-  }
-  if (typeof value === "string") {
-    return `'${value.replace(/'/g, "''")}'`;
-  }
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  // For other types, convert to JSON string
-  return `'${JSON.stringify(value).replace(/'/g, "''")}'`;
-}
-
-/**
  * Result of building a filter
  * Returns SQL WHERE clause and parameters for parameterized queries
  */
@@ -168,25 +151,25 @@ export class FilterBuilder {
           if (op in this.COMPARISON_OPS) {
             const sqlOp = this.COMPARISON_OPS[op];
             clauses.push(
-              `JSON_EXTRACT(${metadataColumn}, '$.${key}') ${sqlOp} ${formatSqlValue(opValue)}`,
+              `JSON_EXTRACT(${metadataColumn}, '$.${key}') ${sqlOp} ?`,
             );
           } else if (op === "$in" && Array.isArray(opValue)) {
-            const values = opValue.map((v) => formatSqlValue(v)).join(", ");
             clauses.push(
-              `JSON_EXTRACT(${metadataColumn}, '$.${key}') IN (${values})`,
+              `JSON_EXTRACT(${metadataColumn}, '$.${key}') IN (?)`,
             );
           } else if (op === "$nin" && Array.isArray(opValue)) {
-            const values = opValue.map((v) => formatSqlValue(v)).join(", ");
             clauses.push(
-              `JSON_EXTRACT(${metadataColumn}, '$.${key}') NOT IN (${values})`,
+              `JSON_EXTRACT(${metadataColumn}, '$.${key}') NOT IN (?)`,
             );
           }
+          params.push(opValue);
         }
       } else {
         // Direct equality comparison
         clauses.push(
-          `JSON_EXTRACT(${metadataColumn}, '$.${key}') = ${formatSqlValue(value)}`,
+          `JSON_EXTRACT(${metadataColumn}, '$.${key}') = ?`,
         );
+        params.push(value);
       }
     }
 
@@ -208,11 +191,13 @@ export class FilterBuilder {
       if (key === "$contains") {
         // Full-text search using MATCH AGAINST
         clauses.push(
-          `MATCH(${documentColumn}) AGAINST (${formatSqlValue(value)} IN NATURAL LANGUAGE MODE)`,
+          `MATCH(${documentColumn}) AGAINST (? IN NATURAL LANGUAGE MODE)`,
         );
+        params.push(value);
       } else if (key === "$regex") {
         // Regular expression matching
-        clauses.push(`${documentColumn} REGEXP ${formatSqlValue(value)}`);
+        clauses.push(`${documentColumn} REGEXP ?`);
+        params.push(value);
       } else if (key === "$and" && Array.isArray(value)) {
         const subClauses: string[] = [];
         for (const subCondition of value) {
@@ -490,3 +475,4 @@ export class FilterBuilder {
     return result;
   }
 }
+
