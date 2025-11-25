@@ -3,6 +3,8 @@
  * Provides common configuration and helper functions
  */
 
+import type { EmbeddingFunction } from "../src/types.js";
+
 /**
  * Get test configuration based on test mode
  */
@@ -52,3 +54,94 @@ export function createTestEmbeddingFunction(dimension: number) {
   });
   return fn;
 }
+
+/**
+ * Simple 3D embedding function for testing
+ * Returns deterministic 3-dimensional vectors based on text hash
+ */
+export function Simple3DEmbeddingFunction(): EmbeddingFunction {
+  const embeddingFn: EmbeddingFunction = async (
+    input: string | string[],
+  ): Promise<number[][]> => {
+    const texts = Array.isArray(input) ? input : [input];
+
+    const embeddings: number[][] = [];
+    for (const doc of texts) {
+      // Simple hash-based 3D embedding for testing
+      const hashVal = simpleHash(doc) % 1000;
+      const embedding = [
+        ((hashVal % 10) / 10.0),
+        (((hashVal / 10) | 0) % 10) / 10.0,
+        (((hashVal / 100) | 0) % 10) / 10.0,
+      ];
+      embeddings.push(embedding);
+    }
+
+    return embeddings;
+  };
+
+  Object.defineProperty(embeddingFn, "name", {
+    value: "Simple3DEmbeddingFunction",
+    configurable: true,
+  });
+
+  Object.defineProperty(embeddingFn, "dimension", {
+    value: 3,
+    writable: false,
+    enumerable: true,
+  });
+
+  return embeddingFn;
+}
+
+/**
+ * Simple 128D embedding function for testing
+ * Returns deterministic 128-dimensional vectors based on text hash
+ */
+export function Simple128DEmbeddingFunction(): EmbeddingFunction {
+  const embeddingFn: EmbeddingFunction = async (
+    input: string | string[],
+  ): Promise<number[][]> => {
+    const texts = Array.isArray(input) ? input : [input];
+
+    const embeddings: number[][] = [];
+    for (const doc of texts) {
+      // Simple hash-based 128D embedding for testing
+      const hashVal = simpleHash(doc);
+      const embedding: number[] = [];
+      for (let i = 0; i < 128; i++) {
+        embedding.push(((hashVal + i) % 100) / 100.0);
+      }
+      embeddings.push(embedding);
+    }
+
+    return embeddings;
+  };
+
+  Object.defineProperty(embeddingFn, "name", {
+    value: "Simple128DEmbeddingFunction",
+    configurable: true,
+  });
+
+  Object.defineProperty(embeddingFn, "dimension", {
+    value: 128,
+    writable: false,
+    enumerable: true,
+  });
+
+  return embeddingFn;
+}
+
+/**
+ * Simple hash function for generating deterministic numbers from strings
+ */
+function simpleHash(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+}
+

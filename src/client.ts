@@ -8,6 +8,7 @@ import { Collection } from "./collection.js";
 import { Connection } from "./connection.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekDBValueError, InvalidCollectionError } from "./errors.js";
+import { getDefaultEmbeddingFunction } from "./embedding-function.js";
 import {
   CollectionFieldNames,
   DEFAULT_TENANT,
@@ -15,7 +16,6 @@ import {
   DEFAULT_PORT,
   DEFAULT_USER,
   DEFAULT_CHARSET,
-  DEFAULT_VECTOR_DIMENSION,
   DEFAULT_DISTANCE_METRIC,
 } from "./utils.js";
 import type {
@@ -93,13 +93,14 @@ export class SeekDBClient {
     let config: HNSWConfiguration | null = configuration;
     let ef: EmbeddingFunction | null = embeddingFunction;
 
-    // Default behavior: if neither provided, use defaults
+    // Default behavior: if neither provided, use DefaultEmbeddingFunction
     if (config === null && ef === null) {
+      ef = getDefaultEmbeddingFunction();
+      const testEmbeddings = await ef("seekdb");
       config = {
-        dimension: DEFAULT_VECTOR_DIMENSION,
+        dimension: testEmbeddings[0].length,
         distance: DEFAULT_DISTANCE_METRIC,
       };
-      // No default embedding function in Node.js version
     }
 
     // Auto-calculate dimension from embedding function if config not provided
@@ -201,11 +202,14 @@ export class SeekDBClient {
       distance = DEFAULT_DISTANCE_METRIC;
     }
 
+    // Use default embedding function if not provided
+    const ef = embeddingFunction === undefined ? getDefaultEmbeddingFunction() : embeddingFunction;
+
     return new Collection({
       name,
       dimension,
       distance,
-      embeddingFunction: embeddingFunction ?? undefined,
+      embeddingFunction: ef ?? undefined,
       client: this,
     });
   }
