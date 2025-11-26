@@ -4,7 +4,6 @@
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekDBClient } from "../src/client.js";
-import { DefaultEmbeddingFunction } from "../src/embedding-function.js";
 import type { HNSWConfiguration } from "../src/types.js";
 import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
 import {
@@ -45,12 +44,9 @@ describe("Collection Embedding Function Tests", () => {
       expect(collection.name).toBe(collectionName);
       expect(collection.embeddingFunction).toBeDefined();
 
-      const ef = collection.embeddingFunction!;
-      expect((ef as any).name).toBe("DefaultEmbeddingFunction");
       expect(collection.dimension).toBe(384);
 
       console.log(`   Collection dimension: ${collection.dimension}`);
-      console.log(`   Embedding function: ${(ef as any).name}`);
 
       await client.deleteCollection(collectionName);
     }, 60000);
@@ -97,7 +93,6 @@ describe("Collection Embedding Function Tests", () => {
       expect(collection.dimension).toBe(3);
 
       console.log(`   Collection dimension: ${collection.dimension}`);
-      console.log(`   Embedding function: ${(customEf as any).name}`);
 
       await client.deleteCollection(collectionName);
     });
@@ -139,7 +134,6 @@ describe("Collection Embedding Function Tests", () => {
       expect(collection.dimension).toBe(3);
 
       console.log(`   Collection dimension: ${collection.dimension}`);
-      console.log(`   Embedding function: ${(customEf as any).name}`);
 
       await client.deleteCollection(collectionName);
     });
@@ -156,7 +150,6 @@ describe("Collection Embedding Function Tests", () => {
       expect(collection).toBeDefined();
       expect(collection.embeddingFunction).toBeDefined();
       expect(collection.dimension).toBe(384);
-      expect((collection.embeddingFunction as any).name).toBe("DefaultEmbeddingFunction");
       
       console.log(`   Collection created with default embedding function`);
 
@@ -184,10 +177,8 @@ describe("Collection Embedding Function Tests", () => {
       expect(retrievedCollection.dimension).toBe(128);
       // When getting, if no embeddingFunction provided, should use default
       expect(retrievedCollection.embeddingFunction).toBeDefined();
-      expect((retrievedCollection.embeddingFunction as any).name).toBe("DefaultEmbeddingFunction");
 
       console.log(`   Collection dimension: ${retrievedCollection.dimension}`);
-      console.log(`   Embedding function: ${(retrievedCollection.embeddingFunction as any).name}`);
 
       await client.deleteCollection(collectionName);
     }, 60000);
@@ -214,7 +205,6 @@ describe("Collection Embedding Function Tests", () => {
       expect(retrievedCollection.name).toBe(collectionName);
       expect(retrievedCollection.dimension).toBe(128);
       expect(retrievedCollection.embeddingFunction).toBeDefined();
-      expect((retrievedCollection.embeddingFunction as any).name).toBe("DefaultEmbeddingFunction");
 
       console.log(`   Collection dimension: ${retrievedCollection.dimension}`);
       console.log(`   Embedding function: ${retrievedCollection.embeddingFunction}`);
@@ -234,11 +224,9 @@ describe("Collection Embedding Function Tests", () => {
       expect(collection).toBeDefined();
       expect(collection.name).toBe(collectionName);
       expect(collection.embeddingFunction).toBeDefined();
-      expect((collection.embeddingFunction as any).name).toBe("DefaultEmbeddingFunction");
       expect(collection.dimension).toBe(384);
 
       console.log(`   Collection dimension: ${collection.dimension}`);
-      console.log(`   Embedding function: ${(collection.embeddingFunction as any).name}`);
 
       await client.deleteCollection(collectionName);
     }, 60000);
@@ -291,7 +279,6 @@ describe("Collection Embedding Function Tests", () => {
       expect(collection.dimension).toBe(3);
 
       console.log(`   Collection dimension: ${collection.dimension}`);
-      console.log(`   Embedding function: ${(customEf as any).name}`);
 
       await client.deleteCollection(collectionName);
     });

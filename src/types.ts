@@ -96,8 +96,9 @@ export interface HNSWConfiguration {
 // ==================== Embedding Function ====================
 
 export interface EmbeddingFunction {
-  (input: EmbeddingDocuments): Promise<number[][]>;
-  name?: string;
+  generate(input: EmbeddingDocuments): Promise<number[][]>;
+  readonly dimension: number;
+  dispose?(): Promise<void>;
 }
 
 // ==================== Client Configuration ====================

@@ -7,10 +7,10 @@ import {
   SeekDBClient,
   SeekDBAdminClient,
   AdminClient,
-  DefaultEmbeddingFunction,
-  EmbeddingFunction,
   EmbeddingDocuments,
+  getDefaultEmbeddingFunction,
 } from "../src/index.js";
+import { EmbeddingFunction } from "../src/types.js";
 
 // 测试配置
 const TEST_CONFIG = {
@@ -24,17 +24,15 @@ const TEST_CONFIG = {
 
 // 简单的 mock embedding 函数
 function createEmbeddingFunction(dimension: number): EmbeddingFunction {
-  const fn = async (input: EmbeddingDocuments): Promise<number[][]> => {
-    const texts = Array.isArray(input) ? input : [input];
-    return texts.map(() =>
-      Array.from({ length: dimension }, () => Math.random()),
-    );
+  return {
+    dimension,
+    generate: async (input: EmbeddingDocuments): Promise<number[][]> => {
+      const texts = Array.isArray(input) ? input : [input];
+      return texts.map(() =>
+        Array.from({ length: dimension }, () => Math.random()),
+      );
+    },
   };
-  Object.defineProperty(fn, "name", {
-    value: "test-embedding",
-    configurable: true,
-  });
-  return fn;
 }
 
 // 测试结果统计
@@ -140,7 +138,7 @@ async function testAdminClientP0(adminClient: SeekDBAdminClient) {
 async function testDefaultEmbeddingFunctionP1(client: SeekDBClient) {
   await testSection("P1 - DefaultEmbeddingFunction", async () => {
     const testName = `test_embedding_${Date.now()}`;
-    const embeddingFn = DefaultEmbeddingFunction();
+    const embeddingFn = getDefaultEmbeddingFunction();
 
     // 1. Check dimension property
     assertEqual(
@@ -191,11 +189,13 @@ async function testDefaultEmbeddingFunctionP1(client: SeekDBClient) {
       include: ["embeddings"],
     });
     assert(items.embeddings?.[0] !== undefined, "Embeddings were generated");
-    assertEqual(
-      items.embeddings[0].length,
-      384,
-      "Generated embeddings have correct dimension",
-    );
+    if (items.embeddings && items.embeddings[0]) {
+      assertEqual(
+        items.embeddings[0].length,
+        384,
+        "Generated embeddings have correct dimension",
+      );
+    }
 
     await client.deleteCollection(testName);
   });

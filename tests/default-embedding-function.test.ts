@@ -42,7 +42,6 @@ describe("Default Embedding Function Tests", () => {
 
     // Verify it's using DefaultEmbeddingFunction
     const ef = collection.embeddingFunction!;
-    expect((ef as any).name).toBe("DefaultEmbeddingFunction");
     expect((ef as any).dimension).toBe(384);
 
     console.log(`   Collection dimension: ${collection.dimension}`);
@@ -97,7 +96,7 @@ describe("Default Embedding Function Tests", () => {
       // Test 2: Generate query embedding using default embedding function
       console.log(`\nTesting query embedding generation`);
       const queryText = "artificial intelligence and machine learning";
-      const queryEmbedding = (await collection.embeddingFunction!([queryText]))[0];
+      const queryEmbedding = (await collection.embeddingFunction!.generate([queryText]))[0];
       expect(queryEmbedding.length).toBe(collection.dimension);
       console.log(`   Generated query embedding with dimension: ${queryEmbedding.length}`);
 

@@ -134,7 +134,7 @@ export class Collection {
     // Handle embedding generation
     if (!embeddingsArray && documentsArray) {
       if (this.embeddingFunction) {
-        embeddingsArray = await this.embeddingFunction(documentsArray);
+        embeddingsArray = await this.embeddingFunction.generate(documentsArray);
       } else {
         throw new SeekDBValueError(
           "Documents provided but no embeddings and no embedding function",
@@ -186,7 +186,7 @@ export class Collection {
     // Handle embedding generation
     // For update, embeddings are optional - only generate if documents provided and embedding function available
     if (!embeddingsArray && documentsArray && this.embeddingFunction) {
-      embeddingsArray = await this.embeddingFunction(documentsArray);
+      embeddingsArray = await this.embeddingFunction.generate(documentsArray);
     }
 
     // Validate that at least one field is being updated
@@ -261,7 +261,7 @@ export class Collection {
 
     // Handle embedding generation
     if (!embeddingsArray && documentsArray && this.embeddingFunction) {
-      embeddingsArray = await this.embeddingFunction(documentsArray);
+      embeddingsArray = await this.embeddingFunction.generate(documentsArray);
     }
 
     // Validate that at least one field is provided
@@ -439,7 +439,7 @@ export class Collection {
         const textsArray = Array.isArray(queryTexts)
           ? queryTexts
           : [queryTexts];
-        queryEmbeddings = await this.embeddingFunction(textsArray);
+        queryEmbeddings = await this.embeddingFunction.generate(textsArray);
       } else {
         throw new SeekDBValueError(
           "queryTexts provided but no queryEmbeddings and no embedding function",
@@ -590,7 +590,7 @@ export class Collection {
           const textsArray = Array.isArray(queryTexts)
             ? queryTexts
             : [queryTexts];
-          const embeddings = await this.embeddingFunction(textsArray);
+          const embeddings = await this.embeddingFunction.generate(textsArray);
           if (embeddings && embeddings.length > 0) {
             queryVector = embeddings[0];
           }

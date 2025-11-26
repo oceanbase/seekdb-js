@@ -96,7 +96,7 @@ export class SeekDBClient {
     // Default behavior: if neither provided, use DefaultEmbeddingFunction
     if (config === null && ef === null) {
       ef = getDefaultEmbeddingFunction();
-      const testEmbeddings = await ef("seekdb");
+      const testEmbeddings = await ef.generate("seekdb");
       config = {
         dimension: testEmbeddings[0].length,
         distance: DEFAULT_DISTANCE_METRIC,
@@ -105,7 +105,7 @@ export class SeekDBClient {
 
     // Auto-calculate dimension from embedding function if config not provided
     if (config === null && ef !== null) {
-      const testEmbeddings = await ef("seekdb");
+      const testEmbeddings = await ef.generate("seekdb");
       const dimension = testEmbeddings[0].length;
       config = {
         dimension,
@@ -115,7 +115,7 @@ export class SeekDBClient {
 
     // Validate dimension matches if both provided
     if (config !== null && ef !== null) {
-      const testEmbeddings = await ef("seekdb");
+      const testEmbeddings = await ef.generate("seekdb");
       const actualDimension = testEmbeddings[0].length;
       if (config.dimension !== actualDimension) {
         throw new SeekDBValueError(

@@ -8,7 +8,6 @@ export { Collection } from "./collection.js";
 export { FilterBuilder } from "./filters.js";
 export { Database } from "./database.js";
 export {
-  DefaultEmbeddingFunction,
   getDefaultEmbeddingFunction,
 } from "./embedding-function.js";
 

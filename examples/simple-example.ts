@@ -11,7 +11,7 @@
  * This is a minimal example to get you started quickly with embedding functions.
  */
 
-import { SeekDBClient, DefaultEmbeddingFunction } from "../src/index.js";
+import { SeekDBClient, getDefaultEmbeddingFunction } from "../src/index.js";
 
 async function main() {
   // ==================== Step 1: Create Client Connection ====================
@@ -31,7 +31,7 @@ async function main() {
 
   // Create collection with default embedding function
   // The embedding function will automatically convert documents to embeddings
-  const embeddingFunction = DefaultEmbeddingFunction();
+  const embeddingFunction = getDefaultEmbeddingFunction();
 
   const collection = await client.createCollection({
     name: collectionName,
@@ -41,7 +41,7 @@ async function main() {
   console.log(
     `Created collection '${collection.name}' with dimension: ${collection.dimension}`,
   );
-  console.log(`Embedding function: ${embeddingFunction.name}`);
+  console.log(`Embedding function: ${embeddingFunction}`);
 
   // ==================== Step 3: Add Data to Collection ====================
   // With embedding function, you can add documents directly without providing embeddings

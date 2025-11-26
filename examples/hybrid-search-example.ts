@@ -8,7 +8,7 @@
  * - Handles complex scenarios that query() cannot
  */
 
-import { SeekDBClient, DefaultEmbeddingFunction } from "../src/index.js";
+import { SeekDBClient, getDefaultEmbeddingFunction } from "../src/index.js";
 
 async function main() {
   const client = new SeekDBClient({
@@ -22,7 +22,7 @@ async function main() {
 
   const collection = await client.getOrCreateCollection({
     name: "hybrid_search_demo",
-    embeddingFunction: DefaultEmbeddingFunction(),
+    embeddingFunction: getDefaultEmbeddingFunction(),
   });
 
   const documents = [

@@ -60,38 +60,27 @@ export function createTestEmbeddingFunction(dimension: number) {
  * Returns deterministic 3-dimensional vectors based on text hash
  */
 export function Simple3DEmbeddingFunction(): EmbeddingFunction {
-  const embeddingFn: EmbeddingFunction = async (
-    input: string | string[],
-  ): Promise<number[][]> => {
-    const texts = Array.isArray(input) ? input : [input];
+  return {
+    dimension: 3,
+    
+    async generate(input: string | string[]): Promise<number[][]> {
+      const texts = Array.isArray(input) ? input : [input];
 
-    const embeddings: number[][] = [];
-    for (const doc of texts) {
-      // Simple hash-based 3D embedding for testing
-      const hashVal = simpleHash(doc) % 1000;
-      const embedding = [
-        ((hashVal % 10) / 10.0),
-        (((hashVal / 10) | 0) % 10) / 10.0,
-        (((hashVal / 100) | 0) % 10) / 10.0,
-      ];
-      embeddings.push(embedding);
-    }
+      const embeddings: number[][] = [];
+      for (const doc of texts) {
+        // Simple hash-based 3D embedding for testing
+        const hashVal = simpleHash(doc) % 1000;
+        const embedding = [
+          ((hashVal % 10) / 10.0),
+          (((hashVal / 10) | 0) % 10) / 10.0,
+          (((hashVal / 100) | 0) % 10) / 10.0,
+        ];
+        embeddings.push(embedding);
+      }
 
-    return embeddings;
+      return embeddings;
+    },
   };
-
-  Object.defineProperty(embeddingFn, "name", {
-    value: "Simple3DEmbeddingFunction",
-    configurable: true,
-  });
-
-  Object.defineProperty(embeddingFn, "dimension", {
-    value: 3,
-    writable: false,
-    enumerable: true,
-  });
-
-  return embeddingFn;
 }
 
 /**
@@ -99,37 +88,26 @@ export function Simple3DEmbeddingFunction(): EmbeddingFunction {
  * Returns deterministic 128-dimensional vectors based on text hash
  */
 export function Simple128DEmbeddingFunction(): EmbeddingFunction {
-  const embeddingFn: EmbeddingFunction = async (
-    input: string | string[],
-  ): Promise<number[][]> => {
-    const texts = Array.isArray(input) ? input : [input];
+  return {
+    dimension: 128,
+    
+    async generate(input: string | string[]): Promise<number[][]> {
+      const texts = Array.isArray(input) ? input : [input];
 
-    const embeddings: number[][] = [];
-    for (const doc of texts) {
-      // Simple hash-based 128D embedding for testing
-      const hashVal = simpleHash(doc);
-      const embedding: number[] = [];
-      for (let i = 0; i < 128; i++) {
-        embedding.push(((hashVal + i) % 100) / 100.0);
+      const embeddings: number[][] = [];
+      for (const doc of texts) {
+        // Simple hash-based 128D embedding for testing
+        const hashVal = simpleHash(doc);
+        const embedding: number[] = [];
+        for (let i = 0; i < 128; i++) {
+          embedding.push(((hashVal + i) % 100) / 100.0);
+        }
+        embeddings.push(embedding);
       }
-      embeddings.push(embedding);
-    }
 
-    return embeddings;
+      return embeddings;
+    },
   };
-
-  Object.defineProperty(embeddingFn, "name", {
-    value: "Simple128DEmbeddingFunction",
-    configurable: true,
-  });
-
-  Object.defineProperty(embeddingFn, "dimension", {
-    value: 128,
-    writable: false,
-    enumerable: true,
-  });
-
-  return embeddingFn;
 }
 
 /**
