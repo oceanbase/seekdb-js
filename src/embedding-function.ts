@@ -1,4 +1,4 @@
-import { pipeline, env } from "@xenova/transformers";
+import { pipeline, env } from "@huggingface/transformers";
 import type { EmbeddingFunction, EmbeddingDocuments } from "./types.js";
 
 const MODEL_NAME = "Xenova/all-MiniLM-L6-v2";
@@ -18,6 +18,7 @@ export class DefaultEmbeddingFunction implements EmbeddingFunction {
     this.modelName = modelName;
     this._dimension = dimension;
 
+    // Set HuggingFace mirror for Chinese users
     env.remoteHost = process.env.HF_ENDPOINT || "https://hf-mirror.com";
   }
 

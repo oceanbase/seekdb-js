@@ -9,3 +9,4 @@ coverage/
 .nyc_output/
 pyseekdb-code
 pyseekdb-docs
+.node
