@@ -70,6 +70,60 @@ describe("Client Creation and Collection Management", () => {
       await client.deleteCollection(testCollectionName);
     });
 
+    test("get_collection - should extract correct distance metric (l2)", async () => {
+      const testCollectionName = generateCollectionName("test_distance_l2");
+      
+      await client.createCollection({
+        name: testCollectionName,
+        configuration: { dimension: 64, distance: "l2" },
+        embeddingFunction: null,
+      });
+
+      const collection = await client.getCollection({
+        name: testCollectionName,
+        embeddingFunction: null,
+      });
+
+      expect(collection.distance).toBe("l2");
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("get_collection - should extract correct distance metric (cosine)", async () => {
+      const testCollectionName = generateCollectionName("test_distance_cosine");
+      
+      await client.createCollection({
+        name: testCollectionName,
+        configuration: { dimension: 64, distance: "cosine" },
+        embeddingFunction: null,
+      });
+
+      const collection = await client.getCollection({
+        name: testCollectionName,
+        embeddingFunction: null,
+      });
+
+      expect(collection.distance).toBe("cosine");
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("get_collection - should extract correct distance metric (inner_product)", async () => {
+      const testCollectionName = generateCollectionName("test_distance_ip");
+      
+      await client.createCollection({
+        name: testCollectionName,
+        configuration: { dimension: 64, distance: "inner_product" },
+        embeddingFunction: null,
+      });
+
+      const collection = await client.getCollection({
+        name: testCollectionName,
+        embeddingFunction: null,
+      });
+
+      expect(collection.distance).toBe("inner_product");
+      await client.deleteCollection(testCollectionName);
+    });
+
     test("has_collection - should return false for non-existent collection", async () => {
       const nonExistentName = generateCollectionName(
         "test_collection_nonexistent",

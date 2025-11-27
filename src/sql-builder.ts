@@ -72,6 +72,14 @@ export class SQLBuilder {
   }
 
   /**
+   * Build SHOW CREATE TABLE SQL
+   */
+  static buildShowCreateTable(name: string): string {
+    const tableName = CollectionNames.tableName(name);
+    return `SHOW CREATE TABLE \`${tableName}\``;
+  }
+
+  /**
    * Build DROP TABLE SQL
    */
   static buildDropTable(name: string): string {

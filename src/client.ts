@@ -188,18 +188,25 @@ export class SeekDBClient {
 
     const dimension = parseInt(match[1], 10);
 
-    // Get distance metric from VECTOR INDEX
-    const indexSql = SQLBuilder.buildShowIndex(name);
-    const indexResult = await this.execute(indexSql);
-
+    // Extract distance from CREATE TABLE statement
     let distance: DistanceMetric = DEFAULT_DISTANCE_METRIC;
-
-    // Try to extract distance from index comment or use default
-    if (indexResult && indexResult.length > 0) {
-      // For now, we'll use the default distance metric
-      // In the future, we could parse the index definition to extract the distance
-      // The distance information is stored in the index WITH clause
-      distance = DEFAULT_DISTANCE_METRIC;
+    try {
+      const createTableSql = SQLBuilder.buildShowCreateTable(name);
+      const createTableResult = await this.execute(createTableSql);
+      
+      if (createTableResult && createTableResult.length > 0) {
+        const createStmt = (createTableResult[0] as any)["Create Table"] || "";
+        // Match: with(distance=value, ...) where value can be l2, cosine, inner_product, or ip
+        const distanceMatch = createStmt.match(/with\s*\([^)]*distance\s*=\s*['"]?(\w+)['"]?/i);
+        if (distanceMatch) {
+          const parsedDistance = distanceMatch[1].toLowerCase();
+          if (parsedDistance === "l2" || parsedDistance === "cosine" || parsedDistance === "inner_product" || parsedDistance === "ip") {
+            distance = parsedDistance as DistanceMetric;
+          }
+        }
+      }
+    } catch (error) {
+      // If extraction fails, use default distance
     }
 
     // Use default embedding function if not provided
