@@ -1,6 +1,15 @@
 import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "seekdb-node-sdk": resolve(__dirname, "packages/seekdb/src/index.ts"),
+    },
+  },
   test: {
     // use threads mode
     pool: "threads",

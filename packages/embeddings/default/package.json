@@ -1,0 +1,27 @@
+{
+  "name": "@seekdb/embedding-default",
+  "version": "0.1.0",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup index.ts --format cjs,esm --dts",
+    "dev": "tsup index.ts --format cjs,esm --dts --watch"
+  },
+  "peerDependencies": {
+    "seekdb-node-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "seekdb-node-sdk": "workspace:*"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.5.1"
+  }
+}

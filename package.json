@@ -1,48 +1,13 @@
 {
-  "name": "seekdb-node-sdk",
-  "version": "0.1.0",
-  "description": "A unified Node.js client for SeekDB that supports Server mode and OceanBase mode",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
-      }
-    }
-  },
+  "name": "seekdb-monorepo-root",
+  "private": true,
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "vitest",
-    "test:verify": "npm run build && npx tsx tests/verify-all.ts",
-    "examples": "npm run build && npx tsx examples/run-all.ts",
-    "type-check": "tsc --noEmit",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "test:seekdb": "pnpm --filter seekdb-node-sdk run test",
+    "lint": "pnpm -r run lint",
+    "type-check": "pnpm -r run type-check",
     "prettier": "prettier --write ."
-  },
-  "keywords": [
-    "seekdb",
-    "vector-database",
-    "embeddings",
-    "similarity-search",
-    "hybrid-search"
-  ],
-  "author": "OceanBase",
-  "license": "Apache-2.0",
-  "engines": {
-    "node": ">=20"
-  },
-  "dependencies": {
-    "@huggingface/transformers": "^3.5.1",
-    "mysql2": "^3.11.5",
-    "node-addon-api": "^8.0.0",
-    "node-gyp": "^10.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

@@ -1,0 +1,49 @@
+{
+  "name": "seekdb-node-sdk",
+  "version": "0.1.0",
+  "description": "A unified Node.js client for SeekDB that supports Server mode and OceanBase mode",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "type-check": "tsc --noEmit",
+    "prettier": "prettier --write ."
+  },
+  "keywords": [
+    "seekdb-node-sdk",
+    "vector-database",
+    "embeddings",
+    "similarity-search",
+    "hybrid-search"
+  ],
+  "author": "OceanBase",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "mysql2": "^3.11.5",
+    "node-addon-api": "^8.0.0",
+    "node-gyp": "^10.1.0"
+  },
+  "devDependencies": {
+    "@seekdb/embedding-default": "workspace:*",
+    "@seekdb/embedding-openai": "workspace:*"
+  }
+}
