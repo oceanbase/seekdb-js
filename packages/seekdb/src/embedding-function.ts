@@ -28,7 +28,7 @@ export const registerEmbeddingFunction = (
 };
 
 export async function getEmbeddingFunction(
-  name: string = "embedding-default",
+  name: string = "default-embed",
   config?: any,
 ): Promise<IEmbeddingFunction> {
   const finalConfig = config || ({} as any);

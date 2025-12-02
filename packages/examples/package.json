@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "seekdb-node-sdk": "workspace:*",
-    "@seekdb/embedding-default": "workspace:*",
-    "@seekdb/embedding-openai": "workspace:*",
+    "@seekdb/default-embed": "workspace:*",
+    "@seekdb/openai": "workspace:*",
     "dotenv": "^16.0.0"
   }
 }

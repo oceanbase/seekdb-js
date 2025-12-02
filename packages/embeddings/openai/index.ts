@@ -9,7 +9,7 @@ export interface OpenAIEmbeddingConfig extends EmbeddingConfig {
   modelName?: string;
 }
 
-const embeddingFunctionName = "embedding-openai";
+const embeddingFunctionName = "openai";
 
 export class OpenAIEmbeddingFunction implements IEmbeddingFunction {
   readonly name: string = embeddingFunctionName;
@@ -17,11 +17,12 @@ export class OpenAIEmbeddingFunction implements IEmbeddingFunction {
   private modelName: string;
 
   constructor(config: OpenAIEmbeddingConfig) {
-    if (!config?.apiKey) {
+    const openaiConfig = config as OpenAIEmbeddingConfig;
+    if (!openaiConfig?.apiKey) {
       throw new Error("OpenAI API Key is required");
     }
-    this.apiKey = config.apiKey;
-    this.modelName = config.modelName || "text-embedding-3-small";
+    this.apiKey = openaiConfig.apiKey;
+    this.modelName = openaiConfig.modelName || "text-embedding-3-small";
   }
 
   async generate(texts: string[]): Promise<number[][]> {

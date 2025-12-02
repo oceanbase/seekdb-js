@@ -1,5 +1,4 @@
-
-import { SeekDBClient } from "seekdb-node-sdk";
+import { SeekDBClient } from "../src/index.js";
 
 async function cleanup() {
   const client = new SeekDBClient({

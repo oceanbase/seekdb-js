@@ -8,10 +8,13 @@ export { Collection } from "./collection.js";
 export { FilterBuilder } from "./filters.js";
 export { Database } from "./database.js";
 export {
-  IEmbeddingFunction,
   registerEmbeddingFunction,
-  EmbeddingConfig,
   getEmbeddingFunction,
+} from "./embedding-function.js";
+
+export type {
+  IEmbeddingFunction,
+  EmbeddingConfig,
 } from "./embedding-function.js";
 
 export * from "./errors.js";

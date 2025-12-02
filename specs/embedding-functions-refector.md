@@ -12,7 +12,7 @@ seekdb-node-sdk/
 │   │   │   └── embedding-function.ts  # 核心定义：IEmbeddingFunction, Registry, getEmbeddingFunction
 │   │   └── package.json
 │   ├── embeddings/            # Embedding 实现包
-│   │   ├── default/           # 默认模型实现 (@seekdb/embedding-default)
+│   │   ├── default/           # 默认模型实现 (@seekdb/default-embed)
 │   │   │   ├── package.json
 │   │   │   └── index.ts
 │   │   └── openai/            # OpenAI 模型实现 (@seekdb/embedding-openai)
@@ -75,7 +75,7 @@ export const registerEmbeddingFunction = (
  * 支持动态加载：如果未注册，尝试动态 import 包
  */
 export async function getEmbeddingFunction(
-  name: string = "embedding-default",
+  name: string = "default",
   config?: any,
 ): Promise<IEmbeddingFunction> {
   const finalConfig = config || ({} as any);
@@ -103,14 +103,14 @@ export async function getEmbeddingFunction(
 
 每种 Embedding Function 作为一个独立包，在入口文件底部执行注册。
 
-### 3.1 默认实现 (`@seekdb/embedding-default`)
+### 3.1 默认实现 (`@seekdb/default-embed`)
 
 位于 `packages/embeddings/default/index.ts`。
 
 ```typescript
 import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb-node-sdk";
 
-const embeddingFunctionName = "embedding-default";
+const embeddingFunctionName = "default";
 
 export class DefaultEmbeddingFunction implements IEmbeddingFunction {
   readonly name: string = embeddingFunctionName;
@@ -162,10 +162,10 @@ await client.createCollection({
 
 ### 4.2 隐式加载 (Implicit Loading)
 
-如果在创建 Collection 时未指定 `embeddingFunction`，SDK 将默认调用 `getEmbeddingFunction()`，这会尝试加载 `@seekdb/embedding-default`。
+如果在创建 Collection 时未指定 `embeddingFunction`，SDK 将默认调用 `getEmbeddingFunction()`，这会尝试加载 `@seekdb/default-embed`。
 
 ```typescript
-// 如果没有提供 embeddingFunction，默认加载 embedding-default
+// 如果没有提供 embeddingFunction，默认加载 default
 const collection = await client.createCollection({
   name: "default_collection"
 });

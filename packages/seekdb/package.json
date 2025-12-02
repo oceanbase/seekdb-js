@@ -43,7 +43,7 @@
     "node-gyp": "^10.1.0"
   },
   "devDependencies": {
-    "@seekdb/embedding-default": "workspace:*",
-    "@seekdb/embedding-openai": "workspace:*"
+    "@seekdb/default-embed": "workspace:*",
+    "@seekdb/openai": "workspace:*"
   }
 }

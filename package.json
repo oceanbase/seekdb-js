@@ -2,7 +2,9 @@
   "name": "seekdb-monorepo-root",
   "private": true,
   "scripts": {
-    "build": "pnpm -r run build",
+    "build": "pnpm --filter seekdb-node-sdk run build && pnpm --filter '@seekdb/default-embed' run build",
+    "build:seekdb": "pnpm --filter seekdb-node-sdk run build",
+    "build:embeddings": "pnpm --filter '@seekdb/*' run build",
     "test": "pnpm -r run test",
     "test:seekdb": "pnpm --filter seekdb-node-sdk run test",
     "lint": "pnpm -r run lint",

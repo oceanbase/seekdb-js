@@ -7,10 +7,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
-      "seekdb-node-sdk": resolve(__dirname, "packages/seekdb/src/index.ts"),
+      "seekdb-node-sdk": resolve(__dirname, "./src/index.ts"),
+      "@seekdb/default-embed": resolve(__dirname, "../embeddings/default-embed/index.ts"),
+      "@seekdb/openai": resolve(__dirname, "../embeddings/openai/index.ts"),
     },
   },
-  test: {
+  test: { 
     // use threads mode
     pool: "threads",
     poolOptions: {

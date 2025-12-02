@@ -27,7 +27,7 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.19.1)
 
-  packages/embeddings/default:
+  packages/embeddings/default-embed:
     dependencies:
       '@huggingface/transformers':
         specifier: ^3.5.1
@@ -45,10 +45,10 @@ importers:
 
   packages/examples:
     dependencies:
-      '@seekdb/embedding-default':
+      '@seekdb/default-embed':
         specifier: workspace:*
-        version: link:../embeddings/default
-      '@seekdb/embedding-openai':
+        version: link:../embeddings/default-embed
+      '@seekdb/openai':
         specifier: workspace:*
         version: link:../embeddings/openai
       dotenv:
@@ -70,10 +70,10 @@ importers:
         specifier: ^10.1.0
         version: 10.3.1
     devDependencies:
-      '@seekdb/embedding-default':
+      '@seekdb/default-embed':
         specifier: workspace:*
-        version: link:../embeddings/default
-      '@seekdb/embedding-openai':
+        version: link:../embeddings/default-embed
+      '@seekdb/openai':
         specifier: workspace:*
         version: link:../embeddings/openai
 

@@ -19,7 +19,7 @@ export type DType =
   | "bnb4"
   | "q4f16";
 
-const embeddingFunctionName = "embedding-default";
+const embeddingFunctionName = "default-embed";
 export interface DefaultEmbeddingFunctionConfig extends EmbeddingConfig {
   modelName?: string;
   revision?: string;
@@ -27,6 +27,7 @@ export interface DefaultEmbeddingFunctionConfig extends EmbeddingConfig {
   cache_dir?: string;
   local_files_only?: boolean;
   progress_callback?: (data: any) => void;
+  remoteHost?: string;
 }
 
 export class DefaultEmbeddingFunction implements IEmbeddingFunction {
@@ -48,6 +49,9 @@ export class DefaultEmbeddingFunction implements IEmbeddingFunction {
     this.cache_dir = config.cache_dir;
     this.local_files_only = config.local_files_only;
     this.progress_callback = config.progress_callback;
+    if (config.remoteHost) {
+      env.remoteHost = config.remoteHost;
+    }
   }
 
   async generate(texts: string[]): Promise<number[][]> {

@@ -5,7 +5,7 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekDBClient } from "../src/client.js";
 import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
-import { DefaultEmbeddingFunction } from "@seekdb/embedding-default";
+import { DefaultEmbeddingFunction } from "@seekdb/default-embed";
 
 describe("Default Embedding Function Tests", () => {
   let client: SeekDBClient;
@@ -52,7 +52,7 @@ describe("Default Embedding Function Tests", () => {
     // Verify it's using DefaultEmbeddingFunction
     const ef = collection.embeddingFunction!;
     // Check name and behavior instead of internal property
-    expect(ef.name).toBe("embedding-default");
+    expect(ef.name).toBe("default-embed");
 
     console.log(`   Collection dimension: ${collection.dimension}`);
     console.log(`   Embedding function: ${ef.name}`);
