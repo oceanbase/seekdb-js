@@ -770,12 +770,15 @@ export class Collection {
           );
         }
 
-        // Distance field might be named "_distance" or "distance"
-        if (row._distance !== undefined) {
-          distances.push(row._distance);
-        } else if (row.distance !== undefined) {
-          distances.push(row.distance);
-        }
+        // Distance field might be named "_distance", "distance", "_score", "score", 
+        // "DISTANCE", "_DISTANCE", or "SCORE" (matching Python SDK behavior)
+        const distanceFields = ['_distance', 'distance', '_score', 'score', 'DISTANCE', '_DISTANCE', 'SCORE'];
+        const distanceValue = distanceFields
+          .map(field => (row as any)[field])
+          .find(val => val !== undefined);
+        // Convert to number (database may return string)
+        const distance = distanceValue !== undefined ? Number(distanceValue) : 0.0;
+        distances.push(distance);
       }
     }
 
