@@ -250,8 +250,7 @@ export class SeekDBClient {
         const dbResult = await this.execute("SELECT DATABASE()");
         if (dbResult && dbResult.length > 0) {
           const dbName =
-            (dbResult[0] as any)["DATABASE()"] ||
-            Object.values(dbResult[0])[0];
+            (dbResult[0] as any)["DATABASE()"] || Object.values(dbResult[0])[0];
           if (dbName) {
             result = await this.execute(
               `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${prefix}%'`,

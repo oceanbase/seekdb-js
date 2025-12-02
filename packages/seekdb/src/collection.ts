@@ -775,14 +775,23 @@ export class Collection {
           );
         }
 
-        // Distance field might be named "_distance", "distance", "_score", "score", 
+        // Distance field might be named "_distance", "distance", "_score", "score",
         // "DISTANCE", "_DISTANCE", or "SCORE"
-        const distanceFields = ['_distance', 'distance', '_score', 'score', 'DISTANCE', '_DISTANCE', 'SCORE'];
+        const distanceFields = [
+          "_distance",
+          "distance",
+          "_score",
+          "score",
+          "DISTANCE",
+          "_DISTANCE",
+          "SCORE",
+        ];
         const distanceValue = distanceFields
-          .map(field => (row as any)[field])
-          .find(val => val !== undefined);
+          .map((field) => (row as any)[field])
+          .find((val) => val !== undefined);
         // Convert to number (database may return string)
-        const distance = distanceValue !== undefined ? Number(distanceValue) : 0.0;
+        const distance =
+          distanceValue !== undefined ? Number(distanceValue) : 0.0;
         distances.push(distance);
       }
     }

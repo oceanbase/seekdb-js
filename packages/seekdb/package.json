@@ -1,6 +1,6 @@
 {
   "name": "seekdb-node-sdk",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "A unified Node.js client for SeekDB that supports Server mode and OceanBase mode",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -43,7 +43,6 @@
     "node-gyp": "^10.1.0"
   },
   "devDependencies": {
-    "@seekdb/default-embed": "workspace:*",
-    "@seekdb/openai": "workspace:*"
+    "@seekdb/default-embed": "workspace:*"
   }
 }

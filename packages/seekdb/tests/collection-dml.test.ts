@@ -201,7 +201,7 @@ describe("Collection DML Operations", () => {
 
     test("collection.update - update only metadata without changing document", async () => {
       const testId = "test_id_update_metadata_only";
-      
+
       // Add item first
       await collection.add({
         ids: testId,
@@ -227,7 +227,7 @@ describe("Collection DML Operations", () => {
 
     test("collection.update - update only embeddings without changing document or metadata", async () => {
       const testId = "test_id_update_embeddings_only";
-      
+
       // Add item first
       await collection.add({
         ids: testId,
@@ -243,9 +243,9 @@ describe("Collection DML Operations", () => {
       });
 
       // Verify document and metadata unchanged, embeddings updated
-      const results = await collection.get({ ids: testId});
-      expect(results.ids.length).toBe(1)
-      console.log('results', results);
+      const results = await collection.get({ ids: testId });
+      expect(results.ids.length).toBe(1);
+      console.log("results", results);
       expect(results?.documents![0]).toBe("Test document");
       expect(results?.metadatas![0]?.tag).toBe("original");
       expect(results?.embeddings![0]).toEqual([30.0, 31.0, 32.0]);
@@ -253,7 +253,7 @@ describe("Collection DML Operations", () => {
 
     test("collection.add - add item without document", async () => {
       const testId = "test_id_no_document";
-      
+
       await collection.add({
         ids: testId,
         embeddings: [40.0, 41.0, 42.0],
@@ -268,7 +268,7 @@ describe("Collection DML Operations", () => {
 
     test("collection.add - add item without metadata", async () => {
       const testId = "test_id_no_metadata";
-      
+
       await collection.add({
         ids: testId,
         embeddings: [50.0, 51.0, 52.0],
@@ -282,7 +282,7 @@ describe("Collection DML Operations", () => {
 
     test("collection.delete - delete multiple IDs at once", async () => {
       const testIds = ["test_id_multi_1", "test_id_multi_2", "test_id_multi_3"];
-      
+
       // Add items first
       await collection.add({
         ids: testIds,
@@ -299,7 +299,9 @@ describe("Collection DML Operations", () => {
       await collection.delete({ ids: [testIds[0], testIds[2]] });
 
       // Verify deletion
-      const deletedResults = await collection.get({ ids: [testIds[0], testIds[2]] });
+      const deletedResults = await collection.get({
+        ids: [testIds[0], testIds[2]],
+      });
       expect(deletedResults.ids.length).toBe(0);
 
       // Verify remaining item still exists
@@ -309,7 +311,7 @@ describe("Collection DML Operations", () => {
 
     test("collection.delete - delete by combined metadata filters", async () => {
       const testId = "test_id_combined_filter";
-      
+
       // Add item with specific metadata
       await collection.add({
         ids: testId,
@@ -334,7 +336,7 @@ describe("Collection DML Operations", () => {
 
     test("collection.upsert - upsert multiple items", async () => {
       const testIds = ["test_id_upsert_1", "test_id_upsert_2"];
-      
+
       // Upsert multiple items (mix of new and existing)
       await collection.upsert({
         ids: testIds,
@@ -355,7 +357,7 @@ describe("Collection DML Operations", () => {
 
     test("collection.add - throws error for duplicate ID", async () => {
       const testId = "test_id_duplicate";
-      
+
       // Add item first time
       await collection.add({
         ids: testId,
@@ -375,13 +377,13 @@ describe("Collection DML Operations", () => {
 
     test("collection.update - throws error for non-existent ID", async () => {
       const nonExistentId = "test_id_nonexistent";
-      
+
       await expect(async () => {
         await collection.update({
           ids: nonExistentId,
           metadatas: { updated: true },
         });
-      })
+      });
     });
   });
 });

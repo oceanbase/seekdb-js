@@ -215,7 +215,7 @@ describe("Client Creation and Collection Management", () => {
 
         const collections = await client.listCollections();
         expect(Array.isArray(collections)).toBe(true);
-        
+
         const collectionNames = collections.map((c) => c.name);
         expect(collectionNames).toContain(testCollectionName1);
         expect(collectionNames).toContain(testCollectionName2);

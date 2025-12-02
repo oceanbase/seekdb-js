@@ -37,7 +37,9 @@ export class OpenAIEmbeddingFunction implements IEmbeddingFunction {
     this.apiKeyEnvVar = config?.apiKeyEnvVar || "OPENAI_API_KEY";
     this.apiKey = config?.apiKey || process.env[this.apiKeyEnvVar] || "";
     if (!this.apiKey) {
-      throw new Error(`OpenAI API Key is required. Provide it via config.apiKey or set ${this.apiKeyEnvVar} environment variable.`);
+      throw new Error(
+        `OpenAI API Key is required. Provide it via config.apiKey or set ${this.apiKeyEnvVar} environment variable.`,
+      );
     }
     this.modelName = config?.modelName || "text-embedding-3-small";
     this.dimensions = config?.dimensions;

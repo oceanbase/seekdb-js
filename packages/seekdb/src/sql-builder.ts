@@ -201,11 +201,11 @@ export class SQLBuilder {
       sql += ` WHERE ${whereClauses.join(" AND ")}`;
     }
 
-    if (typeof limit === 'number') {
+    if (typeof limit === "number") {
       sql += ` LIMIT ?`;
       params.push(limit);
     }
-    if (typeof offset === 'number') {
+    if (typeof offset === "number") {
       sql += ` OFFSET ?`;
       params.push(offset);
     }
@@ -336,7 +336,7 @@ export class SQLBuilder {
     };
 
     // Get the distance function name, default to 'l2_distance' if distance is not recognized
-    const distanceFunc =distanceFunctionMap[distance];
+    const distanceFunc = distanceFunctionMap[distance];
 
     // Build SELECT clause
     const selectFields = [CollectionFieldNames.ID];

@@ -27,12 +27,23 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.19.1)
 
+  packages/embeddings/common: {}
+
   packages/embeddings/default-embed:
     dependencies:
       '@huggingface/transformers':
         specifier: ^3.5.1
         version: 3.8.0
     devDependencies:
+      seekdb-node-sdk:
+        specifier: workspace:*
+        version: link:../../seekdb
+
+  packages/embeddings/jina:
+    devDependencies:
+      '@seekdb/common':
+        specifier: workspace:*
+        version: link:../common
       seekdb-node-sdk:
         specifier: workspace:*
         version: link:../../seekdb
@@ -77,9 +88,6 @@ importers:
       '@seekdb/default-embed':
         specifier: workspace:*
         version: link:../embeddings/default-embed
-      '@seekdb/openai':
-        specifier: workspace:*
-        version: link:../embeddings/openai
 
 packages:
 

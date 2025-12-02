@@ -1,6 +1,7 @@
 {
-  "name": "@seekdb/default-embed",
+  "name": "@seekdb/common",
   "version": "0.0.1",
+  "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -14,14 +15,5 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch"
-  },
-  "peerDependencies": {
-    "seekdb-node-sdk": "workspace:*"
-  },
-  "devDependencies": {
-    "seekdb-node-sdk": "workspace:*"
-  },
-  "dependencies": {
-    "@huggingface/transformers": "^3.5.1"
   }
 }

@@ -240,7 +240,7 @@ describe("Collection Get Operations", () => {
 
     test("get with limit 0 returns empty results", async () => {
       const results = await collection.get({ limit: 0 });
-      console.log('results', results);
+      console.log("results", results);
       expect(results).toBeDefined();
       expect(results.ids).toBeDefined();
       expect(results.ids.length).toBe(0);

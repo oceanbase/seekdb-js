@@ -228,7 +228,7 @@ describe("AdminClient Database Management", () => {
 
       await expect(async () => {
         await adminClient.deleteDatabase(nonExistentDbName);
-      })
+      });
     });
 
     test("create database throws error for duplicate database name", async () => {
@@ -241,7 +241,7 @@ describe("AdminClient Database Management", () => {
         // Try to create again with same name (should fail)
         await expect(async () => {
           await adminClient.createDatabase(testDbName);
-        })
+        });
       } finally {
         // Cleanup
         try {
@@ -262,7 +262,7 @@ describe("AdminClient Database Management", () => {
     test("list databases with large limit returns all available databases", async () => {
       const allDbs = await adminClient.listDatabases(10000);
       const normalDbs = await adminClient.listDatabases();
-      
+
       expect(allDbs.length).toBeLessThanOrEqual(normalDbs.length);
       // If there are databases, both should return same count (or allDbs might be limited)
       if (normalDbs.length > 0) {
@@ -272,8 +272,11 @@ describe("AdminClient Database Management", () => {
 
     test("list databases with offset beyond available databases returns empty array", async () => {
       const allDbs = await adminClient.listDatabases();
-      const offsetDbs = await adminClient.listDatabases(10, allDbs.length + 100);
-      
+      const offsetDbs = await adminClient.listDatabases(
+        10,
+        allDbs.length + 100,
+      );
+
       expect(offsetDbs).toBeDefined();
       expect(Array.isArray(offsetDbs)).toBe(true);
       expect(offsetDbs.length).toBe(0);

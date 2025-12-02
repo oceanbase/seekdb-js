@@ -57,7 +57,9 @@ async function main() {
 
   // 2.4 List all collections
   const allCollections = await client.listCollections();
-  console.log(`All collections: ${allCollections.map((c) => c.name).join(", ")}`);
+  console.log(
+    `All collections: ${allCollections.map((c) => c.name).join(", ")}`,
+  );
 
   // ============================================================================
   // PART 3: DML OPERATIONS - ADD DATA

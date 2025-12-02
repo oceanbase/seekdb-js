@@ -1,6 +1,7 @@
 {
-  "name": "@seekdb/default-embed",
-  "version": "0.0.1",
+  "name": "@seekdb/jina",
+  "version": "0.1.0",
+  "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -16,12 +17,11 @@
     "dev": "tsup --watch"
   },
   "peerDependencies": {
-    "seekdb-node-sdk": "workspace:*"
+    "seekdb-node-sdk": "workspace:*",
+    "@seekdb/common": "workspace:*"
   },
   "devDependencies": {
-    "seekdb-node-sdk": "workspace:*"
-  },
-  "dependencies": {
-    "@huggingface/transformers": "^3.5.1"
+    "seekdb-node-sdk": "workspace:*",
+    "@seekdb/common": "workspace:*"
   }
 }

@@ -11,13 +11,16 @@ async function cleanup() {
   });
 
   console.log("Connecting to database...");
-  
+
   try {
     const collections = await client.listCollections();
     console.log(`Found ${collections.length} collections.`);
 
     for (const collection of collections) {
-      if (collection.name.startsWith("test_") || collection.name.startsWith("quickstart_")) {
+      if (
+        collection.name.startsWith("test_") ||
+        collection.name.startsWith("quickstart_")
+      ) {
         console.log(`Deleting collection: ${collection.name}`);
         try {
           await client.deleteCollection(collection.name);
@@ -35,4 +38,3 @@ async function cleanup() {
 }
 
 cleanup();
-
