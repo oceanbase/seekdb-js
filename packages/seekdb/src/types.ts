@@ -175,6 +175,7 @@ export interface QueryOptions {
   where?: Where;
   whereDocument?: WhereDocument;
   include?: readonly ("documents" | "metadatas" | "embeddings" | "distances")[];
+  distance?: DistanceMetric;
 }
 
 export interface HybridSearchQuery {

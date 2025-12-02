@@ -304,5 +304,157 @@ describe("Collection Hybrid Search Operations", () => {
         }
       });
     });
+
+    test("hybrid search with $ne (not equal) operator", async () => {
+      await runHybridSearchTest(async () => {
+        const results = await collection.hybridSearch({
+          query: {
+            whereDocument: {
+              $contains: "machine",
+            },
+            where: {
+              category: { $ne: "Programming" },
+            },
+            nResults: 10,
+          },
+          knn: {
+            queryEmbeddings: [1.0, 2.0, 3.0],
+            where: {
+              category: { $ne: "Programming" },
+            },
+            nResults: 10,
+          },
+          nResults: 5,
+          include: ["documents", "metadatas"],
+        });
+
+        expect(results).toBeDefined();
+        expect(results.ids).toBeDefined();
+        expect(results.ids.length).toBeGreaterThanOrEqual(0);
+
+        // Verify no results have category="Programming"
+        if (results.ids.length > 0 && results.ids[0].length > 0) {
+          for (const metadata of results.metadatas![0]) {
+            if (metadata) {
+              expect(metadata.category).not.toBe("Programming");
+            }
+          }
+        }
+      });
+    });
+
+    test("hybrid search with $lt (less than) operator", async () => {
+      await runHybridSearchTest(async () => {
+        const results = await collection.hybridSearch({
+          query: {
+            whereDocument: {
+              $contains: "machine",
+            },
+            where: {
+              score: { $lt: 90 },
+            },
+            nResults: 10,
+          },
+          knn: {
+            queryEmbeddings: [1.0, 2.0, 3.0],
+            where: {
+              score: { $lt: 90 },
+            },
+            nResults: 10,
+          },
+          nResults: 5,
+          include: ["documents", "metadatas"],
+        });
+
+        expect(results).toBeDefined();
+        expect(results.ids).toBeDefined();
+        expect(results.ids.length).toBeGreaterThanOrEqual(0);
+
+        // Verify all results have score < 90
+        if (results.ids.length > 0 && results.ids[0].length > 0) {
+          for (const metadata of results.metadatas![0]) {
+            if (metadata && metadata.score !== undefined) {
+              expect(metadata.score).toBeLessThan(90);
+            }
+          }
+        }
+      });
+    });
+
+    test("hybrid search with $gt (greater than) operator", async () => {
+      await runHybridSearchTest(async () => {
+        const results = await collection.hybridSearch({
+          query: {
+            whereDocument: {
+              $contains: "machine",
+            },
+            where: {
+              score: { $gt: 90 },
+            },
+            nResults: 10,
+          },
+          knn: {
+            queryEmbeddings: [1.0, 2.0, 3.0],
+            where: {
+              score: { $gt: 90 },
+            },
+            nResults: 10,
+          },
+          nResults: 5,
+          include: ["documents", "metadatas"],
+        });
+
+        expect(results).toBeDefined();
+        expect(results.ids).toBeDefined();
+        expect(results.ids.length).toBeGreaterThanOrEqual(0);
+
+        // Verify all results have score > 90
+        if (results.ids.length > 0 && results.ids[0].length > 0) {
+          for (const metadata of results.metadatas![0]) {
+            if (metadata && metadata.score !== undefined) {
+              expect(metadata.score).toBeGreaterThan(90);
+            }
+          }
+        }
+      });
+    });
+
+    test("hybrid search with $nin (not in) operator", async () => {
+      await runHybridSearchTest(async () => {
+        const results = await collection.hybridSearch({
+          query: {
+            whereDocument: {
+              $contains: "machine",
+            },
+            where: {
+              tag: { $nin: ["ml", "python"] },
+            },
+            nResults: 10,
+          },
+          knn: {
+            queryEmbeddings: [1.0, 2.0, 3.0],
+            where: {
+              tag: { $nin: ["ml", "python"] },
+            },
+            nResults: 10,
+          },
+          nResults: 5,
+          include: ["documents", "metadatas"],
+        });
+
+        expect(results).toBeDefined();
+        expect(results.ids).toBeDefined();
+        expect(results.ids.length).toBeGreaterThanOrEqual(0);
+
+        // Verify no results have tag in ["ml", "python"]
+        if (results.ids.length > 0 && results.ids[0].length > 0) {
+          for (const metadata of results.metadatas![0]) {
+            if (metadata && metadata.tag) {
+              expect(["ml", "python"]).not.toContain(metadata.tag);
+            }
+          }
+        }
+      });
+    });
   });
 });

@@ -7,7 +7,7 @@ import type { SeekDBClient } from "./client.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekDBValueError } from "./errors.js";
 import { CollectionFieldNames } from "./utils.js";
-import { FilterBuilder } from "./filters.js";
+import { FilterBuilder, SearchFilterCondition } from "./filters.js";
 import type {
   EmbeddingFunction,
   Metadata,
@@ -455,10 +455,13 @@ export class Collection {
       where,
       whereDocument,
       include,
+      distance,
     } = options;
 
     // Handle embedding generation
-    if (!queryEmbeddings && queryTexts) {
+    if (queryEmbeddings) {
+      // Query embeddings provided, use them directly without embedding
+    } else if (queryTexts) {
       if (this.embeddingFunction) {
         const textsArray = Array.isArray(queryTexts)
           ? queryTexts
@@ -469,9 +472,7 @@ export class Collection {
           "queryTexts provided but no queryEmbeddings and no embedding function",
         );
       }
-    }
-
-    if (!queryEmbeddings) {
+    } else {
       throw new SeekDBValueError(
         "Either queryEmbeddings or queryTexts must be provided",
       );
@@ -499,6 +500,7 @@ export class Collection {
           where,
           whereDocument,
           include: include as string[] | undefined,
+          distance: distance ?? this.distance,
         },
       );
 
@@ -645,7 +647,7 @@ export class Collection {
       return null;
     }
 
-    // Build knn expression - field order matches Python SDK
+    // Build knn expression
     const knnExpr: any = {
       field: "embedding",
       k: nResults,
@@ -654,7 +656,10 @@ export class Collection {
 
     // Add filter if where conditions provided
     if (where) {
-      knnExpr.filter = this.buildMetadataFilter(where);
+      const filter = this.buildMetadataFilter(where);
+      if (filter) {
+        knnExpr.filter = filter;
+      }
     }
 
     return knnExpr;
@@ -771,7 +776,7 @@ export class Collection {
         }
 
         // Distance field might be named "_distance", "distance", "_score", "score", 
-        // "DISTANCE", "_DISTANCE", or "SCORE" (matching Python SDK behavior)
+        // "DISTANCE", "_DISTANCE", or "SCORE"
         const distanceFields = ['_distance', 'distance', '_score', 'score', 'DISTANCE', '_DISTANCE', 'SCORE'];
         const distanceValue = distanceFields
           .map(field => (row as any)[field])
@@ -936,16 +941,16 @@ export class Collection {
    * Uses JSON_EXTRACT format for field names
    * @private
    */
-  private buildMetadataFilter(where: any): any {
+  private buildMetadataFilter(where: any): SearchFilterCondition[] | null {
     if (!where) {
-      return {};
+      return null;
     }
 
     const filterConditions = FilterBuilder.buildHybridSearchFilter(where);
     if (filterConditions && filterConditions.length > 0) {
       return filterConditions;
     }
-    return {};
+    return null;
   }
 
   /**

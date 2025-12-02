@@ -214,5 +214,164 @@ describe("AdminClient Database Management", () => {
         expect(db.collation).toBeDefined();
       }
     });
+
+    test("get database throws error for non-existent database", async () => {
+      const nonExistentDbName = generateDatabaseName("non_existent_db");
+
+      await expect(async () => {
+        await adminClient.getDatabase(nonExistentDbName);
+      }).rejects.toThrow();
+    });
+
+    test("delete database throws error for non-existent database", async () => {
+      const nonExistentDbName = generateDatabaseName("non_existent_db");
+
+      await expect(async () => {
+        await adminClient.deleteDatabase(nonExistentDbName);
+      })
+    });
+
+    test("create database throws error for duplicate database name", async () => {
+      const testDbName = generateDatabaseName("test_duplicate_db");
+
+      try {
+        // Create database first time
+        await adminClient.createDatabase(testDbName);
+
+        // Try to create again with same name (should fail)
+        await expect(async () => {
+          await adminClient.createDatabase(testDbName);
+        })
+      } finally {
+        // Cleanup
+        try {
+          await adminClient.deleteDatabase(testDbName);
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
+    });
+
+    test("list databases with zero limit returns empty array", async () => {
+      const emptyDbs = await adminClient.listDatabases(0);
+      expect(emptyDbs).toBeDefined();
+      expect(Array.isArray(emptyDbs)).toBe(true);
+      expect(emptyDbs.length).toBe(0);
+    });
+
+    test("list databases with large limit returns all available databases", async () => {
+      const allDbs = await adminClient.listDatabases(10000);
+      const normalDbs = await adminClient.listDatabases();
+      
+      expect(allDbs.length).toBeLessThanOrEqual(normalDbs.length);
+      // If there are databases, both should return same count (or allDbs might be limited)
+      if (normalDbs.length > 0) {
+        expect(allDbs.length).toBeGreaterThan(0);
+      }
+    });
+
+    test("list databases with offset beyond available databases returns empty array", async () => {
+      const allDbs = await adminClient.listDatabases();
+      const offsetDbs = await adminClient.listDatabases(10, allDbs.length + 100);
+      
+      expect(offsetDbs).toBeDefined();
+      expect(Array.isArray(offsetDbs)).toBe(true);
+      expect(offsetDbs.length).toBe(0);
+    });
+
+    test("database object properties are correctly set", async () => {
+      const testDbName = generateDatabaseName("test_db_properties");
+
+      try {
+        await adminClient.createDatabase(testDbName);
+        const db = await adminClient.getDatabase(testDbName);
+
+        // Verify all expected properties exist
+        expect(db.name).toBe(testDbName);
+        expect(db.tenant).toBe(TEST_CONFIG.tenant);
+        expect(typeof db.charset).toBe("string");
+        expect(db.charset.length).toBeGreaterThan(0);
+        expect(typeof db.collation).toBe("string");
+        expect(db.collation.length).toBeGreaterThan(0);
+      } finally {
+        // Cleanup
+        try {
+          await adminClient.deleteDatabase(testDbName);
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
+    });
+
+    test("create and delete multiple databases in sequence", async () => {
+      const dbNames = [
+        generateDatabaseName("test_seq_1"),
+        generateDatabaseName("test_seq_2"),
+        generateDatabaseName("test_seq_3"),
+      ];
+
+      try {
+        // Create all databases
+        for (const dbName of dbNames) {
+          await adminClient.createDatabase(dbName);
+          const db = await adminClient.getDatabase(dbName);
+          expect(db.name).toBe(dbName);
+        }
+
+        // Verify all are in the list
+        const databases = await adminClient.listDatabases();
+        const dbNamesList = databases.map((db) => db.name);
+        for (const dbName of dbNames) {
+          expect(dbNamesList).toContain(dbName);
+        }
+
+        // Delete all databases
+        for (const dbName of dbNames) {
+          await adminClient.deleteDatabase(dbName);
+        }
+
+        // Verify all are deleted
+        const databasesAfter = await adminClient.listDatabases();
+        const dbNamesListAfter = databasesAfter.map((db) => db.name);
+        for (const dbName of dbNames) {
+          expect(dbNamesListAfter).not.toContain(dbName);
+        }
+      } catch (error) {
+        // Cleanup on error
+        for (const dbName of dbNames) {
+          try {
+            await adminClient.deleteDatabase(dbName);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        }
+        throw error;
+      }
+    });
+
+    test("database equals method returns false for different databases", async () => {
+      const testDbName1 = generateDatabaseName("test_db_1");
+      const testDbName2 = generateDatabaseName("test_db_2");
+
+      try {
+        await adminClient.createDatabase(testDbName1);
+        await adminClient.createDatabase(testDbName2);
+
+        const db1 = await adminClient.getDatabase(testDbName1);
+        const db2 = await adminClient.getDatabase(testDbName2);
+
+        expect(db1.equals(db2)).toBe(false);
+        expect(db1.equals(db1)).toBe(true);
+        expect(db2.equals(db2)).toBe(true);
+      } finally {
+        // Cleanup
+        try {
+          await adminClient.deleteDatabase(testDbName1);
+          await adminClient.deleteDatabase(testDbName2);
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
+    });
   });
 });

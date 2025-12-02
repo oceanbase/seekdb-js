@@ -237,7 +237,7 @@ export class SeekDBClient {
    */
   async listCollections(): Promise<Collection[]> {
     const prefix = "c$v1$";
-    // Match Python implementation: Use SHOW TABLES LIKE for filtering
+    // Use SHOW TABLES LIKE for filtering
     const sql = `SHOW TABLES LIKE '${prefix}%'`;
     let result: RowDataPacket[] | null = null;
 

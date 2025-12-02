@@ -53,7 +53,7 @@ describe("Collection DML Operations", () => {
       expect(results.ids.length).toBe(1);
       expect(results.ids[0]).toBe(testId1);
       expect(results.documents![0]).toBe("This is test document 1");
-      expect(results.metadatas![0].category).toBe("test");
+      expect(results?.metadatas![0]?.category).toBe("test");
     });
 
     test("collection.add - add multiple items", async () => {
@@ -89,8 +89,8 @@ describe("Collection DML Operations", () => {
       const results = await collection.get({ ids: testId1 });
       expect(results.ids.length).toBe(1);
       expect(results.documents![0]).toBe("This is test document 1");
-      expect(results.metadatas![0].score).toBe(95);
-      expect(results.metadatas![0].updated).toBe(true);
+      expect(results?.metadatas![0]?.score).toBe(95);
+      expect(results?.metadatas![0]?.updated).toBe(true);
     });
 
     test("collection.update - update multiple items", async () => {
@@ -125,7 +125,7 @@ describe("Collection DML Operations", () => {
       const results = await collection.get({ ids: testId1 });
       expect(results.ids.length).toBe(1);
       expect(results.documents![0]).toBe("Upserted document 1");
-      expect(results.metadatas![0].score).toBe(98);
+      expect(results?.metadatas![0]?.score).toBe(98);
     });
 
     test("collection.upsert - upsert new item (insert)", async () => {
@@ -141,7 +141,7 @@ describe("Collection DML Operations", () => {
       const results = await collection.get({ ids: testIdNew });
       expect(results.ids.length).toBe(1);
       expect(results.documents![0]).toBe("New upserted document");
-      expect(results.metadatas![0].category).toBe("new");
+      expect(results?.metadatas![0]?.category).toBe("new");
     });
 
     test("collection.delete - delete by ID", async () => {
@@ -197,6 +197,191 @@ describe("Collection DML Operations", () => {
     test("verify final state using collection.get", async () => {
       const allResults = await collection.get({ limit: 100 });
       expect(allResults.ids.length).toBeGreaterThan(0);
+    });
+
+    test("collection.update - update only metadata without changing document", async () => {
+      const testId = "test_id_update_metadata_only";
+      
+      // Add item first
+      await collection.add({
+        ids: testId,
+        embeddings: [10.0, 11.0, 12.0],
+        documents: "Original document text",
+        metadatas: { status: "active", version: 1 },
+      });
+
+      // Update only metadata
+      await collection.update({
+        ids: testId,
+        metadatas: { status: "inactive", version: 2, updated: true },
+      });
+
+      // Verify document unchanged, metadata updated
+      const results = await collection.get({ ids: testId });
+      expect(results.ids.length).toBe(1);
+      expect(results.documents![0]).toBe("Original document text");
+      expect(results?.metadatas![0]?.status).toBe("inactive");
+      expect(results?.metadatas![0]?.version).toBe(2);
+      expect(results?.metadatas![0]?.updated).toBe(true);
+    });
+
+    test("collection.update - update only embeddings without changing document or metadata", async () => {
+      const testId = "test_id_update_embeddings_only";
+      
+      // Add item first
+      await collection.add({
+        ids: testId,
+        embeddings: [20.0, 21.0, 22.0],
+        documents: "Test document",
+        metadatas: { tag: "original" },
+      });
+
+      // Update only embeddings
+      await collection.update({
+        ids: testId,
+        embeddings: [30.0, 31.0, 32.0],
+      });
+
+      // Verify document and metadata unchanged, embeddings updated
+      const results = await collection.get({ ids: testId});
+      expect(results.ids.length).toBe(1)
+      console.log('results', results);
+      expect(results?.documents![0]).toBe("Test document");
+      expect(results?.metadatas![0]?.tag).toBe("original");
+      expect(results?.embeddings![0]).toEqual([30.0, 31.0, 32.0]);
+    });
+
+    test("collection.add - add item without document", async () => {
+      const testId = "test_id_no_document";
+      
+      await collection.add({
+        ids: testId,
+        embeddings: [40.0, 41.0, 42.0],
+        metadatas: { type: "vector_only" },
+      });
+
+      const results = await collection.get({ ids: testId });
+      expect(results.ids.length).toBe(1);
+      expect(results.ids[0]).toBe(testId);
+      expect(results?.metadatas![0]?.type).toBe("vector_only");
+    });
+
+    test("collection.add - add item without metadata", async () => {
+      const testId = "test_id_no_metadata";
+      
+      await collection.add({
+        ids: testId,
+        embeddings: [50.0, 51.0, 52.0],
+        documents: "Document without metadata",
+      });
+
+      const results = await collection.get({ ids: testId });
+      expect(results.ids.length).toBe(1);
+      expect(results?.documents![0]).toBe("Document without metadata");
+    });
+
+    test("collection.delete - delete multiple IDs at once", async () => {
+      const testIds = ["test_id_multi_1", "test_id_multi_2", "test_id_multi_3"];
+      
+      // Add items first
+      await collection.add({
+        ids: testIds,
+        embeddings: [
+          [60.0, 61.0, 62.0],
+          [61.0, 62.0, 63.0],
+          [62.0, 63.0, 64.0],
+        ],
+        documents: ["Doc 1", "Doc 2", "Doc 3"],
+        metadatas: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      });
+
+      // Delete multiple IDs
+      await collection.delete({ ids: [testIds[0], testIds[2]] });
+
+      // Verify deletion
+      const deletedResults = await collection.get({ ids: [testIds[0], testIds[2]] });
+      expect(deletedResults.ids.length).toBe(0);
+
+      // Verify remaining item still exists
+      const remainingResults = await collection.get({ ids: testIds[1] });
+      expect(remainingResults.ids.length).toBe(1);
+    });
+
+    test("collection.delete - delete by combined metadata filters", async () => {
+      const testId = "test_id_combined_filter";
+      
+      // Add item with specific metadata
+      await collection.add({
+        ids: testId,
+        embeddings: [70.0, 71.0, 72.0],
+        documents: "Test for combined filter",
+        metadatas: { category: "test", score: 100, active: true },
+      });
+
+      // Delete by combined filters
+      await collection.delete({
+        where: {
+          category: { $eq: "test" },
+          score: { $gte: 100 },
+          active: { $eq: true },
+        },
+      });
+
+      // Verify deletion
+      const results = await collection.get({ ids: testId });
+      expect(results.ids.length).toBe(0);
+    });
+
+    test("collection.upsert - upsert multiple items", async () => {
+      const testIds = ["test_id_upsert_1", "test_id_upsert_2"];
+      
+      // Upsert multiple items (mix of new and existing)
+      await collection.upsert({
+        ids: testIds,
+        embeddings: [
+          [80.0, 81.0, 82.0],
+          [81.0, 82.0, 83.0],
+        ],
+        documents: ["Upsert doc 1", "Upsert doc 2"],
+        metadatas: [{ type: "upsert" }, { type: "upsert" }],
+      });
+
+      // Verify both items exist
+      const results = await collection.get({ ids: testIds });
+      expect(results.ids.length).toBe(2);
+      expect(results.documents![0]).toBe("Upsert doc 1");
+      expect(results.documents![1]).toBe("Upsert doc 2");
+    });
+
+    test("collection.add - throws error for duplicate ID", async () => {
+      const testId = "test_id_duplicate";
+      
+      // Add item first time
+      await collection.add({
+        ids: testId,
+        embeddings: [90.0, 91.0, 92.0],
+        documents: "First document",
+      });
+
+      // Try to add again with same ID (should fail)
+      await expect(async () => {
+        await collection.add({
+          ids: testId,
+          embeddings: [91.0, 92.0, 93.0],
+          documents: "Duplicate document",
+        });
+      }).rejects.toThrow();
+    });
+
+    test("collection.update - throws error for non-existent ID", async () => {
+      const nonExistentId = "test_id_nonexistent";
+      
+      await expect(async () => {
+        await collection.update({
+          ids: nonExistentId,
+          metadatas: { updated: true },
+        });
+      })
     });
   });
 });

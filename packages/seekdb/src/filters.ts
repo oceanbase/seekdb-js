@@ -465,6 +465,11 @@ export class FilterBuilder {
       const key = boolKeys[0] as "must" | "should" | "must_not";
       const conditions = result.bool![key]!;
       if (conditions.length === 1) {
+        // For must_not, always wrap in bool to preserve negation semantics
+        if (key === "must_not") {
+          return { bool: { must_not: conditions } };
+        }
+        // For must and should, can simplify if it's a simple term or range
         return conditions[0];
       }
       return { bool: { [key]: conditions } };

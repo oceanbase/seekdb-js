@@ -212,5 +212,115 @@ describe("Collection Query Operations", () => {
         expect(results.ids[0].length).toBe(results.documents![0].length);
       }
     });
+
+    test("query with $ne (not equal) operator", async () => {
+      const queryVector = [1.0, 2.0, 3.0];
+      const results = await collection.query({
+        queryEmbeddings: queryVector,
+        where: { category: { $ne: "AI" } },
+        nResults: 5,
+      });
+
+      expect(results).toBeDefined();
+      expect(results.ids).toBeDefined();
+      // Verify no results have category="AI"
+      if (results.ids[0].length > 0 && results.metadatas) {
+        for (const metadata of results.metadatas[0]) {
+          if (metadata) {
+            expect(metadata.category).not.toBe("AI");
+          }
+        }
+      }
+    });
+
+    test("query with $lt (less than) operator", async () => {
+      const queryVector = [1.0, 2.0, 3.0];
+      const results = await collection.query({
+        queryEmbeddings: queryVector,
+        where: { score: { $lt: 90 } },
+        nResults: 5,
+      });
+
+      expect(results).toBeDefined();
+      expect(results.ids).toBeDefined();
+      // Verify all results have score < 90
+      if (results.ids[0].length > 0 && results.metadatas) {
+        for (const metadata of results.metadatas[0]) {
+          if (metadata && metadata.score !== undefined) {
+            expect(metadata.score).toBeLessThan(90);
+          }
+        }
+      }
+    });
+
+    test("query with $lte (less than or equal) operator", async () => {
+      const queryVector = [1.0, 2.0, 3.0];
+      const results = await collection.query({
+        queryEmbeddings: queryVector,
+        where: { score: { $lte: 88 } },
+        nResults: 5,
+      });
+
+      expect(results).toBeDefined();
+      expect(results.ids).toBeDefined();
+    });
+
+    test("query with $gt (greater than) operator", async () => {
+      const queryVector = [1.0, 2.0, 3.0];
+      const results = await collection.query({
+        queryEmbeddings: queryVector,
+        where: { score: { $gt: 90 } },
+        nResults: 5,
+      });
+
+      expect(results).toBeDefined();
+      expect(results.ids).toBeDefined();
+      // Verify all results have score > 90
+      if (results.ids[0].length > 0 && results.metadatas) {
+        for (const metadata of results.metadatas[0]) {
+          if (metadata && metadata.score !== undefined) {
+            expect(metadata.score).toBeGreaterThan(90);
+          }
+        }
+      }
+    });
+
+    test("query with $nin (not in) operator", async () => {
+      const queryVector = [1.0, 2.0, 3.0];
+      const results = await collection.query({
+        queryEmbeddings: queryVector,
+        where: { tag: { $nin: ["ml", "python"] } },
+        nResults: 5,
+      });
+
+      expect(results).toBeDefined();
+      expect(results.ids).toBeDefined();
+      // Verify no results have tag in ["ml", "python"]
+      if (results.ids[0].length > 0 && results.metadatas) {
+        for (const metadata of results.metadatas[0]) {
+          if (metadata && metadata.tag) {
+            expect(["ml", "python"]).not.toContain(metadata.tag);
+          }
+        }
+      }
+    });
+
+    test("query with $and operator combining multiple conditions", async () => {
+      const queryVector = [1.0, 2.0, 3.0];
+      const results = await collection.query({
+        queryEmbeddings: queryVector,
+        where: {
+          $and: [
+            { category: { $eq: "AI" } },
+            { score: { $gte: 90 } },
+            { tag: { $in: ["ml", "neural"] } },
+          ],
+        },
+        nResults: 5,
+      });
+
+      expect(results).toBeDefined();
+      expect(results.ids).toBeDefined();
+    });
   });
 });

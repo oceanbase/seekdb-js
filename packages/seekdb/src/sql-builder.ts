@@ -165,11 +165,14 @@ export class SQLBuilder {
 
     if (ids) {
       const idsArray = Array.isArray(ids) ? ids : [ids];
-      const idConditions = idsArray.map(
-        () => `${CollectionFieldNames.ID} = CAST(? AS BINARY)`,
-      );
-      whereClauses.push(`(${idConditions.join(" OR ")})`);
-      params.push(...idsArray);
+      // Skip empty ids array to avoid invalid SQL (WHERE ())
+      if (idsArray.length > 0) {
+        const idConditions = idsArray.map(
+          () => `${CollectionFieldNames.ID} = CAST(? AS BINARY)`,
+        );
+        whereClauses.push(`(${idConditions.join(" OR ")})`);
+        params.push(...idsArray);
+      }
     }
 
     if (where) {
@@ -198,11 +201,11 @@ export class SQLBuilder {
       sql += ` WHERE ${whereClauses.join(" AND ")}`;
     }
 
-    if (limit) {
+    if (typeof limit === 'number') {
       sql += ` LIMIT ?`;
       params.push(limit);
     }
-    if (offset) {
+    if (typeof offset === 'number') {
       sql += ` OFFSET ?`;
       params.push(offset);
     }
@@ -318,11 +321,22 @@ export class SQLBuilder {
       where?: Where;
       whereDocument?: WhereDocument;
       include?: string[];
+      distance?: DistanceMetric;
     },
   ): SQLResult {
     const tableName = CollectionNames.tableName(collectionName);
-    const { where, whereDocument, include } = options;
+    const { where, whereDocument, include, distance = "l2" } = options;
     const params: unknown[] = [];
+
+    // Map distance metric to SQL function name
+    const distanceFunctionMap: Record<DistanceMetric, string> = {
+      l2: "l2_distance",
+      cosine: "cosine_distance",
+      inner_product: "inner_product",
+    };
+
+    // Get the distance function name, default to 'l2_distance' if distance is not recognized
+    const distanceFunc =distanceFunctionMap[distance];
 
     // Build SELECT clause
     const selectFields = [CollectionFieldNames.ID];
@@ -367,10 +381,10 @@ export class SQLBuilder {
 
     const sql = `
       SELECT ${selectFields.join(", ")},
-             l2_distance(${CollectionFieldNames.EMBEDDING}, '${vectorStr}') AS distance
+             ${distanceFunc}(${CollectionFieldNames.EMBEDDING}, '${vectorStr}') AS distance
       FROM \`${tableName}\`
       ${whereClause}
-      ORDER BY l2_distance(${CollectionFieldNames.EMBEDDING}, '${vectorStr}')
+      ORDER BY ${distanceFunc}(${CollectionFieldNames.EMBEDDING}, '${vectorStr}')
       APPROXIMATE
       LIMIT ?
     `.trim();
@@ -394,7 +408,7 @@ export class SQLBuilder {
    * Build hybrid search GET_SQL query
    */
   static buildHybridSearchGetSql(tableName: string): string {
-    // Following Python SDK pattern: use user variable @search_parm
+    // use user variable @search_parm
     return `SELECT DBMS_HYBRID_SEARCH.GET_SQL('${tableName}', @search_parm) as query_sql FROM dual`;
   }
 }
