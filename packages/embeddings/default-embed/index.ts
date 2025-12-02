@@ -21,6 +21,9 @@ export type DType =
 
 const embeddingFunctionName = "default-embed";
 export interface DefaultEmbeddingFunctionConfig extends EmbeddingConfig {
+  /**
+   * Defaults to 'Xenova/all-MiniLM-L6-v2'.
+   */
   modelName?: string;
   revision?: string;
   dtype?: DType;
