@@ -11,6 +11,9 @@ importers:
       '@types/node':
         specifier: ^22.10.2
         version: 22.19.1
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
       prettier:
         specifier: ^3.6.2
         version: 3.7.3

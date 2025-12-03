@@ -57,7 +57,7 @@ export class DefaultEmbeddingFunction implements IEmbeddingFunction {
     }
   }
 
-  async generate(texts: string[]): Promise<number[][]> {
+  async generate(texts: string | string[]): Promise<number[][]> {
     if (!this.pipe) {
       this.pipe = await pipeline("feature-extraction", this.modelName, {
         revision: this.revision,
