@@ -18,14 +18,14 @@ describe("JinaEmbeddingFunction", () => {
       expect(embedder.name).toBe("jina");
 
       const config = embedder.getConfig();
-      expect(config.model_name).toBe("jina-clip-v2");
-      expect(config.api_key_env_var).toBe("JINA_API_KEY");
+      expect(config.modelName).toBe("jina-clip-v2");
+      expect(config.apiKeyEnvVar).toBe("JINA_API_KEY");
       expect(config.task).toBeUndefined();
-      expect(config.late_chunking).toBeUndefined();
+      expect(config.lateChunking).toBeUndefined();
       expect(config.truncate).toBeUndefined();
       expect(config.dimensions).toBeUndefined();
       expect(config.normalized).toBeUndefined();
-      expect(config.embedding_type).toBeUndefined();
+      expect(config.embeddingType).toBeUndefined();
     });
   }
 
@@ -45,13 +45,13 @@ describe("JinaEmbeddingFunction", () => {
       });
 
       const config = embedder.getConfig();
-      expect(config.model_name).toBe("custom-model");
+      expect(config.modelName).toBe("custom-model");
       expect(config.task).toBe("custom-task");
-      expect(config.late_chunking).toBe(true);
+      expect(config.lateChunking).toBe(true);
       expect(config.truncate).toBe(true);
       expect(config.dimensions).toBe(256);
       expect(config.normalized).toBe(true);
-      expect(config.embedding_type).toBe("custom-type");
+      expect(config.embeddingType).toBe("custom-type");
     });
   }
 
@@ -78,7 +78,7 @@ describe("JinaEmbeddingFunction", () => {
         apiKeyEnvVar: "CUSTOM_JINA_API_KEY",
       });
 
-      expect(embedder.getConfig().api_key_env_var).toBe("CUSTOM_JINA_API_KEY");
+      expect(embedder.getConfig().apiKeyEnvVar).toBe("CUSTOM_JINA_API_KEY");
     } finally {
       delete process.env.CUSTOM_JINA_API_KEY;
     }

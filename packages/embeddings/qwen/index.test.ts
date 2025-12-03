@@ -1,60 +1,57 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { OpenAIEmbeddingFunction } from "./index";
+import { QwenEmbeddingFunction } from "./index";
 
-describe("OpenAIEmbeddingFunction", () => {
+describe("QwenEmbeddingFunction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  const MODEL = "text-embedding-3-small";
+  const MODEL = "text-embedding-v4";
 
   const defaultParametersTest = "should initialize with default parameters";
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.DASHSCOPE_API_KEY) {
     it.skip(defaultParametersTest, () => {});
   } else {
     it(defaultParametersTest, () => {
-      const embedder = new OpenAIEmbeddingFunction({ modelName: MODEL });
-      expect(embedder.name).toBe("openai");
+      const embedder = new QwenEmbeddingFunction();
+      expect(embedder.name).toBe("qwen");
 
       const config = embedder.getConfig();
       expect(config.modelName).toBe(MODEL);
-      expect(config.apiKeyEnvVar).toBe("OPENAI_API_KEY");
-      expect(config.dimensions).toBeUndefined();
-      expect(config.organizationId).toBeUndefined();
+      expect(config.apiKeyEnvVar).toBe("DASHSCOPE_API_KEY");
+      expect(config.dimensions).toBe(1024);
     });
   }
 
   const customParametersTest = "should initialize with custom parameters";
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.DASHSCOPE_API_KEY) {
     it.skip(customParametersTest, () => {});
   } else {
     it(customParametersTest, () => {
-      const embedder = new OpenAIEmbeddingFunction({
+      const embedder = new QwenEmbeddingFunction({
         modelName: "custom-model",
         dimensions: 2000,
-        apiKeyEnvVar: "OPENAI_API_KEY",
-        organizationId: "custom-organization-id",
+        apiKeyEnvVar: "DASHSCOPE_API_KEY",
       });
 
       const config = embedder.getConfig();
       expect(config.modelName).toBe("custom-model");
-      expect(config.organizationId).toBe("custom-organization-id");
       expect(config.dimensions).toBe(2000);
-      expect(config.apiKeyEnvVar).toBe("OPENAI_API_KEY");
+      expect(config.apiKeyEnvVar).toBe("DASHSCOPE_API_KEY");
     });
   }
 
   it("should initialize with custom error for a API key", () => {
-    const originalEnv = process.env.OPENAI_API_KEY;
-    delete process.env.OPENAI_API_KEY;
+    const originalEnv = process.env.DASHSCOPE_API_KEY;
+    delete process.env.DASHSCOPE_API_KEY;
 
     try {
       expect(() => {
-        new OpenAIEmbeddingFunction({ modelName: MODEL });
+        new QwenEmbeddingFunction();
       }).toThrow("OpenAI API Key is required");
     } finally {
       if (originalEnv) {
-        process.env.OPENAI_API_KEY = originalEnv;
+        process.env.DASHSCOPE_API_KEY = originalEnv;
       }
     }
   });
@@ -63,7 +60,7 @@ describe("OpenAIEmbeddingFunction", () => {
     process.env.CUSTOM_OPENAI_API_KEY = "test-api-key";
 
     try {
-      const embedder = new OpenAIEmbeddingFunction({
+      const embedder = new QwenEmbeddingFunction({
         modelName: MODEL,
         apiKeyEnvVar: "CUSTOM_OPENAI_API_KEY",
       });
@@ -75,18 +72,17 @@ describe("OpenAIEmbeddingFunction", () => {
   });
 
   const buildFromConfigTest = "should build from config";
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.DASHSCOPE_API_KEY) {
     it.skip(buildFromConfigTest, () => {});
   } else {
     it(buildFromConfigTest, () => {
       const config = {
-        apiKeyEnvVar: "OPENAI_API_KEY",
+        apiKeyEnvVar: "DASHSCOPE_API_KEY",
         modelName: "config-model",
         dimensions: 2000,
-        organizationId: "custom-organization-id",
       };
 
-      const embedder = new OpenAIEmbeddingFunction(config);
+      const embedder = new QwenEmbeddingFunction(config);
 
       expect(embedder.getConfig()).toEqual({
         ...config,
@@ -95,11 +91,11 @@ describe("OpenAIEmbeddingFunction", () => {
     });
 
     const generateEmbeddingsTest = "should generate embeddings";
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.DASHSCOPE_API_KEY) {
       it.skip(generateEmbeddingsTest, () => {});
     } else {
       it(generateEmbeddingsTest, async () => {
-        const embedder = new OpenAIEmbeddingFunction({ modelName: MODEL });
+        const embedder = new QwenEmbeddingFunction();
         const texts = ["Hello world", "Test text"];
         const embeddings = await embedder.generate(texts);
 

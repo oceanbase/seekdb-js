@@ -6,6 +6,9 @@ import {
 } from "seekdb-node-sdk";
 
 export interface OpenAIEmbeddingConfig extends EmbeddingConfig {
+  /**
+   * Defaults to 'text-embedding-3-small'.
+   */
   modelName?: string;
   /**
    * Defaults to process.env['OPENAI_API_KEY'].
@@ -20,18 +23,20 @@ export interface OpenAIEmbeddingConfig extends EmbeddingConfig {
    */
   organizationId?: string;
   dimensions?: number;
+  baseURL?: string;
 }
 
 const embeddingFunctionName = "openai";
 
 export class OpenAIEmbeddingFunction implements IEmbeddingFunction {
   readonly name: string = embeddingFunctionName;
-  private apiKey: string;
-  private modelName: string;
-  private dimensions: number | undefined;
-  private organizationId: string | undefined;
-  private client: OpenAI;
-  private apiKeyEnvVar: string;
+  protected apiKey: string;
+  protected modelName: string;
+  protected dimensions: number | undefined;
+  protected organizationId: string | undefined;
+  protected client: OpenAI;
+  protected apiKeyEnvVar: string;
+  protected baseURL: string | undefined;
 
   constructor(config: OpenAIEmbeddingConfig = {}) {
     this.apiKeyEnvVar = config?.apiKeyEnvVar || "OPENAI_API_KEY";
@@ -44,10 +49,12 @@ export class OpenAIEmbeddingFunction implements IEmbeddingFunction {
     this.modelName = config?.modelName || "text-embedding-3-small";
     this.dimensions = config?.dimensions;
     this.organizationId = config?.organizationId || process.env.OPENAI_ORG_ID;
+    this.baseURL = config?.baseURL;
 
     this.client = new OpenAI({
       apiKey: this.apiKey,
       organization: this.organizationId,
+      baseURL: this.baseURL,
     });
   }
 

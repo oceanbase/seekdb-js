@@ -61,6 +61,19 @@ importers:
         specifier: workspace:*
         version: link:../../seekdb
 
+  packages/embeddings/qwen:
+    dependencies:
+      openai:
+        specifier: ^6.9.1
+        version: 6.9.1
+    devDependencies:
+      '@seekdb/openai':
+        specifier: workspace:*
+        version: link:../openai
+      seekdb-node-sdk:
+        specifier: workspace:*
+        version: link:../../seekdb
+
   packages/examples:
     dependencies:
       '@seekdb/default-embed':

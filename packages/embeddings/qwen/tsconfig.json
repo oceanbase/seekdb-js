@@ -1,0 +1,12 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "paths": {
+      "seekdb-node-sdk": ["../../seekdb/src/index.ts"],
+      "@seekdb/openai": ["../openai/index.ts"]
+    }
+  },
+  "include": ["index.ts"]
+}

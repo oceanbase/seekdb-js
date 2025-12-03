@@ -456,6 +456,7 @@ export class Collection {
       whereDocument,
       include,
       distance,
+      approximate = true,
     } = options;
 
     // Handle embedding generation
@@ -501,6 +502,7 @@ export class Collection {
           whereDocument,
           include: include as string[] | undefined,
           distance: distance ?? this.distance,
+          approximate,
         },
       );
 

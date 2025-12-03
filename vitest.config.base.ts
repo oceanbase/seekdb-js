@@ -1,3 +1,12 @@
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+import { config } from "dotenv";
+
+// Load .env file from package directory or root directory
+config({
+  path: resolve(dirname(fileURLToPath(import.meta.url)), ".env"),
+});
+
 export default {
   test: {
     // use threads mode

@@ -11,11 +11,15 @@ config({
 });
 
 export default defineConfig({
-  ...vitestConfigBase,
+  test: {
+    ...vitestConfigBase.test,
+    testTimeout: 600000,
+  },
   resolve: {
     alias: {
       "seekdb-node-sdk": resolve(__dirname, "../../seekdb/src/index.ts"),
       "@seekdb/common": resolve(__dirname, "../common/index.ts"),
+      "@seekdb/openai": resolve(__dirname, "../openai/index.ts"),
     },
   },
 });

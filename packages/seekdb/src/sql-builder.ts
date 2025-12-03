@@ -322,10 +322,17 @@ export class SQLBuilder {
       whereDocument?: WhereDocument;
       include?: string[];
       distance?: DistanceMetric;
+      approximate?: boolean;
     },
   ): SQLResult {
     const tableName = CollectionNames.tableName(collectionName);
-    const { where, whereDocument, include, distance = "l2" } = options;
+    const {
+      where,
+      whereDocument,
+      include,
+      distance = "l2",
+      approximate = true,
+    } = options;
     const params: unknown[] = [];
 
     // Map distance metric to SQL function name
@@ -385,7 +392,7 @@ export class SQLBuilder {
       FROM \`${tableName}\`
       ${whereClause}
       ORDER BY ${distanceFunc}(${CollectionFieldNames.EMBEDDING}, '${vectorStr}')
-      APPROXIMATE
+      ${approximate ? "APPROXIMATE" : ""}
       LIMIT ?
     `.trim();
 

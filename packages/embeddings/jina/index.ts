@@ -4,17 +4,10 @@ import { toSnake } from "@seekdb/common";
 const name = "jina";
 
 export interface JinaConfig {
-  api_key_env_var: string;
-  model_name: string;
-  task?: string;
-  late_chunking?: boolean;
-  truncate?: boolean;
-  dimensions?: number;
-  normalized?: boolean;
-  embedding_type?: string;
-}
-
-export interface JinaArgs {
+  /**
+   * Defaults to 'JINA_API_KEY'
+   */
+  apiKeyEnvVar?: string;
   /**
    * Defaults to 'jina-clip-v2'.
    */
@@ -25,14 +18,13 @@ export interface JinaArgs {
   dimensions?: number;
   normalized?: boolean;
   embeddingType?: string;
+}
+
+export interface JinaArgs extends JinaConfig {
   /**
    * Defaults to process.env['JINA_API_KEY'].
    */
   apiKey?: string;
-  /**
-   * Defaults to 'JINA_API_KEY'
-   */
-  apiKeyEnvVar?: string;
 }
 
 interface JinaRequestBody extends JinaArgs {
@@ -49,12 +41,13 @@ export interface JinaEmbeddingsResponse {
   };
 }
 
+const url = "https://api.jina.ai/v1/embeddings";
+
 export class JinaEmbeddingFunction implements IEmbeddingFunction {
   public readonly name = name;
-
+  public readonly url = url;
   private readonly apiKeyEnvVar: string;
   private readonly modelName: string;
-  private readonly url: string;
   private readonly headers: { [key: string]: string };
   private readonly task: string | undefined;
   private readonly lateChunking: boolean | undefined;
@@ -64,35 +57,23 @@ export class JinaEmbeddingFunction implements IEmbeddingFunction {
   private readonly normalized: boolean | undefined;
 
   constructor(args: Partial<JinaArgs> = {}) {
-    const {
-      apiKeyEnvVar = "JINA_API_KEY",
-      modelName = "jina-clip-v2",
-      task,
-      lateChunking,
-      truncate,
-      dimensions,
-      normalized,
-      embeddingType,
-    } = args;
+    this.modelName = args.modelName || "jina-clip-v2";
+    this.apiKeyEnvVar = args.apiKeyEnvVar || "JINA_API_KEY";
+    this.task = args.task;
+    this.lateChunking = args.lateChunking;
+    this.truncate = args.truncate;
+    this.dimensions = args.dimensions;
+    this.normalized = args.normalized;
+    this.embeddingType = args.embeddingType;
 
-    const apiKey = args.apiKey || process.env[apiKeyEnvVar];
+    const apiKey = args.apiKey || process.env[this.apiKeyEnvVar];
 
     if (!apiKey) {
       throw new Error(
-        `Jina AI API key is required. Please provide it in the constructor or set the environment variable ${apiKeyEnvVar}.`,
+        `Jina AI API key is required. Please provide it in the constructor or set the environment variable ${this.apiKeyEnvVar}.`,
       );
     }
 
-    this.modelName = modelName;
-    this.apiKeyEnvVar = apiKeyEnvVar;
-    this.task = task;
-    this.lateChunking = lateChunking;
-    this.truncate = truncate;
-    this.dimensions = dimensions;
-    this.normalized = normalized;
-    this.embeddingType = embeddingType;
-
-    this.url = "https://api.jina.ai/v1/embeddings";
     this.headers = {
       Authorization: `Bearer ${apiKey}`,
       "Accept-Encoding": "identity",
@@ -133,13 +114,13 @@ export class JinaEmbeddingFunction implements IEmbeddingFunction {
 
   public getConfig(): JinaConfig {
     return {
-      api_key_env_var: this.apiKeyEnvVar,
-      model_name: this.modelName,
+      apiKeyEnvVar: this.apiKeyEnvVar,
+      modelName: this.modelName,
       task: this.task,
-      late_chunking: this.lateChunking,
+      lateChunking: this.lateChunking,
       truncate: this.truncate,
       dimensions: this.dimensions,
-      embedding_type: this.embeddingType,
+      embeddingType: this.embeddingType,
       normalized: this.normalized,
     };
   }
