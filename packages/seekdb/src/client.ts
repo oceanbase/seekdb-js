@@ -5,17 +5,12 @@
 
 import type { RowDataPacket } from "mysql2/promise";
 import { Collection } from "./collection.js";
-import { Connection } from "./connection.js";
+import { InternalClient } from "./internal-client.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekDBValueError, InvalidCollectionError } from "./errors.js";
 import { getEmbeddingFunction } from "./embedding-function.js";
 import {
   CollectionFieldNames,
-  DEFAULT_TENANT,
-  DEFAULT_DATABASE,
-  DEFAULT_PORT,
-  DEFAULT_USER,
-  DEFAULT_CHARSET,
   DEFAULT_DISTANCE_METRIC,
   DEFAULT_VECTOR_DIMENSION,
 } from "./utils.js";
@@ -30,54 +25,24 @@ import type {
  * SeekDB Client for remote server connections
  */
 export class SeekDBClient {
-  private readonly connectionManager: Connection;
-  private readonly tenant: string;
-  private readonly database: string;
+  private _internal: InternalClient;
 
   constructor(args: SeekDBClientArgs) {
-    const host = args.host;
-    const port = args.port ?? DEFAULT_PORT;
-    this.tenant = args.tenant ?? DEFAULT_TENANT;
-    this.database = args.database ?? DEFAULT_DATABASE;
-    const user = args.user ?? DEFAULT_USER;
-    const password = args.password ?? process.env.SEEKDB_PASSWORD ?? "";
-    const charset = args.charset ?? DEFAULT_CHARSET;
-
-    const fullUser = this.tenant ? `${user}@${this.tenant}` : user;
-
-    // Initialize connection manager
-    this.connectionManager = new Connection({
-      host,
-      port,
-      user: fullUser,
-      password,
-      database: this.database,
-      charset,
-    });
+    this._internal = new InternalClient(args);
   }
 
   /**
    * Check if connected
    */
   isConnected(): boolean {
-    return this.connectionManager.isConnected();
-  }
-
-  /**
-   * Execute SQL query
-   */
-  async execute(
-    sql: string,
-    params?: unknown[],
-  ): Promise<RowDataPacket[] | null> {
-    return this.connectionManager.execute(sql, params);
+    return this._internal.isConnected();
   }
 
   /**
    * Close connection
    */
   async close(): Promise<void> {
-    await this.connectionManager.close();
+    await this._internal.close();
   }
 
   // ==================== Collection Management ====================
@@ -133,14 +98,14 @@ export class SeekDBClient {
 
     // Create table using SQLBuilder
     const sql = SQLBuilder.buildCreateTable(name, dimension, distance);
-    await this.execute(sql);
+    await this._internal.execute(sql);
 
     return new Collection({
       name,
       dimension,
       distance,
       embeddingFunction: ef ?? undefined,
-      client: this,
+      client: this._internal,
     });
   }
 
@@ -152,7 +117,7 @@ export class SeekDBClient {
 
     // Check if collection exists
     const sql = SQLBuilder.buildShowTable(name);
-    const result = await this.execute(sql);
+    const result = await this._internal.execute(sql);
 
     if (!result || result.length === 0) {
       throw new InvalidCollectionError(`Collection not found: ${name}`);
@@ -160,7 +125,7 @@ export class SeekDBClient {
 
     // Get table schema to extract dimension and distance
     const descSql = SQLBuilder.buildDescribeTable(name);
-    const schema = await this.execute(descSql);
+    const schema = await this._internal.execute(descSql);
 
     if (!schema) {
       throw new InvalidCollectionError(
@@ -192,7 +157,7 @@ export class SeekDBClient {
     let distance: DistanceMetric = DEFAULT_DISTANCE_METRIC;
     try {
       const createTableSql = SQLBuilder.buildShowCreateTable(name);
-      const createTableResult = await this.execute(createTableSql);
+      const createTableResult = await this._internal.execute(createTableSql);
 
       if (createTableResult && createTableResult.length > 0) {
         const createStmt = (createTableResult[0] as any)["Create Table"] || "";
@@ -228,7 +193,7 @@ export class SeekDBClient {
       dimension,
       distance,
       embeddingFunction: ef ?? undefined,
-      client: this,
+      client: this._internal,
     });
   }
 
@@ -242,17 +207,17 @@ export class SeekDBClient {
     let result: RowDataPacket[] | null = null;
 
     try {
-      result = await this.execute(sql);
+      result = await this._internal.execute(sql);
     } catch (error) {
       // Fallback: try to query information_schema
       try {
         // Get current database name
-        const dbResult = await this.execute("SELECT DATABASE()");
+        const dbResult = await this._internal.execute("SELECT DATABASE()");
         if (dbResult && dbResult.length > 0) {
           const dbName =
             (dbResult[0] as any)["DATABASE()"] || Object.values(dbResult[0])[0];
           if (dbName) {
-            result = await this.execute(
+            result = await this._internal.execute(
               `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${prefix}%'`,
             );
           } else {
@@ -309,7 +274,7 @@ export class SeekDBClient {
       throw new Error(`Collection '${name}' does not exist`);
     }
     const sql = SQLBuilder.buildDropTable(name);
-    await this.execute(sql);
+    await this._internal.execute(sql);
   }
 
   /**
@@ -317,7 +282,7 @@ export class SeekDBClient {
    */
   async hasCollection(name: string): Promise<boolean> {
     const sql = SQLBuilder.buildShowTable(name);
-    const result = await this.execute(sql);
+    const result = await this._internal.execute(sql);
     return result !== null && result.length > 0;
   }
 

@@ -66,19 +66,20 @@ describe("DefaultEmbeddingFunction", () => {
       modelName: "test-model",
       revision: "test-revision",
       dtype: "fp32",
-      cache_dir: "/tmp/cache",
-      local_files_only: true,
-      progress_callback: progressCallback,
+      cacheDir: "/tmp/cache",
+      localFilesOnly: true,
+      progressCallback: progressCallback,
       remoteHost: "https://custom-host.com",
+      region: "cn",
     });
 
     const config = customEmbedder.getConfig();
     expect(config.modelName).toBe("test-model");
     expect(config.revision).toBe("test-revision");
     expect(config.dtype).toBe("fp32");
-    expect(config.cache_dir).toBe("/tmp/cache");
-    expect(config.local_files_only).toBe(true);
-    expect(config.progress_callback).toBe(progressCallback);
+    expect(config.cacheDir).toBe("/tmp/cache");
+    expect(config.localFilesOnly).toBe(true);
+    expect(config.progressCallback).toBe(progressCallback);
   });
 
   it("should generate embeddings with correct dimensions", async () => {
@@ -125,8 +126,8 @@ describe("DefaultEmbeddingFunction", () => {
       modelName: "test-model",
       revision: "v1.0",
       dtype: "fp16",
-      cache_dir: "/cache",
-      local_files_only: false,
+      cacheDir: "/cache",
+      localFilesOnly: false,
     });
 
     const config = embedder.getConfig();
@@ -134,9 +135,9 @@ describe("DefaultEmbeddingFunction", () => {
       modelName: "test-model",
       revision: "v1.0",
       dtype: "fp16",
-      cache_dir: "/cache",
-      local_files_only: false,
-      progress_callback: undefined,
+      cacheDir: "/cache",
+      localFilesOnly: false,
+      progressCallback: undefined,
     });
   });
 

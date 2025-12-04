@@ -2,8 +2,7 @@
  * Collection class - represents a collection of documents with vector embeddings
  */
 
-import type { RowDataPacket } from "mysql2/promise";
-import type { SeekDBClient } from "./client.js";
+import type { InternalClient } from "./internal-client.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekDBValueError } from "./errors.js";
 import { CollectionFieldNames } from "./utils.js";
@@ -29,7 +28,7 @@ export interface CollectionConfig {
   distance: DistanceMetric;
   embeddingFunction?: EmbeddingFunction;
   metadata?: Metadata;
-  client: SeekDBClient;
+  client: InternalClient;
 }
 
 /**
@@ -41,7 +40,7 @@ export class Collection {
   readonly distance: DistanceMetric;
   readonly embeddingFunction?: EmbeddingFunction;
   readonly metadata?: Metadata;
-  private readonly client: SeekDBClient;
+  #client: InternalClient;
 
   constructor(config: CollectionConfig) {
     this.name = config.name;
@@ -49,18 +48,7 @@ export class Collection {
     this.distance = config.distance;
     this.embeddingFunction = config.embeddingFunction;
     this.metadata = config.metadata;
-    this.client = config.client;
-  }
-
-  /**
-   * Execute SQL query via client
-   * @internal
-   */
-  private async execute(
-    sql: string,
-    params?: unknown[],
-  ): Promise<RowDataPacket[] | null> {
-    return (this.client as any).execute(sql, params);
+    this.#client = config.client;
   }
 
   /**
@@ -176,7 +164,7 @@ export class Collection {
       metadatas: metadatasArray ?? undefined,
     });
 
-    await this.execute(sql, params);
+    await this.#client.execute(sql, params);
   }
 
   /**
@@ -251,7 +239,7 @@ export class Collection {
       }
 
       const { sql, params } = SQLBuilder.buildUpdate(this.name, id, updates);
-      await this.execute(sql, params);
+      await this.#client.execute(sql, params);
     }
   }
 
@@ -329,7 +317,7 @@ export class Collection {
             id,
             updates,
           );
-          await this.execute(sql, params);
+          await this.#client.execute(sql, params);
         }
       } else {
         // Insert new record using add method
@@ -363,7 +351,7 @@ export class Collection {
       whereDocument,
     });
 
-    await this.execute(sql, params);
+    await this.#client.execute(sql, params);
   }
 
   /**
@@ -395,7 +383,7 @@ export class Collection {
       include: include as string[] | undefined,
     });
 
-    const rows = await this.execute(sql, params);
+    const rows = await this.#client.execute(sql, params);
 
     // Use mutable arrays internally, then return as readonly
     const resultIds: string[] = [];
@@ -506,7 +494,7 @@ export class Collection {
         },
       );
 
-      const rows = await this.execute(sql, params);
+      const rows = await this.#client.execute(sql, params);
 
       const queryIds: string[] = [];
       const queryDocuments: (string | null)[] = [];
@@ -718,11 +706,11 @@ export class Collection {
     // Set search_parm variable
     const { sql: setVarSql, params: setVarParams } =
       SQLBuilder.buildSetVariable("search_parm", searchParmJson);
-    await this.execute(setVarSql, setVarParams);
+    await this.#client.execute(setVarSql, setVarParams);
 
     // Get SQL query from DBMS_HYBRID_SEARCH.GET_SQL
     const getSqlQuery = SQLBuilder.buildHybridSearchGetSql(tableName);
-    const getSqlResult = await this.execute(getSqlQuery);
+    const getSqlResult = await this.#client.execute(getSqlQuery);
 
     if (
       !getSqlResult ||
@@ -746,7 +734,7 @@ export class Collection {
     // Security check: Validate the SQL query before execution
     this.validateDynamicSql(querySql);
 
-    const resultRows = await this.execute(querySql);
+    const resultRows = await this.#client.execute(querySql);
 
     // Transform results
     const ids: string[] = [];
@@ -969,7 +957,7 @@ export class Collection {
    */
   async count(): Promise<number> {
     const sql = SQLBuilder.buildCount(this.name);
-    const rows = await this.execute(sql);
+    const rows = await this.#client.execute(sql);
     if (!rows || rows.length === 0) return 0;
     return rows[0].cnt;
   }

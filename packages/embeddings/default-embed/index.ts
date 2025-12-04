@@ -5,9 +5,6 @@ import {
 } from "seekdb-node-sdk";
 import { pipeline, env } from "@huggingface/transformers";
 
-// Set environment variable for HF mirror if needed
-env.remoteHost = process.env.HF_ENDPOINT || "https://hf-mirror.com";
-
 export type DType =
   | "auto"
   | "fp32"
@@ -27,11 +24,23 @@ export interface DefaultEmbeddingFunctionConfig extends EmbeddingConfig {
   modelName?: string;
   revision?: string;
   dtype?: DType;
-  cache_dir?: string;
-  local_files_only?: boolean;
-  progress_callback?: (data: any) => void;
+  cacheDir?: string;
+  localFilesOnly?: boolean;
+  progressCallback?: (data: any) => void;
+  /**
+   * Defaults to 'https://hf-mirror.com'.
+   */
   remoteHost?: string;
+  /**
+   * Defaults to 'cn'.
+   */
+  region?: "cn" | "intl";
 }
+
+const remoteUrls = {
+  cn: "https://hf-mirror.com",
+  intl: "https://huggingface.co",
+};
 
 export class DefaultEmbeddingFunction implements IEmbeddingFunction {
   readonly name: string = embeddingFunctionName;
@@ -41,20 +50,21 @@ export class DefaultEmbeddingFunction implements IEmbeddingFunction {
   // Configuration properties
   private revision?: string;
   private dtype?: DType;
-  private cache_dir?: string;
-  private local_files_only?: boolean;
-  private progress_callback?: (data: any) => void;
+  private cacheDir?: string;
+  private localFilesOnly?: boolean;
+  private progressCallback?: (data: any) => void;
 
   constructor(config: DefaultEmbeddingFunctionConfig = {}) {
     this.modelName = config.modelName || "Xenova/all-MiniLM-L6-v2";
     this.revision = config.revision;
     this.dtype = config.dtype;
-    this.cache_dir = config.cache_dir;
-    this.local_files_only = config.local_files_only;
-    this.progress_callback = config.progress_callback;
-    if (config.remoteHost) {
-      env.remoteHost = config.remoteHost;
-    }
+    this.cacheDir = config.cacheDir;
+    this.localFilesOnly = config.localFilesOnly;
+    this.progressCallback = config.progressCallback;
+    env.remoteHost =
+      config.remoteHost ||
+      process.env.HF_ENDPOINT ||
+      remoteUrls[config.region || "cn"];
   }
 
   async generate(texts: string | string[]): Promise<number[][]> {
@@ -62,9 +72,9 @@ export class DefaultEmbeddingFunction implements IEmbeddingFunction {
       this.pipe = await pipeline("feature-extraction", this.modelName, {
         revision: this.revision,
         dtype: this.dtype,
-        cache_dir: this.cache_dir,
-        local_files_only: this.local_files_only,
-        progress_callback: this.progress_callback,
+        cache_dir: this.cacheDir,
+        local_files_only: this.localFilesOnly,
+        progress_callback: this.progressCallback,
       });
     }
     const inputs = Array.isArray(texts) ? texts : [texts];
@@ -81,9 +91,9 @@ export class DefaultEmbeddingFunction implements IEmbeddingFunction {
       modelName: this.modelName,
       revision: this.revision,
       dtype: this.dtype,
-      cache_dir: this.cache_dir,
-      local_files_only: this.local_files_only,
-      progress_callback: this.progress_callback,
+      cacheDir: this.cacheDir,
+      localFilesOnly: this.localFilesOnly,
+      progressCallback: this.progressCallback,
     };
   }
 

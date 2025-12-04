@@ -34,7 +34,7 @@ async function main() {
   // ============================================================================
 
   const collectionName = "comprehensive_example";
-  const dimension = 128;
+  const dimension = 384;
 
   // 2.1 Create a collection
   const collection = await client.getOrCreateCollection({
@@ -398,7 +398,6 @@ async function main() {
   // PART 11: CLEANUP
   // ============================================================================
 
-  await client.deleteCollection("another_collection");
   await client.deleteCollection(collectionName);
 
   console.log("Cleanup complete");

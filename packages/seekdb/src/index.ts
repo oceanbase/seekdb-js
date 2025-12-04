@@ -3,9 +3,9 @@
  */
 
 export { SeekDBClient } from "./client.js";
-export { SeekDBAdminClient, AdminClient } from "./admin-client.js";
+export { SeekDBAdminClient } from "./admin-client.js";
+export { InternalClient } from "./internal-client.js";
 export { Collection } from "./collection.js";
-export { FilterBuilder } from "./filters.js";
 export { Database } from "./database.js";
 export {
   registerEmbeddingFunction,

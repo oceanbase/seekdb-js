@@ -1,60 +1,28 @@
-import type { RowDataPacket } from "mysql2/promise";
-import { Connection } from "./connection.js";
 import { SeekDBValueError } from "./errors.js";
-import {
-  DEFAULT_TENANT,
-  DEFAULT_PORT,
-  DEFAULT_USER,
-  DEFAULT_CHARSET,
-} from "./utils.js";
+import { DEFAULT_TENANT } from "./utils.js";
 import type { SeekDBAdminClientArgs } from "./types.js";
 import { Database } from "./database.js";
-
-export function AdminClient(args: SeekDBAdminClientArgs): SeekDBAdminClient {
-  return new SeekDBAdminClient(args);
-}
+import { InternalClient } from "./internal-client.js";
 
 export class SeekDBAdminClient {
-  private readonly connectionManager: Connection;
+  private _internal: InternalClient;
   private readonly tenant: string;
 
   constructor(args: SeekDBAdminClientArgs) {
-    const host = args.host;
-    const port = args.port ?? DEFAULT_PORT;
     this.tenant = args.tenant ?? DEFAULT_TENANT;
-    const user = args.user ?? DEFAULT_USER;
-    const password = args.password ?? process.env.SEEKDB_PASSWORD ?? "";
-    const charset = args.charset ?? DEFAULT_CHARSET;
-
-    const fullUser = this.tenant ? `${user}@${this.tenant}` : user;
-
     // Initialize connection manager (no database specified for admin client)
-    this.connectionManager = new Connection({
-      host,
-      port,
-      user: fullUser,
-      password,
-      charset,
-    });
-  }
-
-  isConnected(): boolean {
-    return this.connectionManager.isConnected();
-  }
-
-  async close(): Promise<void> {
-    await this.connectionManager.close();
+    this._internal = new InternalClient(args);
   }
 
   /**
-   * Execute SQL query
-   * @internal
+   * Check if connected
    */
-  private async execute(
-    sql: string,
-    params?: unknown[],
-  ): Promise<RowDataPacket[] | null> {
-    return this.connectionManager.execute(sql, params);
+  isConnected(): boolean {
+    return this._internal.isConnected();
+  }
+
+  async close(): Promise<void> {
+    await this._internal.close();
   }
 
   async createDatabase(
@@ -70,7 +38,7 @@ export class SeekDBAdminClient {
     }
 
     const sql = `CREATE DATABASE IF NOT EXISTS \`${name}\``;
-    await this.execute(sql);
+    await this._internal.execute(sql);
   }
 
   async getDatabase(
@@ -86,7 +54,7 @@ export class SeekDBAdminClient {
     }
 
     const sql = `SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?`;
-    const rows = await this.execute(sql, [name]);
+    const rows = await this._internal.execute(sql, [name]);
 
     if (!rows || rows.length === 0) {
       throw new SeekDBValueError(`Database not found: ${name}`);
@@ -114,7 +82,7 @@ export class SeekDBAdminClient {
     }
 
     const sql = `DROP DATABASE IF EXISTS \`${name}\``;
-    await this.execute(sql);
+    await this._internal.execute(sql);
   }
 
   async listDatabases(
@@ -152,7 +120,7 @@ export class SeekDBAdminClient {
       }
     }
 
-    const rows = await this.execute(sql, params);
+    const rows = await this._internal.execute(sql, params);
 
     const databases: Database[] = [];
     if (rows) {
