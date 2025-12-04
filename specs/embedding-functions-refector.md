@@ -5,7 +5,7 @@
 采用 Monorepo 结构，核心逻辑位于 `seekdb` 包中，具体的 Embedding 实现作为独立的包存在于 `packages/embeddings/` 目录下。
 
 ```text
-seekdb-node-sdk/
+seekdb-js/
 ├── packages/
 │   ├── seekdb/                # SDK 主包
 │   │   ├── src/
@@ -108,7 +108,7 @@ export async function getEmbeddingFunction(
 位于 `packages/embeddings/default/index.ts`。
 
 ```typescript
-import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb-node-sdk";
+import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb-js";
 
 const embeddingFunctionName = "default";
 
@@ -126,7 +126,7 @@ registerEmbeddingFunction(embeddingFunctionName, DefaultEmbeddingFunction);
 位于 `packages/embeddings/openai/index.ts`。
 
 ```typescript
-import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb-node-sdk";
+import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb-js";
 
 const embeddingFunctionName = "embedding-openai";
 
@@ -147,7 +147,7 @@ registerEmbeddingFunction(embeddingFunctionName, OpenAIEmbeddingFunction);
 
 ```typescript
 import { OpenAIEmbeddingFunction } from "@seekdb/embedding-openai";
-import { Client } from "seekdb-node-sdk";
+import { Client } from "seekdb-js";
 
 // 1. 用户显式实例化
 const openaiEf = new OpenAIEmbeddingFunction({ apiKey: "sk-..." });

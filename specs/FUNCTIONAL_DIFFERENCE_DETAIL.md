@@ -1,7 +1,7 @@
 好的，我们从客户端初始化开始。
 
 相关的核心文件是：
--   Node SDK: `/Users/raindrop/Documents/workspaces/SeekDB-Node-SDK/src/client.ts`
+-   Node SDK: `/Users/raindrop/Documents/workspaces/seekdb-js/src/client.ts`
 -   Python SDK: `/Users/raindrop/Documents/workspaces/pyseekdb/src/pyseekdb/client/client_seekdb_server.py` (以及其基类 `client_base.py`)
 
 我将读取这几个文件的内容，然后为你分析和对比它们在客户端初始化方面的异同。
@@ -102,7 +102,7 @@ export class SeekDBClient {
 
 ### 2. 主要差异分析
 
-| 特性 | SeekDB-Node-SDK | pyseekdb | 差异分析 |
+| 特性 | seekdb-js | pyseekdb | 差异分析 |
 | :--- | :--- | :--- | :--- |
 | **参数传递** | 通过一个 `args` 对象 (`SeekDBClientArgs`) 传入所有参数。 | 直接通过命名参数传入，支持 `**kwargs` 透传给底层驱动。 | Node SDK 采用对象传参，更利于参数的管理和扩展。Python SDK 更符合 Python 开发者习惯，且 `**kwargs` 提供了灵活性。 |
 | **连接时机** | **立即连接**。在构造函数中直接创建了 `Connection` 实例，该实例会尝试建立连接池。 | **惰性连接 (Lazy Loading)**。`__init__` 只保存配置，在第一次执行 `execute` 时才通过 `_ensure_connection` 真正建立连接。 | 这是一个核心设计差异。Node SDK 的 "fail-fast" 模式会在初始化时就暴露连接问题。Python SDK 的惰性连接则更节省资源，只在需要时连接。 |
@@ -132,7 +132,7 @@ export class SeekDBClient {
 这部分功能主要包括 `createCollection`、`getCollection`、`deleteCollection` 和 `listCollections` 等。
 
 核心文件：
--   Node SDK: `/Users/raindrop/Documents/workspaces/SeekDB-Node-SDK/src/client.ts`
+-   Node SDK: `/Users/raindrop/Documents/workspaces/seekdb-js/src/client.ts`
 -   Python SDK: `/Users/raindrop/Documents/workspaces/pyseekdb/src/pyseekdb/client/client_base.py` (主要逻辑在这里) 和 `/Users/raindrop/Documents/workspaces/pyseekdb/src/pyseekdb/client/collection.py`
 
 我将重点阅读 `client.ts` 中关于集合管理的方法，并与 `client_base.py` 中对应的实现进行比较。Python SDK 的 `RemoteServerClient` 在这部分直接继承了 `BaseClient` 的实现，所以我们关注基类即可。
@@ -143,11 +143,11 @@ export class SeekDBClient {
 
 好的，我们来深入对比**集合管理 (Collection Management)** 的实现。
 
-我已经分析了 `SeekDB-Node-SDK/src/client.ts` 和 `pyseekdb/src/pyseekdb/client/client_base.py` 中关于集合管理的代码。
+我已经分析了 `seekdb-js/src/client.ts` 和 `pyseekdb/src/pyseekdb/client/client_base.py` 中关于集合管理的代码。
 
 ### 1. 核心方法对比
 
-| 方法 | SeekDB-Node-SDK (`client.ts`) | pyseekdb (`client_base.py`) |
+| 方法 | seekdb-js (`client.ts`) | pyseekdb (`client_base.py`) |
 | :--- | :--- | :--- |
 | **创建集合** | `createCollection` | `create_collection` |
 | **获取集合** | `getCollection` | `get_collection` |
@@ -224,7 +224,7 @@ export class SeekDBClient {
 
 ### **`create_collection` 对比分析**
 
-| 特性 | SeekDB-Node-SDK | pyseekdb | 差异分析 |
+| 特性 | seekdb-js | pyseekdb | 差异分析 |
 | :--- | :--- | :--- | :--- |
 | **参数推断** | 逻辑非常相似：1. 如果都没提供，使用默认 embedding function 推断维度。2. 如果只提供了 embedding function，用它推断维度。3. 如果都提供了，校验两者维度是否匹配。 | 几乎完全相同的逻辑。这表明两个SDK在这方面的设计意图是一致的。 | 功能对齐得很好。 |
 | **SQL 构建** | 使用 `SQLBuilder.buildCreateTable()` 方法构建 SQL。逻辑封装在 `sql-builder.ts` 中。 | **直接在方法内通过 f-string 拼接 SQL**。 | **这是一个关键架构差异**。Node SDK 将 SQL 构建逻辑抽象出来，更符合关注点分离原则，易于维护和测试。Python SDK 的实现方式更直接，但在未来如果 SQL 逻辑变复杂，可能会变得难以管理。 |
@@ -329,7 +329,7 @@ export class SeekDBClient {
 
 ### **`get_collection` 对比分析**
 
-| 特性 | SeekDB-Node-SDK | pyseekdb | 差异分析 |
+| 特性 | seekdb-js | pyseekdb | 差异分析 |
 | :--- | :--- | :--- | :--- |
 | **存在性检查** | `SHOW TABLES LIKE ...` | `DESCRIBE ...` | 两者都有效。`DESCRIBE` 失败时会抛出异常，Python SDK 捕获了这个异常来判断表是否存在，逻辑更严谨一些。 |
 | **维度提取** | `DESCRIBE` 表，然后用正则表达式匹配 `VECTOR(d)`。 | 完全相同。 | 功能一致。 |
@@ -354,7 +354,7 @@ export class SeekDBClient {
 `AdminClient` 主要负责一些管理类的操作，比如数据库（Database）的创建和删除，这些操作通常需要更高的权限。
 
 核心文件：
-*   Node SDK: `/Users/raindrop/Documents/workspaces/SeekDB-Node-SDK/src/admin-client.ts`
+*   Node SDK: `/Users/raindrop/Documents/workspaces/seekdb-js/src/admin-client.ts`
 *   Python SDK: `/Users/raindrop/Documents/workspaces/pyseekdb/src/pyseekdb/client/admin_client.py`
 
 我将读取这两个文件，并比较它们在功能、实现方式和设计上的异同。
@@ -439,7 +439,7 @@ class _AdminClientProxy(AdminAPI):
 
 ### 2. 功能实现对比
 
-| 功能 | SeekDB-Node-SDK (`admin-client.ts`) | pyseekdb (`client_seekdb_server.py`) | 差异分析 |
+| 功能 | seekdb-js (`admin-client.ts`) | pyseekdb (`client_seekdb_server.py`) | 差异分析 |
 | :--- | :--- | :--- | :--- |
 | **创建数据库** | `CREATE DATABASE IF NOT EXISTS \`${name}\`` | `CREATE DATABASE IF NOT EXISTS \`${name}\`` | SQL 语句完全一致。 |
 | **获取数据库** | `SELECT ... FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${name}'` | `SELECT ... FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '{name}'` | SQL 查询逻辑完全一致。 |
@@ -449,7 +449,7 @@ class _AdminClientProxy(AdminAPI):
 
 ### 3. 核心差异总结
 
-| 特性 | SeekDB-Node-SDK | pyseekdb |
+| 特性 | seekdb-js | pyseekdb |
 | :--- | :--- | :--- |
 | **架构** | **独立、自包含的 `AdminClient` 类** | **代理模式**，`AdminClient` 是一个轻量级代理，实际逻辑在 `BaseClient` 的具体实现中。 |
 | **代码复用**| `Connection` 类被 `SeekDBClient` 和 `SeekDBAdminClient` 分别实例化和使用。 | `RemoteServerClient` **同时实现了** Collection 操作和 Database 操作的逻辑，`AdminClient` 只是一个API的“视图”或“代理”，复用了底层的连接和 `execute` 方法。 |
@@ -479,8 +479,8 @@ Node SDK 的实现方式更直接，`AdminClient` 和 `Client` 是两个完全�
 
 相关的核心文件：
 *   **Node SDK**:
-    *   `/Users/raindrop/Documents/workspaces/SeekDB-Node-SDK/src/collection.ts` (DML 方法的实现)
-    *   `/Users/raindrop/Documents/workspaces/SeekDB-Node-SDK/src/sql-builder.ts` (SQL 构建逻辑)
+    *   `/Users/raindrop/Documents/workspaces/seekdb-js/src/collection.ts` (DML 方法的实现)
+    *   `/Users/raindrop/Documents/workspaces/seekdb-js/src/sql-builder.ts` (SQL 构建逻辑)
 *   **Python SDK**:
     *   `/Users/raindrop/Documents/workspaces/pyseekdb/src/pyseekdb/client/collection.py` (API 定义)
     *   `/Users/raindrop/Documents/workspaces/pyseekdb/src/pyseekdb/client/client_base.py` (DML 方法的实现)
@@ -548,7 +548,7 @@ Node SDK 的实现方式更直接，`AdminClient` 和 `Client` 是两个完全�
 
 #### **`add` 对比分析**
 
-| 特性 | SeekDB-Node-SDK | pyseekdb | 差异分析 |
+| 特性 | seekdb-js | pyseekdb | 差异分析 |
 | :--- | :--- | :--- | :--- |
 | **逻辑位置** | `Collection` 类中 | `BaseClient` 类中 (`_collection_add`) | 架构不同，Node SDK 更像 ORM 模式，对象自身负责持久化；Python SDK 中对象只是数据的载体，由 Client 负责持久化。 |
 | **批量插入** | **是**。`SQLBuilder` 将所有待插入的数据拼接成一个单一的 `INSERT INTO ... VALUES (...), (...), ...` 语句。 | **是**。在 `_collection_add` 方法的后半部分（我没有展示出来，但已经分析过），同样是将所有数据拼接成一个大的 `INSERT` 语句。 | 两者都采用了高效的批量插入方式，这是一个很好的共同点。 |
@@ -645,7 +645,7 @@ Python SDK 在 `_collection_update` 方法中采用了类似的**循环**策略�
 **分析**: Python SDK 使用了数据库原生的 `INSERT ... ON DUPLICATE KEY UPDATE` 语法。这是一个**原子操作**，并且是**单一的 SQL 语句**，将所有 upsert 操作一次性提交给数据库。
 
 #### **`upsert` 对比分析**
-| 特性 | SeekDB-Node-SDK | pyseekdb | 差异分析 |
+| 特性 | seekdb-js | pyseekdb | 差异分析 |
 | :--- | :--- | :--- | :--- |
 | **实现方式** | 循环 + 先 `SELECT` 后 `INSERT`/`UPDATE` | 单一的 `INSERT ... ON DUPLICATE KEY UPDATE` 语句 | **Python SDK 的实现效率远高于 Node SDK**。它利用了数据库的原子性保证了数据一致性，并且通过单条 SQL 完成了批量操作，网络开销和数据库负载都小得多。 |
 | **性能** | 低 (2N+ 次数据库交互) | 高 (1 次数据库交互) | 这是一个**重大的功能和性能差异**。 |
@@ -670,8 +670,8 @@ Python SDK 在 `_collection_update` 方法中采用了类似的**循环**策略�
 
 核心文件：
 *   **Node SDK**:
-    *   `/Users/raindrop/Documents/workspaces/SeekDB-Node-SDK/src/filters.ts`
-    *   `/Users/raindrop/Documents/workspaces/SeekDB-Node-SDK/src/sql-builder.ts`
+    *   `/Users/raindrop/Documents/workspaces/seekdb-js/src/filters.ts`
+    *   `/Users/raindrop/Documents/workspaces/seekdb-js/src/sql-builder.ts`
 *   **Python SDK**:
     *   `/Users/raindrop/Documents/workspaces/pyseekdb/src/pyseekdb/client/filters.py`
     *   `/Users/raindrop/Documents/workspaces/pyseekdb/src/pyseekdb/client/client_base.py` (包含部分SQL构建逻辑)
@@ -685,7 +685,7 @@ Python SDK 在 `_collection_update` 方法中采用了类似的**循环**策略�
 
 ### 1. 整体架构对比
 
-| 模块 | SeekDB-Node-SDK | pyseekdb | 差异分析 |
+| 模块 | seekdb-js | pyseekdb | 差异分析 |
 | :--- | :--- | :--- | :--- |
 | **过滤器逻辑** | `src/filters.ts` | `src/pyseekdb/client/filters.py` | 两个 SDK 都将过滤器解析逻辑**高度封装**在 `FilterBuilder` 类中，这是一种非常好的实践，实现了关注点分离。 |
 | **SQL 构建** | `src/sql-builder.ts` | 主要在 `client_base.py` 中通过 f-string 拼接，少量辅助在 `sql_utils.py`。 | **Node SDK 架构更优**。它有一个**中心化的 `SQLBuilder`**，负责所有 SQL 语句的构建。而 Python SDK 的 SQL 构建逻辑分散在各个方法中，不够集中。 |
@@ -801,7 +801,7 @@ Python SDK 则是在 `_collection_get` 或 `_collection_query` 等方法内部�
 这部分定义了如何将文本文档转换为向量嵌入，是整个向量数据库SDK的核心能力之一。
 
 核心文件：
-*   **Node SDK**: `/Users/raindrop/Documents/workspaces/SeekDB-Node-SDK/src/embedding-function.ts`
+*   **Node SDK**: `/Users/raindrop/Documents/workspaces/seekdb-js/src/embedding-function.ts`
 *   **Python SDK**: `/Users/raindrop/Documents/workspaces/pyseekdb/src/pyseekdb/client/embedding_function.py`
 
 我将读取这两个文件，对比它们的接口设计、默认实现以及与SDK其他部分的集成方式。
@@ -905,7 +905,7 @@ class DefaultEmbeddingFunction:
 
 ### 3. 对比分析与总结
 
-| 特性 | SeekDB-Node-SDK | pyseekdb | 差异分析 |
+| 特性 | seekdb-js | pyseekdb | 差异分析 |
 | :--- | :--- | :--- | :--- |
 | **底层技术** | **Transformers.js (`@xenova/transformers`)** | **ONNX Runtime + 手动实现** | Node SDK 站在了巨人的肩膀上，实现简洁。Python SDK 则是从零开始构建了整个推理流程。 |
 | **实现难度**| **低** | **非常高** | Python SDK 的实现展示了对 NLP 模型推理流程的深入理解，但同时也引入了大量的维护成本和潜在的 bug。 |

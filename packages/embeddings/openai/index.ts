@@ -3,7 +3,7 @@ import {
   IEmbeddingFunction,
   registerEmbeddingFunction,
   EmbeddingConfig,
-} from "seekdb-node-sdk";
+} from "seekdb-js";
 
 export interface OpenAIEmbeddingConfig extends EmbeddingConfig {
   /**

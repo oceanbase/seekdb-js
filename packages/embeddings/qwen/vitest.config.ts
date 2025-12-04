@@ -17,7 +17,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "seekdb-node-sdk": resolve(__dirname, "../../seekdb/src/index.ts"),
+      "seekdb-js": resolve(__dirname, "../../seekdb/src/index.ts"),
       "@seekdb/common": resolve(__dirname, "../common/index.ts"),
       "@seekdb/openai": resolve(__dirname, "../openai/index.ts"),
     },

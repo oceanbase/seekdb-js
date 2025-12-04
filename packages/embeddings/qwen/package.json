@@ -18,11 +18,11 @@
     "test": "vitest"
   },
   "peerDependencies": {
-    "seekdb-node-sdk": "workspace:*",
+    "seekdb-js": "workspace:*",
     "@seekdb/openai": "workspace:*"
   },
   "devDependencies": {
-    "seekdb-node-sdk": "workspace:*",
+    "seekdb-js": "workspace:*",
     "@seekdb/openai": "workspace:*"
   },
   "dependencies": {

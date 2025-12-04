@@ -9,7 +9,7 @@ export default defineConfig({
   ...vitestConfigBase,
   resolve: {
     alias: {
-      "seekdb-node-sdk": resolve(__dirname, "./src/index.ts"),
+      "seekdb-js": resolve(__dirname, "./src/index.ts"),
       "@seekdb/default-embed": resolve(
         __dirname,
         "../embeddings/default-embed/index.ts",

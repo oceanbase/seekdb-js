@@ -2,7 +2,7 @@ import {
   IEmbeddingFunction,
   registerEmbeddingFunction,
   EmbeddingConfig,
-} from "seekdb-node-sdk";
+} from "seekdb-js";
 import { pipeline, env } from "@huggingface/transformers";
 
 export type DType =

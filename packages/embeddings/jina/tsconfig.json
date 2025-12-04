@@ -4,7 +4,7 @@
     "outDir": "dist",
     "rootDir": ".",
     "paths": {
-      "seekdb-node-sdk": ["../../seekdb/src/index.ts"],
+      "seekdb-js": ["../../seekdb/src/index.ts"],
       "@seekdb/common": ["../common/index.ts"]
     }
   },

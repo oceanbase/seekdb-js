@@ -1,5 +1,5 @@
 {
-  "name": "seekdb-node-sdk",
+  "name": "seekdb-js",
   "version": "0.0.1",
   "description": "A unified Node.js client for SeekDB that supports Server mode and OceanBase mode",
   "type": "module",
@@ -26,7 +26,7 @@
     "prettier": "prettier --write ."
   },
   "keywords": [
-    "seekdb-node-sdk",
+    "seekdb-js",
     "vector-database",
     "embeddings",
     "similarity-search",
