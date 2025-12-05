@@ -1,28 +1,32 @@
 {
+  "files": [],
+  "references": [
+    { "path": "./packages/seekdb" },
+    { "path": "./packages/embeddings/default-embed" },
+    { "path": "./packages/embeddings/openai" },
+    { "path": "./packages/embeddings/jina" },
+    { "path": "./packages/embeddings/common" }
+  ],
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "lib": ["ES2022"],
-    "types": ["node"],
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "checkJs": false,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2020"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "composite": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+    "baseUrl": ".",
+    "paths": {
+      "seekdb-js": ["packages/seekdb/src/index.ts"],
+      "@seekdb/default-embed": ["packages/embeddings/defualt-embed/index.ts"],
+      "@seekdb/openai": ["packages/embeddings/openai/index.ts"],
+      "@seekdb/jina": ["packages/embeddings/jina/index.ts"],
+      "@seekdb/common": ["packages/embeddings/common/index.ts"]
+    }
+  }
 }

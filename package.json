@@ -1,47 +1,27 @@
 {
-  "name": "seekdb-node-sdk",
-  "version": "0.1.0",
-  "description": "A unified Node.js client for SeekDB that supports Server mode and OceanBase mode",
-  "main": "./dist/cjs/index.cjs",
-  "module": "./dist/esm/index.mjs",
-  "types": "./dist/types/index.d.ts",
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/esm/index.mjs"
-      },
-      "require": {
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/cjs/index.cjs"
-      }
-    }
-  },
+  "name": "seekdb-monorepo-root",
+  "private": true,
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "vitest",
-    "type-check": "tsc --noEmit"
-  },
-  "keywords": [
-    "seekdb",
-    "vector-database",
-    "embeddings",
-    "similarity-search",
-    "hybrid-search"
-  ],
-  "author": "OceanBase",
-  "license": "Apache-2.0",
-  "engines": {
-    "node": ">=20"
-  },
-  "dependencies": {
-    "mysql2": "^3.11.5"
+    "build": "pnpm --filter seekdb-js run build && pnpm --filter '@seekdb/*' run build",
+    "build:seekdb": "pnpm --filter seekdb-js run build",
+    "build:embeddings": "pnpm --filter '@seekdb/*' run build",
+    "test": "pnpm  --filter seekdb-js run test",
+    "lint": "pnpm -r run lint",
+    "type-check": "pnpm -r run type-check",
+    "prettier": "prettier --write ."
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@types/node": "^22.10.2",
+    "dotenv": "^16.6.1",
+    "prettier": "^3.6.2",
     "tsup": "^8.3.5",
+    "tsx": "^4.20.6",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   }
 }

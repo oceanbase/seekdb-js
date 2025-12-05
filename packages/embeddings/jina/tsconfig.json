@@ -1,0 +1,12 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "paths": {
+      "seekdb-js": ["../../seekdb/src/index.ts"],
+      "@seekdb/common": ["../common/index.ts"]
+    }
+  },
+  "include": ["index.ts"]
+}

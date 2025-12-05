@@ -1,0 +1,33 @@
+{
+  "name": "@seekdb/openai",
+  "version": "1.0.0-alpha.0",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest"
+  },
+  "peerDependencies": {
+    "seekdb-js": "workspace:*"
+  },
+  "devDependencies": {
+    "seekdb-js": "workspace:*"
+  },
+  "dependencies": {
+    "openai": "^6.9.1"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  }
+}
