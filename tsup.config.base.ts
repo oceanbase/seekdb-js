@@ -3,7 +3,7 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   format: ["cjs", "esm"],
   splitting: false,
-  sourcemap: true,
+  sourcemap: false,
   clean: true,
   outDir: "dist",
   dts: {

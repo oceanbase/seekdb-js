@@ -17,6 +17,9 @@
     "dev": "tsup --watch",
     "test": "vitest"
   },
+  "files": [
+    "dist"
+  ],
   "peerDependencies": {
     "seekdb": "workspace:*"
   },
