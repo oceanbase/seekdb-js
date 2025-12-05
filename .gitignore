@@ -10,3 +10,4 @@ coverage/
 pyseekdb-code
 pyseekdb-docs
 .node
+packages/seekdb/docs/

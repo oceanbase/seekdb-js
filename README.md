@@ -1,101 +1,115 @@
-# SeekDB Node.js SDK
+# seekdb-js
 
-SeekDB 的 Node.js 客户端 SDK，支持 seekdb 模式和 OceanBase 模式。
+The Node.js client SDK for SeekDB, supporting both SeekDB Server mode and OceanBase mode.
 
-## 运行 example
-
-### 1. 准备工作 (Prerequisites)
-
-- **Node.js**: 版本需 >= 20
-- **包管理器**: pnpm
-- **数据库**: 需要一个运行中的 SeekDB 或 OceanBase 实例。
-  - 默认连接配置:
-    - Host: `127.0.0.1`
-    - Port: `2881`
-    - User: `root`
-    - Database: `test`
-    - Tenant: `sys`
-
-### 2. 安装依赖与构建 (Installation & Build)
-
-在项目根目录下运行以下命令来安装依赖并构建项目：
+## Installation
 
 ```bash
-# 安装依赖
-pnpm install
-
-# 构建所有包
-pnpm build
+npm install seekdb-js
 ```
 
-### 3. 运行示例 (Run Examples)
+## Basic Usage
 
-本项目在 `packages/examples` 目录下提供了多个示例代码。你可以直接在根目录通过以下命令运行它们：
+### 1. Client Connection
 
-- **简单示例 (Simple Example)**:
-  演示基本的连接、创建集合、添加数据和查询。
-  ```bash
-  pnpm --filter seekdb-examples run run:simple
-  ```
+```typescript
+import { SeekDBClient } from "seekdb-js";
 
-- **完整示例 (Complete Example)**:
-  演示 SDK 的所有功能，包括 DML (增删改)、DQL (查询)、混合搜索等。
-  ```bash
-  pnpm --filter seekdb-examples run run:complete
-  ```
-
-- **混合搜索示例 (Hybrid Search Example)**:
-  重点演示混合搜索功能。
-  ```bash
-  pnpm --filter seekdb-examples run run:hybrid
-  ```
-
-> **注意**: 示例代码默认连接本地数据库 (`127.0.0.1:2881`)。如果你的数据库配置不同，请修改 `packages/examples/` 目录下对应 `.ts` 文件中的 `SeekDBClient` 配置。
-
----
-
-## 开发者
-
-如果您想参与 SDK 的开发或进行调试，请遵循以下步骤。
-
-### 1. 安装依赖 (Installation)
-
-```bash
-pnpm install
+const client = new SeekDBClient({
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
+  database: "test",
+  // Required for OceanBase mode
+  // tenant: "sys", 
+});
 ```
 
-### 2. 构建项目 (Build)
+### 2. Create Collection
 
-```bash
-# 构建所有包
-pnpm build
-
-# 或者仅构建 seekdb-js 核心包
-pnpm build:seekdb
+```typescript
+const collection = await client.createCollection({
+  name: "my_collection",
+});
 ```
 
-### 3. 运行测试 (Run Tests)
+### 3. Add Data
 
-项目使用 Vitest 进行测试。运行核心包 `seekdb-js` 的测试：
+Supports automatic vectorization, no need to calculate vectors manually.
 
-```bash
-# 运行所有测试
-pnpm test
-
-# 或者指定过滤器运行
-pnpm --filter seekdb-js run test
+```typescript
+await collection.add({
+  ids: ["1", "2"],
+  documents: ["Hello world", "SeekDB is fast"],
+  metadatas: [{ category: "test" }, { category: "db" }],
+});
 ```
 
-### 4. 代码风格与检查 (Linting & Formatting)
+### 4. Query Data
 
-```bash
-# 运行 Lint 检查
-pnpm lint
+```typescript
+// Semantic Search
+const results = await collection.query({
+  queryTexts: "Hello",
+  nResults: 5,
+});
 
-# 运行类型检查
-pnpm type-check
-
-# 格式化代码
-pnpm prettier
+// Hybrid Search (Keyword + Semantic)
+const hybridResults = await collection.hybridSearch({
+  query: { whereDocument: { $contains: "SeekDB" } },
+  knn: { queryTexts: ["fast database"] },
+  nResults: 5
+});
 ```
 
+## Embedding Function
+
+The SDK supports multiple Embedding Functions for generating vectors locally or in the cloud.
+
+### 1. Default Embedding
+
+Uses a local model (`Xenova/all-MiniLM-L6-v2`) by default. No API Key required. Suitable for quick development and testing.
+No configuration is needed to use the default model.
+
+```typescript
+const collection = await client.createCollection({
+  name: "local_embed_collection",
+});
+```
+
+Supports manual import of the built-in model.
+
+```typescript
+import { DefaultEmbeddingFunction } from "@seekdb/default-embed";
+
+const defaultEmbed = new DefaultEmbeddingFunction({
+  // If you encounter download issues, try switching the region, default is 'cn'
+  // region: 'intl'
+});
+
+const collection = await client.createCollection({
+  name: "local_embed_collection",
+  embeddingFunction: defaultEmbed,
+});
+```
+
+### 2. Qwen Embedding 
+
+Uses DashScope's cloud Embedding service (Qwen/Tongyi Qianwen). Suitable for production environments.
+
+```typescript
+import { QwenEmbeddingFunction } from "@seekdb/qwen";
+
+const qwenEmbed = new QwenEmbeddingFunction({
+  // Your DashScope API Key, defaults to reading from env var
+  apiKey: "sk-...", 
+  // Optional, defaults to text-embedding-v4
+  modelName: "text-embedding-v4" 
+});
+
+const collection = await client.createCollection({
+  name: "qwen_embed_collection",
+  embeddingFunction: qwenEmbed,
+});
+```

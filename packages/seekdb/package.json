@@ -23,7 +23,8 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "type-check": "tsc --noEmit",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "docs": "typedoc --entryPoints src/index.ts --out docs/v2"
   },
   "keywords": [
     "seekdb-js",
@@ -43,6 +44,7 @@
     "node-gyp": "^10.1.0"
   },
   "devDependencies": {
-    "@seekdb/default-embed": "workspace:*"
+    "@seekdb/default-embed": "workspace:*",
+    "typedoc": "^0.28.15"
   }
 }

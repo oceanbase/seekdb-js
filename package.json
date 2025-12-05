@@ -11,12 +11,13 @@
     "prettier": "prettier --write ."
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@types/node": "^22.10.2",
+    "dotenv": "^16.6.1",
     "prettier": "^3.6.2",
     "tsup": "^8.3.5",
     "tsx": "^4.20.6",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8",
-    "dotenv": "^16.6.1"
+    "vitest": "^2.1.8"
   }
 }
