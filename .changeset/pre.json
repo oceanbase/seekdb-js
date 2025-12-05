@@ -7,9 +7,10 @@
     "@seekdb/jina": "0.1.0",
     "@seekdb/openai": "0.0.1",
     "@seekdb/qwen": "0.0.1",
-    "seekdb-js": "0.0.1"
+    "seekdb": "0.0.1"
   },
   "changesets": [
+    "bold-lamps-brake",
     "six-times-deny",
     "tender-dingos-clean"
   ]

@@ -1,6 +1,6 @@
 {
   "name": "@seekdb/jina",
-  "version": "1.0.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -18,11 +18,11 @@
     "test": "vitest"
   },
   "peerDependencies": {
-    "seekdb-js": "workspace:*",
+    "seekdb": "workspace:*",
     "@seekdb/common": "workspace:*"
   },
   "devDependencies": {
-    "seekdb-js": "workspace:*",
+    "seekdb": "workspace:*",
     "@seekdb/common": "workspace:*"
   },
   "publishConfig": {

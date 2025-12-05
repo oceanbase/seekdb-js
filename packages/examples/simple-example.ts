@@ -11,7 +11,7 @@
  * This is a minimal example to get you started quickly with embedding functions.
  */
 
-import { SeekDBClient } from "seekdb-js";
+import { SeekDBClient } from "seekdb";
 
 async function main() {
   // ==================== Step 1: Create Client Connection ====================

@@ -1,5 +1,5 @@
 ---
-"seekdb-js": patch
+"seekdb": patch
 ---
 
 update readme.md

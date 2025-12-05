@@ -4,7 +4,7 @@
     "outDir": "dist",
     "rootDir": ".",
     "paths": {
-      "seekdb-js": ["../../seekdb/src/index.ts"]
+      "seekdb": ["../../seekdb/src/index.ts"]
     }
   },
   "include": ["index.ts"]

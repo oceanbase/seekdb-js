@@ -1,4 +1,10 @@
-# seekdb-js
+# seekdb
+
+## 0.1.0-alpha.1
+
+### Patch Changes
+
+- change package name
 
 ## 0.1.0-alpha.1
 

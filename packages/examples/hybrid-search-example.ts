@@ -8,7 +8,7 @@
  * - Handles complex scenarios that query() cannot
  */
 
-import { SeekDBClient } from "seekdb-js";
+import { SeekDBClient } from "seekdb";
 
 async function main() {
   const client = new SeekDBClient({

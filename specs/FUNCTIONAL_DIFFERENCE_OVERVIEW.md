@@ -16,7 +16,7 @@
 
 ### 2.1. 客户端初始化 (`Client`)
 
-| 特性 | seekdb-js | pyseekdb | 结论 |
+| 特性 | seekdb | pyseekdb | 结论 |
 | :--- | :--- | :--- | :--- |
 | **连接时机** | **立即连接** (Fail-fast) | **惰性连接** (Lazy Loading) | 两种有效策略。Node SDK 更适合需要快速失败的场景，Python SDK 资源占用更低。**建议保持现状**。 |
 | **连接管理** | **连接池** (`Connection` 类) | **单连接** (按需创建) | Node SDK 的连接池设计更适合高并发的服务器端应用。**建议保持现状**。 |
@@ -24,14 +24,14 @@
 
 ### 2.2. AdminClient 架构
 
-| 特性 | seekdb-js | pyseekdb | 结论 |
+| 特性 | seekdb | pyseekdb | 结论 |
 | :--- | :--- | :--- | :--- |
 | **设计模式** | **独立类** (`SeekDBAdminClient`) | **代理模式** (`_AdminClientProxy`) | **Python SDK 的架构更优**。它通过代理共享了底层的连接资源，避免了重复实例化，同时在 API 层面实现了关注点分离。 |
 | **代码复用**| `Connection` 类被复用，但实例是独立的。 | 底层 `BaseClient` 被完全复用。 | Python SDK 代码复用率更高。**建议 (长期) Node SDK 考虑重构为代理模式**。 |
 
 ### 2.3. DML 操作 (`add`, `update`, `upsert`)
 
-| 特性 | seekdb-js | pyseekdb | 结论 |
+| 特性 | seekdb | pyseekdb | 结论 |
 | :--- | :--- | :--- | :--- |
 | **`add`** | 批量 `INSERT` (单 SQL) | 批量 `INSERT` (单 SQL) | **功能对齐**，性能高效。 |
 | **`update`** | 循环逐条 `UPDATE` | 循环逐条 `UPDATE` | **功能对齐**，但存在性能优化空间（非紧急）。 |
@@ -39,7 +39,7 @@
 
 ### 2.4. 过滤器与 SQL 构建
 
-| 特性 | seekdb-js | pyseekdb | 结论 |
+| 特性 | seekdb | pyseekdb | 结论 |
 | :--- | :--- | :--- | :--- |
 | **SQL 构建架构**| **中心化 `SQLBuilder`** | **分散式 f-string 拼接** | **Node SDK 架构更优**，代码更清晰、可维护性更高。**建议 Python SDK 借鉴此模式进行重构**。 |
 | **安全性** | **手动字符串转义 (存在 SQL 注入风险)** | **参数化查询 (安全)** | **严重的安全差异**。Python SDK 的实现是安全的标准实践。**Node SDK 必须修复 (见高优先级建议)**。 |
@@ -47,20 +47,20 @@
 
 ### 2.5. 集合管理 (`getCollection`)
 
-| 特性 | seekdb-js | pyseekdb | 结论 |
+| 特性 | seekdb | pyseekdb | 结论 |
 | :--- | :--- | :--- | :--- |
 | **`distance` 提取** | **硬编码为默认值** | **通过 `SHOW CREATE TABLE` 解析** | **功能不完整**。Node SDK 返回的 `Collection` 对象可能包含错误的 `distance` 信息。**需要修复 (见高优先级建议)**。 |
 
 ### 2.6. 嵌入函数 (`EmbeddingFunction`)
 
-| 特性 | seekdb-js | pyseekdb | 结论 |
+| 特性 | seekdb | pyseekdb | 结论 |
 | :--- | :--- | :--- | :--- |
 | **实现方式** | 依赖 `@xenova/transformers` | 手动实现 ONNX 推理流程 | **两种不同的工程哲学**。Node SDK "拥抱生态"，代码简洁。Python SDK "自力更生"，控制力强，并为国内用户优化了下载。 |
 | **最终功能**| 提供 `all-MiniLM-L6-v2` 嵌入 | 提供 `all-MiniLM-L6-v2` 嵌入 | **功能对齐**。两者实现方式不同，但对用户暴露的能力一致。**建议保持现状**。 |
 
 ## 3. 完整建议清单
 
-### Node.js SDK (seekdb-js)
+### Node.js SDK (seekdb)
 
 *   **P0 - 必须修复**:
     *   `filters.ts`: 切换到参数化查询以修复 SQL 注入漏洞。

@@ -1,4 +1,4 @@
-import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb-js";
+import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb";
 import { OpenAIEmbeddingFunction, OpenAIEmbeddingConfig } from "@seekdb/openai";
 
 export interface QwenEmbeddingConfig extends Omit<

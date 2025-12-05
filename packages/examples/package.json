@@ -9,7 +9,7 @@
     "run:complete": "tsx complete-example.ts"
   },
   "dependencies": {
-    "seekdb-js": "workspace:*",
+    "seekdb": "workspace:*",
     "@seekdb/default-embed": "workspace:*",
     "@seekdb/openai": "workspace:*",
     "dotenv": "^16.0.0"

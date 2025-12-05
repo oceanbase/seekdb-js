@@ -1,4 +1,4 @@
-import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb-js";
+import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb";
 import { toSnake } from "@seekdb/common";
 
 const name = "jina";

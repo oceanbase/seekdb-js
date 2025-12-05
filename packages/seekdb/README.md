@@ -1,11 +1,11 @@
-# seekdb-js
+# seekdb
 
 The Node.js client SDK for SeekDB, supporting both SeekDB Server mode and OceanBase mode.
 
 ## Installation
 
 ```bash
-npm install seekdb-js
+npm install seekdb
 ```
 
 ## Basic Usage
@@ -13,7 +13,7 @@ npm install seekdb-js
 ### 1. Client Connection
 
 ```typescript
-import { SeekDBClient } from "seekdb-js";
+import { SeekDBClient } from "seekdb";
 
 const client = new SeekDBClient({
   host: "127.0.0.1",

@@ -66,20 +66,20 @@ pnpm install
 # Build all packages
 pnpm build
 
-# Or build only the seekdb-js core package
+# Or build only the seekdb core package
 pnpm build:seekdb
 ```
 
 ### 3. Run Tests
 
-The project uses Vitest for testing. Run tests for the core package `seekdb-js`:
+The project uses Vitest for testing. Run tests for the core package `seekdb`:
 
 ```bash
 # Run all tests
 pnpm test
 
 # Or run with specific filter
-pnpm --filter seekdb-js run test
+pnpm --filter seekdb run test
 ```
 
 ### 4. Linting & Formatting

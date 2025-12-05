@@ -22,7 +22,7 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "seekdb-js": ["packages/seekdb/src/index.ts"],
+      "seekdb": ["packages/seekdb/src/index.ts"],
       "@seekdb/default-embed": ["packages/embeddings/defualt-embed/index.ts"],
       "@seekdb/openai": ["packages/embeddings/openai/index.ts"],
       "@seekdb/jina": ["packages/embeddings/jina/index.ts"],

@@ -12,7 +12,7 @@
  * This is a complete reference for all client capabilities.
  */
 
-import { SeekDBClient } from "seekdb-js";
+import { SeekDBClient } from "seekdb";
 import crypto from "crypto";
 
 async function main() {
