@@ -10,6 +10,7 @@
     "seekdb-js": "0.0.1"
   },
   "changesets": [
+    "six-times-deny",
     "tender-dingos-clean"
   ]
 }
