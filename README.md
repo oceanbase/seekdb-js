@@ -78,7 +78,15 @@ const collection = await client.createCollection({
 });
 ```
 
-Supports manual import of the built-in model.
+We also supports manual import of the built-in model.
+
+First install .
+
+```bash
+npm install @seekdb/default-embed
+```
+
+Instantiate and use the model in your project.
 
 ```typescript
 import { DefaultEmbeddingFunction } from "@seekdb/default-embed";
@@ -97,6 +105,14 @@ const collection = await client.createCollection({
 ### 2. Qwen Embedding 
 
 Uses DashScope's cloud Embedding service (Qwen/Tongyi Qianwen). Suitable for production environments.
+
+First install .
+
+```bash
+npm install @seekdb/qwen
+```
+
+Instantiate and use the model in your project.
 
 ```typescript
 import { QwenEmbeddingFunction } from "@seekdb/qwen";
