@@ -8,7 +8,8 @@
     "test": "pnpm  --filter seekdb run test",
     "lint": "pnpm -r run lint",
     "type-check": "pnpm -r run type-check",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "publish:all": "node scripts/publish.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
