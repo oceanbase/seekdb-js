@@ -32,9 +32,34 @@ export async function getEmbeddingFunction(
   config?: any,
 ): Promise<IEmbeddingFunction> {
   const finalConfig = config || ({} as any);
+
   // If the model is not registered, try to register it automatically (for built-in models)
   if (!registry.has(name)) {
-    await import(`@seekdb/${name}`);
+    let ef: EmbeddingFunctionConstructor;
+    try {
+      ef = await import(`@seekdb/${name}`);
+    } catch (error: any) {
+      if (
+        error.code === "MODULE_NOT_FOUND" ||
+        error.message?.includes("Cannot find module")
+      ) {
+        throw new Error(
+          `Embedding function '${name}' is not registered. \n\n` +
+            `--- For seekdb built-in embedding function ---\n` +
+            `  1. Install: npm install @seekdb/${name}\n` +
+            `  2. Import: Add this at the top of your file: import '@seekdb/${name}';\n` +
+            `The package will automatically register itself upon import.\n\n` +
+            `--- For custom embedding function ---\n` +
+            `Please implement the IEmbeddingFunction interface, then register it using 'registerEmbeddingFunction'. \n` +
+            `You can see more details in the README.md of the package.`
+        );
+      }
+      throw error;
+    }
+    // If the embedding function is not registered, register it
+    if (ef && !registry.has(name)) {
+      registry.set(name, ef);
+    }
   }
   try {
     const Ctor = registry.get(name)!;

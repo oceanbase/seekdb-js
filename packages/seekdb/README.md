@@ -129,3 +129,73 @@ const collection = await client.createCollection({
   embeddingFunction: qwenEmbed,
 });
 ```
+
+### 3. Custom Embedding Function
+
+You can also use your own custom embedding function.
+
+First, implement the `IEmbeddingFunction` interface.
+
+```typescript
+import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb";
+
+class MyCustomEmbedding implements IEmbeddingFunction {
+  // Name of the embedding function
+  readonly name = "my-custom-embed";
+
+    // Initialize your model here
+  constructor(private config: any) {}
+
+    // Generate embeddings for the texts
+  async generate(texts: string[]): Promise<number[][]> {}
+
+  getConfig() {
+    return this.config;
+  }
+}
+```
+
+Then register and use it.
+
+```typescript
+// Register the custom embedding function
+registerEmbeddingFunction("my-custom-embed", MyCustomEmbedding);
+
+// Instantiate your custom embedding function
+const myEmbed = new MyCustomEmbedding({ apiKey: "your-api-key" });
+
+const collection = await client.createCollection({
+  name: "custom_embed_collection",
+  embeddingFunction: myEmbed,
+});
+```
+
+## Database Management
+
+The `SeekDBAdminClient` allows you to manage databases (create, list, delete).
+
+```typescript
+import { SeekDBAdminClient } from "seekdb";
+
+const adminClient = new SeekDBAdminClient({
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
+  // Optional: tenant
+});
+
+// Create a new database
+await adminClient.createDatabase("new_database");
+
+// List all databases
+const databases = await adminClient.listDatabases();
+
+// Get database info
+const db = await adminClient.getDatabase("new_database");
+
+// Delete a database
+await adminClient.deleteDatabase("new_database");
+```
+
+
