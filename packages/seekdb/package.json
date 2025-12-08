@@ -1,6 +1,6 @@
 {
   "name": "seekdb",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.3",
   "description": "A unified Node.js client for SeekDB that supports Server mode and OceanBase mode",
   "type": "module",
   "main": "./dist/index.cjs",
