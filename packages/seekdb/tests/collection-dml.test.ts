@@ -6,6 +6,7 @@ import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekDBClient } from "../src/client.js";
 import { Collection } from "../src/collection.js";
 import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
+import { SeekDBValueError } from "../src/errors.js";
 
 describe("Collection DML Operations", () => {
   let client: SeekDBClient;
@@ -37,6 +38,101 @@ describe("Collection DML Operations", () => {
       } catch (error) {
         // Ignore cleanup errors
       }
+    });
+
+    test("collection.add - throws error for vector with NaN", async () => {
+      const testId = "test_id_nan";
+      await expect(async () => {
+        await collection.add({
+          ids: testId,
+          embeddings: [1.0, NaN, 3.0],
+        });
+      }).rejects.toThrow(SeekDBValueError);
+      await expect(async () => {
+        await collection.add({
+          ids: testId,
+          embeddings: [1.0, NaN, 3.0],
+        });
+      }).rejects.toThrow("Vector contains invalid value: NaN");
+    });
+
+    test("collection.add - throws error for vector with Infinity", async () => {
+      const testId = "test_id_inf";
+      await expect(async () => {
+        await collection.add({
+          ids: testId,
+          embeddings: [1.0, Infinity, 3.0],
+        });
+      }).rejects.toThrow(SeekDBValueError);
+      await expect(async () => {
+        await collection.add({
+          ids: testId,
+          embeddings: [1.0, Infinity, 3.0],
+        });
+      }).rejects.toThrow("Vector contains invalid value: Infinity");
+    });
+
+    test("collection.add - throws error for vector dimension mismatch at start", async () => {
+      const testId = "test_id_dim_mismatch_start";
+      await expect(async () => {
+        await collection.add({
+          ids: testId,
+          // Collection dimension is configured as 3, so providing 2 dims should fail
+          embeddings: [1.0, 2.0],
+        });
+      }).rejects.toThrow(SeekDBValueError);
+      await expect(async () => {
+        await collection.add({
+          ids: testId,
+          embeddings: [1.0, 2.0],
+        });
+      }).rejects.toThrow("Dimension mismatch at index 0. Expected 3, got 2");
+    });
+
+    test("collection.add - throws error for vector dimension mismatch in middle", async () => {
+      const testIds = ["id1", "id2", "id3"];
+      await expect(async () => {
+        await collection.add({
+          ids: testIds,
+          embeddings: [
+            [1.0, 2.0, 3.0], // Correct
+            [1.0, 2.0],      // Incorrect
+            [4.0, 5.0, 6.0], // Correct
+          ],
+        });
+      }).rejects.toThrow(SeekDBValueError);
+      await expect(async () => {
+        await collection.add({
+          ids: testIds,
+          embeddings: [
+            [1.0, 2.0, 3.0],
+            [1.0, 2.0],
+            [4.0, 5.0, 6.0],
+          ],
+        });
+      }).rejects.toThrow("Dimension mismatch at index 1. Expected 3, got 2");
+    });
+
+    test("collection.update - throws error for vector with -Infinity", async () => {
+      const testId = "test_id_neg_inf";
+      // First add a valid item
+      await collection.add({
+        ids: testId,
+        embeddings: [1.0, 2.0, 3.0],
+      });
+
+      await expect(async () => {
+        await collection.update({
+          ids: testId,
+          embeddings: [1.0, -Infinity, 3.0],
+        });
+      }).rejects.toThrow(SeekDBValueError);
+      await expect(async () => {
+        await collection.update({
+          ids: testId,
+          embeddings: [1.0, -Infinity, 3.0],
+        });
+      }).rejects.toThrow("Vector contains invalid value: -Infinity");
     });
 
     test("collection.add - add single item", async () => {

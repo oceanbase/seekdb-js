@@ -99,7 +99,16 @@ export function escapeSqlString(value: string): string {
  * Convert vector array to SQL string format
  */
 export function vectorToSqlString(vector: number[]): string {
-  return "[" + vector.join(",") + "]";
+  if (!Array.isArray(vector)) {
+    throw new SeekDBValueError("Vector must be an array");
+  }
+  // Validate that all elements are finite numbers
+  for (const val of vector) {
+    if (!Number.isFinite(val)) {
+      throw new SeekDBValueError(`Vector contains invalid value: ${val}`);
+    }
+  }
+  return JSON.stringify(vector);
 }
 
 /**

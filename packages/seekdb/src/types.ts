@@ -3,6 +3,7 @@
  */
 
 import { IEmbeddingFunction } from "./embedding-function.js";
+import type { InternalClient } from "./internal-client.js";
 export type EmbeddingFunction = IEmbeddingFunction;
 
 // ==================== Basic Types ====================
@@ -90,6 +91,15 @@ export interface QueryResult<TMeta extends Metadata = Metadata> {
 // ==================== Collection Configuration ====================
 
 export type DistanceMetric = "l2" | "cosine" | "inner_product";
+
+export interface CollectionConfig {
+  name: string;
+  dimension: number;
+  distance: DistanceMetric;
+  embeddingFunction?: EmbeddingFunction;
+  metadata?: Metadata;
+  client: InternalClient;
+}
 
 export interface HNSWConfiguration {
   dimension: number;
