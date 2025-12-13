@@ -1,5 +1,11 @@
 # seekdb
 
+## 0.1.0-alpha.4
+
+### Patch Changes
+
+- Added dimension check for the collection.add method & improve the vectorToString method
+
 ## 0.1.0-alpha.3
 
 ### Patch Changes

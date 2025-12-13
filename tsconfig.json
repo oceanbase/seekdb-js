@@ -23,7 +23,7 @@
     "baseUrl": ".",
     "paths": {
       "seekdb": ["packages/seekdb/src/index.ts"],
-      "@seekdb/default-embed": ["packages/embeddings/defualt-embed/index.ts"],
+      "@seekdb/default-embed": ["packages/embeddings/default-embed/index.ts"],
       "@seekdb/openai": ["packages/embeddings/openai/index.ts"],
       "@seekdb/jina": ["packages/embeddings/jina/index.ts"],
       "@seekdb/common": ["packages/embeddings/common/index.ts"]
