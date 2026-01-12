@@ -1,5 +1,5 @@
 /**
- * Simple Example: Basic usage of seekdb Node SDK with Embedding Functions
+ * Simple Example: Basic usage of seekdb with Embedding Functions
  *
  * This example demonstrates the most common operations with embedding functions:
  * 1. Create a client connection

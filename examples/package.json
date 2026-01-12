@@ -11,7 +11,9 @@
   "dependencies": {
     "seekdb": "workspace:*",
     "@seekdb/default-embed": "workspace:*",
-    "@seekdb/openai": "workspace:*",
-    "dotenv": "^16.0.0"
+    "@seekdb/openai": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6"
   }
 }
