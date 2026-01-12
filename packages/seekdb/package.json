@@ -1,7 +1,7 @@
 {
   "name": "seekdb",
   "version": "0.1.0-alpha.4",
-  "description": "A unified Node.js client for seekdb that supports Server mode and OceanBase mode",
+  "description": "A unified JavaScript/TypeScript SDK for seekdb that supports Server mode and OceanBase mode",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -47,11 +47,19 @@
     "node-gyp": "^10.1.0"
   },
   "devDependencies": {
-    "@seekdb/default-embed": "workspace:*",
-    "typedoc": "^0.28.15"
+    "@seekdb/default-embed": "workspace:*"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oceanbase/seekdb-js.git",
+    "directory": "packages/seekdb"
+  },
+  "homepage": "https://github.com/oceanbase/seekdb-js#readme",
+  "bugs": {
+    "url": "https://github.com/oceanbase/seekdb-js/issues"
   }
 }

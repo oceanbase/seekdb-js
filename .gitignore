@@ -12,3 +12,5 @@ pyseekdb-docs
 .node
 packages/seekdb/docs/
 .npmrc
+.pnpm-store
+.cursor
