@@ -1,7 +1,7 @@
 /**
- * Base error class for SeekDB errors
+ * Base error class for seekdb errors
  */
-export class SeekDBError extends Error {
+export class SeekdbError extends Error {
   constructor(
     message: string,
     public readonly cause?: unknown,
@@ -18,44 +18,44 @@ export class SeekDBError extends Error {
 /**
  * Connection errors - network or connection-related issues
  */
-export class SeekDBConnectionError extends SeekDBError {}
+export class SeekdbConnectionError extends SeekdbError {}
 
 /**
  * Server errors - 5xx status codes
  */
-export class SeekDBServerError extends SeekDBError {}
+export class SeekdbServerError extends SeekdbError {}
 
 /**
  * Client errors - 4xx status codes (generic)
  */
-export class SeekDBClientError extends SeekDBError {}
+export class SeekdbClientError extends SeekdbError {}
 
 /**
  * Unauthorized errors - 401 status code
  */
-export class SeekDBUnauthorizedError extends SeekDBError {}
+export class SeekdbUnauthorizedError extends SeekdbError {}
 
 /**
  * Forbidden errors - 403 status code
  */
-export class SeekDBForbiddenError extends SeekDBError {}
+export class SeekdbForbiddenError extends SeekdbError {}
 
 /**
  * Not found errors - 404 status code
  */
-export class SeekDBNotFoundError extends SeekDBError {}
+export class SeekdbNotFoundError extends SeekdbError {}
 
 /**
  * Value errors - invalid parameter values
  */
-export class SeekDBValueError extends SeekDBError {}
+export class SeekdbValueError extends SeekdbError {}
 
 /**
  * Invalid collection errors
  */
-export class InvalidCollectionError extends SeekDBError {}
+export class InvalidCollectionError extends SeekdbError {}
 
 /**
  * Invalid argument errors
  */
-export class InvalidArgumentError extends SeekDBError {}
+export class InvalidArgumentError extends SeekdbError {}

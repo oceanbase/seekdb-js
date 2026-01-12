@@ -3,15 +3,15 @@
  * automatic vector generation from documents, and hybrid search
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekDBClient } from "../src/client.js";
+import { SeekdbClient } from "../src/client.js";
 import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
 import { DefaultEmbeddingFunction } from "@seekdb/default-embed";
 
 describe("Default Embedding Function Tests", () => {
-  let client: SeekDBClient;
+  let client: SeekdbClient;
 
   beforeAll(async () => {
-    client = new SeekDBClient({
+    client = new SeekdbClient({
       host: TEST_CONFIG.host,
       port: TEST_CONFIG.port,
       user: TEST_CONFIG.user,

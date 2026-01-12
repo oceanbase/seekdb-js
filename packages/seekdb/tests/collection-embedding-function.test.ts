@@ -3,7 +3,7 @@
  * get_or_create_collection, and get_collection interfaces with embedding function handling
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekDBClient } from "../src/client.js";
+import { SeekdbClient } from "../src/client.js";
 import type { HNSWConfiguration } from "../src/types.js";
 import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
 import { Simple3DEmbeddingFunction } from "./test-utils.js";
@@ -14,10 +14,10 @@ import {
 import { EmbeddingFunction } from "../src/types.js";
 
 describe("Collection Embedding Function Tests", () => {
-  let client: SeekDBClient;
+  let client: SeekdbClient;
 
   beforeAll(async () => {
-    client = new SeekDBClient({
+    client = new SeekdbClient({
       host: TEST_CONFIG.host,
       port: TEST_CONFIG.port,
       user: TEST_CONFIG.user,

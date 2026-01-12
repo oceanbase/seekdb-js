@@ -1,6 +1,6 @@
 # seekdb
 
-The Node.js client SDK for SeekDB, supporting both SeekDB Server mode and OceanBase mode.
+The Node.js client SDK for seekdb, supporting both seekdb Server mode and OceanBase mode.
 
 ## Installation
 
@@ -13,9 +13,9 @@ npm install seekdb
 ### 1. Client Connection
 
 ```typescript
-import { SeekDBClient } from "seekdb";
+import { SeekdbClient } from "seekdb";
 
-const client = new SeekDBClient({
+const client = new SeekdbClient({
   host: "127.0.0.1",
   port: 2881,
   user: "root",
@@ -41,7 +41,7 @@ Supports automatic vectorization, no need to calculate vectors manually.
 ```typescript
 await collection.add({
   ids: ["1", "2"],
-  documents: ["Hello world", "SeekDB is fast"],
+  documents: ["Hello world", "seekdb is fast"],
   metadatas: [{ category: "test" }, { category: "db" }],
 });
 ```
@@ -57,7 +57,7 @@ const results = await collection.query({
 
 // Hybrid Search (Keyword + Semantic)
 const hybridResults = await collection.hybridSearch({
-  query: { whereDocument: { $contains: "SeekDB" } },
+  query: { whereDocument: { $contains: "seekdb" } },
   knn: { queryTexts: ["fast database"] },
   nResults: 5
 });
@@ -129,3 +129,73 @@ const collection = await client.createCollection({
   embeddingFunction: qwenEmbed,
 });
 ```
+
+### 3. Custom Embedding Function
+
+You can also use your own custom embedding function.
+
+First, implement the `IEmbeddingFunction` interface.
+
+```typescript
+import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb";
+
+class MyCustomEmbedding implements IEmbeddingFunction {
+  // Name of the embedding function
+  readonly name = "my-custom-embed";
+
+    // Initialize your model here
+  constructor(private config: any) {}
+
+    // Generate embeddings for the texts
+  async generate(texts: string[]): Promise<number[][]> {}
+
+  getConfig() {
+    return this.config;
+  }
+}
+```
+
+Then register and use it.
+
+```typescript
+// Register the custom embedding function
+registerEmbeddingFunction("my-custom-embed", MyCustomEmbedding);
+
+// Instantiate your custom embedding function
+const myEmbed = new MyCustomEmbedding({ apiKey: "your-api-key" });
+
+const collection = await client.createCollection({
+  name: "custom_embed_collection",
+  embeddingFunction: myEmbed,
+});
+```
+
+## Database Management
+
+The `SeekdbAdminClient` allows you to manage databases (create, list, delete).
+
+```typescript
+import { SeekdbAdminClient } from "seekdb";
+
+const adminClient = new SeekdbAdminClient({
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
+  // Optional: tenant
+});
+
+// Create a new database
+await adminClient.createDatabase("new_database");
+
+// List all databases
+const databases = await adminClient.listDatabases();
+
+// Get database info
+const db = await adminClient.getDatabase("new_database");
+
+// Delete a database
+await adminClient.deleteDatabase("new_database");
+```
+
+

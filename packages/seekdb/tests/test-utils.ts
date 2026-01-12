@@ -1,5 +1,5 @@
 /**
- * Test utilities for SeekDB Node SDK tests
+ * Test utilities for seekdb Node SDK tests
  * Provides common configuration and helper functions
  */
 

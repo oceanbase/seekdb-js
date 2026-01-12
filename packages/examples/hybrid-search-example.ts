@@ -8,10 +8,10 @@
  * - Handles complex scenarios that query() cannot
  */
 
-import { SeekDBClient } from "seekdb";
+import { SeekdbClient } from "seekdb";
 
 async function main() {
-  const client = new SeekDBClient({
+  const client = new SeekdbClient({
     host: "127.0.0.1",
     port: 2881,
     tenant: "sys",

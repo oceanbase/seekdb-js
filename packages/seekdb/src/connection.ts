@@ -1,6 +1,6 @@
 /**
  * MySQL Connection Manager
- * Manages database connections for SeekDB clients
+ * Manages database connections for seekdb clients
  */
 
 import mysql from "mysql2/promise";
@@ -8,7 +8,7 @@ import type {
   Connection as MySQLConnection,
   RowDataPacket,
 } from "mysql2/promise";
-import { SeekDBConnectionError } from "./errors.js";
+import { SeekdbConnectionError } from "./errors.js";
 
 /**
  * Configuration for MySQL connection
@@ -49,7 +49,7 @@ export class Connection {
           charset: this.config.charset,
         });
       } catch (error) {
-        throw new SeekDBConnectionError(
+        throw new SeekdbConnectionError(
           `Failed to connect to ${this.config.host}:${this.config.port}`,
           error,
         );

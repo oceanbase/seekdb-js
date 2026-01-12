@@ -1,13 +1,13 @@
 /**
- * SeekDB Client - Remote server mode (MySQL protocol)
- * Supports both SeekDB Server and OceanBase Server
+ * seekdb Client - Remote server mode (MySQL protocol)
+ * Supports both seekdb Server and OceanBase Server
  */
 
 import type { RowDataPacket } from "mysql2/promise";
 import { Collection } from "./collection.js";
 import { InternalClient } from "./internal-client.js";
 import { SQLBuilder } from "./sql-builder.js";
-import { SeekDBValueError, InvalidCollectionError } from "./errors.js";
+import { SeekdbValueError, InvalidCollectionError } from "./errors.js";
 import { getEmbeddingFunction } from "./embedding-function.js";
 import {
   CollectionFieldNames,
@@ -15,19 +15,19 @@ import {
   DEFAULT_VECTOR_DIMENSION,
 } from "./utils.js";
 import type {
-  SeekDBClientArgs,
+  SeekdbClientArgs,
   CreateCollectionOptions,
   GetCollectionOptions,
   DistanceMetric,
 } from "./types.js";
 
 /**
- * SeekDB Client for remote server connections
+ * seekdb Client for remote server connections
  */
-export class SeekDBClient {
+export class SeekdbClient {
   private _internal: InternalClient;
 
-  constructor(args: SeekDBClientArgs) {
+  constructor(args: SeekdbClientArgs) {
     this._internal = new InternalClient(args);
   }
 
@@ -69,7 +69,7 @@ export class SeekDBClient {
         configuration?.dimension &&
         configuration.dimension !== actualDimension
       ) {
-        throw new SeekDBValueError(
+        throw new SeekdbValueError(
           `Configuration dimension (${configuration.dimension}) does not match embedding function dimension (${actualDimension})`,
         );
       }
@@ -88,7 +88,7 @@ export class SeekDBClient {
         configuration?.dimension &&
         configuration.dimension !== actualDimension
       ) {
-        throw new SeekDBValueError(
+        throw new SeekdbValueError(
           `Configuration dimension (${configuration.dimension}) does not match embedding function dimension (${actualDimension})`,
         );
       }

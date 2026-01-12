@@ -4,7 +4,7 @@
 
 - **Node.js**: Version >= 20
 - **Package Manager**: pnpm
-- **Database**: A running SeekDB or OceanBase instance is required.
+- **Database**: A running seekdb or OceanBase instance is required.
   - Default connection config:
     - Host: `127.0.0.1`
     - Port: `2881`
@@ -46,7 +46,7 @@ This project provides several example codes in the `packages/examples` directory
   pnpm --filter seekdb-examples run run:hybrid
   ```
 
-> **Note**: The example code connects to a local database (`127.0.0.1:2881`) by default. If your database configuration is different, please modify the `SeekDBClient` configuration in the corresponding `.ts` file under `packages/examples/`.
+> **Note**: The example code connects to a local database (`127.0.0.1:2881`) by default. If your database configuration is different, please modify the `SeekdbClient` configuration in the corresponding `.ts` file under `packages/examples/`.
 
 ---
 

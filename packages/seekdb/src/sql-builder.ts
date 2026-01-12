@@ -1,5 +1,5 @@
 /**
- * SQL Builder for SeekDB
+ * SQL Builder for seekdb
  * Centralizes all SQL statement construction
  */
 

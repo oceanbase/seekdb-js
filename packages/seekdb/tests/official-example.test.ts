@@ -8,7 +8,7 @@
  * 4. Querying with queryTexts + metadata filter + document filter
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekDBClient } from "../src/client.js";
+import { SeekdbClient } from "../src/client.js";
 import { Collection } from "../src/collection.js";
 import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
 
@@ -81,10 +81,10 @@ async function runOfficialExample(collection: Collection) {
 }
 
 describe("Official Example Test", () => {
-  let client: SeekDBClient;
+  let client: SeekdbClient;
 
   beforeAll(async () => {
-    client = new SeekDBClient({
+    client = new SeekdbClient({
       host: TEST_CONFIG.host,
       port: TEST_CONFIG.port,
       user: TEST_CONFIG.user,

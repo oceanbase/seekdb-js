@@ -3,16 +3,16 @@
  * Supports configuring connection parameters via environment variables
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekDBClient } from "../src/client.js";
+import { SeekdbClient } from "../src/client.js";
 import { Collection } from "../src/collection.js";
 import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
-import { SeekDBValueError } from "../src/errors.js";
+import { SeekdbValueError } from "../src/errors.js";
 
 describe("Collection DML Operations", () => {
-  let client: SeekDBClient;
+  let client: SeekdbClient;
 
   beforeAll(async () => {
-    client = new SeekDBClient(TEST_CONFIG);
+    client = new SeekdbClient(TEST_CONFIG);
   });
 
   afterAll(async () => {
@@ -47,7 +47,7 @@ describe("Collection DML Operations", () => {
           ids: testId,
           embeddings: [1.0, NaN, 3.0],
         });
-      }).rejects.toThrow(SeekDBValueError);
+      }).rejects.toThrow(SeekdbValueError);
       await expect(async () => {
         await collection.add({
           ids: testId,
@@ -63,7 +63,7 @@ describe("Collection DML Operations", () => {
           ids: testId,
           embeddings: [1.0, Infinity, 3.0],
         });
-      }).rejects.toThrow(SeekDBValueError);
+      }).rejects.toThrow(SeekdbValueError);
       await expect(async () => {
         await collection.add({
           ids: testId,
@@ -80,7 +80,7 @@ describe("Collection DML Operations", () => {
           // Collection dimension is configured as 3, so providing 2 dims should fail
           embeddings: [1.0, 2.0],
         });
-      }).rejects.toThrow(SeekDBValueError);
+      }).rejects.toThrow(SeekdbValueError);
       await expect(async () => {
         await collection.add({
           ids: testId,
@@ -100,7 +100,7 @@ describe("Collection DML Operations", () => {
             [4.0, 5.0, 6.0], // Correct
           ],
         });
-      }).rejects.toThrow(SeekDBValueError);
+      }).rejects.toThrow(SeekdbValueError);
       await expect(async () => {
         await collection.add({
           ids: testIds,
@@ -126,7 +126,7 @@ describe("Collection DML Operations", () => {
           ids: testId,
           embeddings: [1.0, -Infinity, 3.0],
         });
-      }).rejects.toThrow(SeekDBValueError);
+      }).rejects.toThrow(SeekdbValueError);
       await expect(async () => {
         await collection.update({
           ids: testId,

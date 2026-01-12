@@ -1,6 +1,6 @@
 import { Connection } from "./connection.js";
 import type { RowDataPacket } from "mysql2/promise";
-import type { SeekDBClientArgs } from "./types.js";
+import type { SeekdbClientArgs } from "./types.js";
 import {
   DEFAULT_TENANT,
   DEFAULT_DATABASE,
@@ -14,7 +14,7 @@ export class InternalClient {
   public readonly tenant: string;
   public readonly database: string;
 
-  constructor(args: SeekDBClientArgs) {
+  constructor(args: SeekdbClientArgs) {
     const host = args.host;
     const port = args.port ?? DEFAULT_PORT;
     this.tenant = args.tenant ?? DEFAULT_TENANT;

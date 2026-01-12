@@ -1,8 +1,8 @@
 /**
- * Utility functions for SeekDB SDK
+ * Utility functions for seekdb SDK
  */
 
-import { SeekDBValueError } from "./errors.js";
+import { SeekdbValueError } from "./errors.js";
 import type { Metadata } from "./types.js";
 
 /**
@@ -45,7 +45,7 @@ export function validateRecordSetLengthConsistency(recordSet: {
   if (recordSet.documents) lengths.add(recordSet.documents.length);
 
   if (lengths.size > 1) {
-    throw new SeekDBValueError(
+    throw new SeekdbValueError(
       `Record set has inconsistent lengths: ${JSON.stringify({
         ids: recordSet.ids?.length,
         embeddings: recordSet.embeddings?.length,
@@ -61,12 +61,12 @@ export function validateRecordSetLengthConsistency(recordSet: {
  */
 export function validateIDs(ids: string[]): void {
   if (ids.length === 0) {
-    throw new SeekDBValueError("IDs cannot be empty");
+    throw new SeekdbValueError("IDs cannot be empty");
   }
 
   const uniqueIds = new Set(ids);
   if (uniqueIds.size !== ids.length) {
-    throw new SeekDBValueError("IDs must be unique");
+    throw new SeekdbValueError("IDs must be unique");
   }
 }
 
@@ -84,7 +84,7 @@ export function deserializeMetadata(metadata: string): Metadata {
   try {
     return JSON.parse(metadata);
   } catch (error) {
-    throw new SeekDBValueError(`Failed to parse metadata: ${error}`);
+    throw new SeekdbValueError(`Failed to parse metadata: ${error}`);
   }
 }
 
@@ -100,12 +100,12 @@ export function escapeSqlString(value: string): string {
  */
 export function vectorToSqlString(vector: number[]): string {
   if (!Array.isArray(vector)) {
-    throw new SeekDBValueError("Vector must be an array");
+    throw new SeekdbValueError("Vector must be an array");
   }
   // Validate that all elements are finite numbers
   for (const val of vector) {
     if (!Number.isFinite(val)) {
-      throw new SeekDBValueError(`Vector contains invalid value: ${val}`);
+      throw new SeekdbValueError(`Vector contains invalid value: ${val}`);
     }
   }
   return JSON.stringify(vector);
@@ -135,7 +135,7 @@ export class CollectionFieldNames {
  */
 export const DEFAULT_VECTOR_DIMENSION = 384;
 export const DEFAULT_DISTANCE_METRIC = "cosine";
-export const DEFAULT_TENANT = "sys"; // SeekDB Server default tenant
+export const DEFAULT_TENANT = "sys"; // seekdb Server default tenant
 export const DEFAULT_DATABASE = "test";
 export const DEFAULT_PORT = 2881;
 export const DEFAULT_USER = "root";

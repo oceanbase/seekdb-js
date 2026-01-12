@@ -1,7 +1,7 @@
-import { SeekDBClient } from "../src/index.js";
+import { SeekdbClient } from "../src/index.js";
 
 async function cleanup() {
-  const client = new SeekDBClient({
+  const client = new SeekdbClient({
     host: process.env.SERVER_HOST || "127.0.0.1",
     port: parseInt(process.env.SERVER_PORT || "2881"),
     user: process.env.SERVER_USER || "root",

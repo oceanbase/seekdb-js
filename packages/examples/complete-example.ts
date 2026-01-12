@@ -1,5 +1,5 @@
 /**
- * Comprehensive Example: Complete guide to all SeekDB features
+ * Comprehensive Example: Complete guide to all seekdb features
  *
  * This example demonstrates all available operations:
  * 1. Client connection
@@ -12,7 +12,7 @@
  * This is a complete reference for all client capabilities.
  */
 
-import { SeekDBClient } from "seekdb";
+import { SeekdbClient } from "seekdb";
 import crypto from "crypto";
 
 async function main() {
@@ -20,7 +20,7 @@ async function main() {
   // PART 1: CLIENT CONNECTION
   // ============================================================================
 
-  const client = new SeekDBClient({
+  const client = new SeekdbClient({
     host: "127.0.0.1",
     port: 2881,
     tenant: "sys",

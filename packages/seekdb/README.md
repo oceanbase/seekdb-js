@@ -1,6 +1,6 @@
 # seekdb
 
-The Node.js client SDK for SeekDB, supporting both SeekDB Server mode and OceanBase mode.
+The Node.js client SDK for seekdb, supporting both seekdb Server mode and OceanBase mode.
 
 ## Installation
 
@@ -13,9 +13,9 @@ npm install seekdb
 ### 1. Client Connection
 
 ```typescript
-import { SeekDBClient } from "seekdb";
+import { SeekdbClient } from "seekdb";
 
-const client = new SeekDBClient({
+const client = new SeekdbClient({
   host: "127.0.0.1",
   port: 2881,
   user: "root",
@@ -41,7 +41,7 @@ Supports automatic vectorization, no need to calculate vectors manually.
 ```typescript
 await collection.add({
   ids: ["1", "2"],
-  documents: ["Hello world", "SeekDB is fast"],
+  documents: ["Hello world", "seekdb is fast"],
   metadatas: [{ category: "test" }, { category: "db" }],
 });
 ```
@@ -57,7 +57,7 @@ const results = await collection.query({
 
 // Hybrid Search (Keyword + Semantic)
 const hybridResults = await collection.hybridSearch({
-  query: { whereDocument: { $contains: "SeekDB" } },
+  query: { whereDocument: { $contains: "seekdb" } },
   knn: { queryTexts: ["fast database"] },
   nResults: 5
 });
@@ -172,12 +172,12 @@ const collection = await client.createCollection({
 
 ## Database Management
 
-The `SeekDBAdminClient` allows you to manage databases (create, list, delete).
+The `SeekdbAdminClient` allows you to manage databases (create, list, delete).
 
 ```typescript
-import { SeekDBAdminClient } from "seekdb";
+import { SeekdbAdminClient } from "seekdb";
 
-const adminClient = new SeekDBAdminClient({
+const adminClient = new SeekdbAdminClient({
   host: "127.0.0.1",
   port: 2881,
   user: "root",

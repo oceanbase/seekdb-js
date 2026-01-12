@@ -1,5 +1,5 @@
 /**
- * Simple Example: Basic usage of SeekDB Node SDK with Embedding Functions
+ * Simple Example: Basic usage of seekdb Node SDK with Embedding Functions
  *
  * This example demonstrates the most common operations with embedding functions:
  * 1. Create a client connection
@@ -11,12 +11,12 @@
  * This is a minimal example to get you started quickly with embedding functions.
  */
 
-import { SeekDBClient } from "seekdb";
+import { SeekdbClient } from "seekdb";
 
 async function main() {
   // ==================== Step 1: Create Client Connection ====================
-  // Server mode (connecting to SeekDB server or OceanBase)
-  const client = new SeekDBClient({
+  // Server mode (connecting to seekdb server or OceanBase)
+  const client = new SeekdbClient({
     host: "127.0.0.1",
     port: 2881,
     tenant: "sys",

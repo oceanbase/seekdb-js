@@ -4,15 +4,15 @@
  * Supports configuring connection parameters via environment variables
  */
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
-import { SeekDBAdminClient } from "../src/admin-client.js";
+import { SeekdbAdminClient } from "../src/admin-client.js";
 import { DEFAULT_TENANT } from "../src/utils.js";
 import { TEST_CONFIG, generateDatabaseName } from "./test-utils.js";
 
 describe("AdminClient Database Management", () => {
-  let adminClient: SeekDBAdminClient;
+  let adminClient: SeekdbAdminClient;
 
   beforeAll(async () => {
-    adminClient = new SeekDBAdminClient({
+    adminClient = new SeekdbAdminClient({
       host: TEST_CONFIG.host,
       port: TEST_CONFIG.port,
       user: TEST_CONFIG.user,

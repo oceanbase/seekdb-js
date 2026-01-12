@@ -1,5 +1,5 @@
 /**
- * Type definitions for SeekDB SDK
+ * Type definitions for seekdb SDK
  */
 
 import { IEmbeddingFunction } from "./embedding-function.js";
@@ -108,7 +108,7 @@ export interface HNSWConfiguration {
 
 // ==================== Client Configuration ====================
 
-export interface SeekDBClientArgs {
+export interface SeekdbClientArgs {
   host: string;
   port?: number;
   tenant?: string;
@@ -118,7 +118,7 @@ export interface SeekDBClientArgs {
   charset?: string;
 }
 
-export interface SeekDBAdminClientArgs {
+export interface SeekdbAdminClientArgs {
   host: string;
   port?: number;
   tenant?: string;

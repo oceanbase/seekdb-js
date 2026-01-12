@@ -1,9 +1,9 @@
 /**
- * SeekDB SDK - Entry point
+ * seekdb SDK - Entry point
  */
 
-export { SeekDBClient } from "./client.js";
-export { SeekDBAdminClient } from "./admin-client.js";
+export { SeekdbClient } from "./client.js";
+export { SeekdbAdminClient } from "./admin-client.js";
 export { InternalClient } from "./internal-client.js";
 export { Collection } from "./collection.js";
 export { Database } from "./database.js";

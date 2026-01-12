@@ -4,7 +4,7 @@
 
 import type { InternalClient } from "./internal-client.js";
 import { SQLBuilder } from "./sql-builder.js";
-import { SeekDBValueError } from "./errors.js";
+import { SeekdbValueError } from "./errors.js";
 import { CollectionFieldNames } from "./utils.js";
 import { FilterBuilder, SearchFilterCondition } from "./filters.js";
 import type {
@@ -50,7 +50,7 @@ export class Collection {
    */
   private validateDynamicSql(sql: string): void {
     if (!sql || typeof sql !== "string") {
-      throw new SeekDBValueError(
+      throw new SeekdbValueError(
         "Invalid SQL query: must be a non-empty string"
       );
     }
@@ -67,7 +67,7 @@ export class Collection {
 
     // Must start with SELECT
     if (!upperSql.startsWith("SELECT")) {
-      throw new SeekDBValueError("Invalid SQL query: must start with SELECT");
+      throw new SeekdbValueError("Invalid SQL query: must start with SELECT");
     }
 
     // Check for dangerous keywords that should not appear in hybrid search results
@@ -94,7 +94,7 @@ export class Collection {
       // Use word boundary to avoid false positives (e.g., "UPDATE_TIME" column)
       const regex = new RegExp(`\\b${keyword}\\b`, "i");
       if (regex.test(cleanSql)) {
-        throw new SeekDBValueError(
+        throw new SeekdbValueError(
           `Dangerous SQL keyword detected: ${keyword}`
         );
       }
@@ -103,7 +103,7 @@ export class Collection {
     // Check for multiple statements (semicolon followed by more SQL)
     const statements = cleanSql.split(";").filter((s) => s.trim().length > 0);
     if (statements.length > 1) {
-      throw new SeekDBValueError("Multiple SQL statements are not allowed");
+      throw new SeekdbValueError("Multiple SQL statements are not allowed");
     }
   }
 
@@ -136,14 +136,14 @@ export class Collection {
       if (this.embeddingFunction) {
         embeddingsArray = await this.embeddingFunction.generate(documentsArray);
       } else {
-        throw new SeekDBValueError(
+        throw new SeekdbValueError(
           "Documents provided but no embeddings and no embedding function"
         );
       }
     }
 
     if (!embeddingsArray) {
-      throw new SeekDBValueError(
+      throw new SeekdbValueError(
         "Either embeddings or documents must be provided"
       );
     }
@@ -153,7 +153,7 @@ export class Collection {
       const dimension = this.dimension;
       for (let i = 0; i < embeddingsArray.length; i++) {
         if (embeddingsArray[i].length !== dimension) {
-          throw new SeekDBValueError(
+          throw new SeekdbValueError(
             `Dimension mismatch at index ${i}. Expected ${dimension}, got ${embeddingsArray[i].length}`
           );
         }
@@ -202,20 +202,20 @@ export class Collection {
 
     // Validate that at least one field is being updated
     if (!embeddingsArray && !metadatasArray && !documentsArray) {
-      throw new SeekDBValueError(
+      throw new SeekdbValueError(
         "At least one of embeddings, metadatas, or documents must be provided"
       );
     }
 
     // Validate lengths
     if (documentsArray && documentsArray.length !== idsArray.length) {
-      throw new SeekDBValueError("Length mismatch: documents vs ids");
+      throw new SeekdbValueError("Length mismatch: documents vs ids");
     }
     if (metadatasArray && metadatasArray.length !== idsArray.length) {
-      throw new SeekDBValueError("Length mismatch: metadatas vs ids");
+      throw new SeekdbValueError("Length mismatch: metadatas vs ids");
     }
     if (embeddingsArray && embeddingsArray.length !== idsArray.length) {
-      throw new SeekDBValueError("Length mismatch: embeddings vs ids");
+      throw new SeekdbValueError("Length mismatch: embeddings vs ids");
     }
 
     // Update each item
@@ -277,7 +277,7 @@ export class Collection {
 
     // Validate that at least one field is provided
     if (!embeddingsArray && !metadatasArray && !documentsArray) {
-      throw new SeekDBValueError(
+      throw new SeekdbValueError(
         "At least one of embeddings, metadatas, or documents must be provided"
       );
     }
@@ -342,7 +342,7 @@ export class Collection {
 
     // Validate at least one filter
     if (!ids && !where && !whereDocument) {
-      throw new SeekDBValueError(
+      throw new SeekdbValueError(
         "At least one of ids, where, or whereDocument must be provided"
       );
     }
@@ -460,12 +460,12 @@ export class Collection {
           : [queryTexts];
         queryEmbeddings = await this.embeddingFunction.generate(textsArray);
       } else {
-        throw new SeekDBValueError(
+        throw new SeekdbValueError(
           "queryTexts provided but no queryEmbeddings and no embedding function"
         );
       }
     } else {
-      throw new SeekDBValueError(
+      throw new SeekdbValueError(
         "Either queryEmbeddings or queryTexts must be provided"
       );
     }
@@ -610,12 +610,12 @@ export class Collection {
             queryVector = embeddings[0];
           }
         } catch (error) {
-          throw new SeekDBValueError(
+          throw new SeekdbValueError(
             `Failed to generate embeddings from queryTexts: ${error}`
           );
         }
       } else {
-        throw new SeekDBValueError(
+        throw new SeekdbValueError(
           "knn.queryTexts provided but no knn.queryEmbeddings and no embedding function. " +
             "Either:\n" +
             "  1. Provide knn.queryEmbeddings directly, or\n" +
@@ -624,7 +624,7 @@ export class Collection {
       }
     } else {
       // Neither queryEmbeddings nor queryTexts provided, raise an error
-      throw new SeekDBValueError(
+      throw new SeekdbValueError(
         "knn requires either queryEmbeddings or queryTexts. " +
           "Please provide either:\n" +
           "  1. knn.queryEmbeddings directly, or\n" +

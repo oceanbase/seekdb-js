@@ -1,14 +1,14 @@
-import { SeekDBValueError } from "./errors.js";
+import { SeekdbValueError } from "./errors.js";
 import { DEFAULT_TENANT } from "./utils.js";
-import type { SeekDBAdminClientArgs } from "./types.js";
+import type { SeekdbAdminClientArgs } from "./types.js";
 import { Database } from "./database.js";
 import { InternalClient } from "./internal-client.js";
 
-export class SeekDBAdminClient {
+export class SeekdbAdminClient {
   private _internal: InternalClient;
   private readonly tenant: string;
 
-  constructor(args: SeekDBAdminClientArgs) {
+  constructor(args: SeekdbAdminClientArgs) {
     this.tenant = args.tenant ?? DEFAULT_TENANT;
     // Initialize connection manager (no database specified for admin client)
     this._internal = new InternalClient(args);
@@ -57,7 +57,7 @@ export class SeekDBAdminClient {
     const rows = await this._internal.execute(sql, [name]);
 
     if (!rows || rows.length === 0) {
-      throw new SeekDBValueError(`Database not found: ${name}`);
+      throw new SeekdbValueError(`Database not found: ${name}`);
     }
 
     const row = rows[0];
@@ -100,10 +100,10 @@ export class SeekDBAdminClient {
 
     // Validate parameters to prevent SQL injection
     if (limit !== undefined && (!Number.isInteger(limit) || limit < 0)) {
-      throw new SeekDBValueError("limit must be a non-negative integer");
+      throw new SeekdbValueError("limit must be a non-negative integer");
     }
     if (offset !== undefined && (!Number.isInteger(offset) || offset < 0)) {
-      throw new SeekDBValueError("offset must be a non-negative integer");
+      throw new SeekdbValueError("offset must be a non-negative integer");
     }
 
     let sql =

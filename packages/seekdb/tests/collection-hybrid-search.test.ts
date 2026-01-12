@@ -3,7 +3,7 @@
  * Supports configuring connection parameters via environment variables
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekDBClient } from "../src/client.js";
+import { SeekdbClient } from "../src/client.js";
 import { Collection } from "../src/collection.js";
 import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
 
@@ -37,10 +37,10 @@ async function runHybridSearchTest(testFn: () => Promise<void>): Promise<void> {
 }
 
 describe("Collection Hybrid Search Operations", () => {
-  let client: SeekDBClient;
+  let client: SeekdbClient;
 
   beforeAll(async () => {
-    client = new SeekDBClient(TEST_CONFIG);
+    client = new SeekdbClient(TEST_CONFIG);
   });
 
   afterAll(async () => {
