@@ -12,11 +12,6 @@ export {
   getEmbeddingFunction,
 } from "./embedding-function.js";
 
-export type {
-  IEmbeddingFunction,
-  EmbeddingConfig,
-} from "./embedding-function.js";
-
 export * from "./errors.js";
 export * from "./types.js";
 export {

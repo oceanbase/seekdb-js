@@ -1,6 +1,6 @@
 # seekdb
 
-The Node.js client SDK for seekdb, supporting both seekdb Server mode and OceanBase mode.
+The JavaScript/TypeScript SDK for seekdb, supporting both seekdb Server mode and OceanBase mode.
 
 ## Installation
 
@@ -104,6 +104,8 @@ const collection = await client.createCollection({
 
 ### 2. Qwen Embedding 
 
+> ⚠️ **Experimental API**: The `QwenEmbeddingFunction` is  currently experimental and may change in future versions.
+
 Uses DashScope's cloud Embedding service (Qwen/Tongyi Qianwen). Suitable for production environments.
 
 First install .
@@ -132,14 +134,16 @@ const collection = await client.createCollection({
 
 ### 3. Custom Embedding Function
 
+> ⚠️ **Experimental API**: The `registerEmbeddingFunction` and `getEmbeddingFunction` APIs are currently experimental and may change in future versions.
+
 You can also use your own custom embedding function.
 
-First, implement the `IEmbeddingFunction` interface.
+First, implement the `EmbeddingFunction` interface.
 
 ```typescript
-import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb";
+import { EmbeddingFunction, registerEmbeddingFunction } from "seekdb";
 
-class MyCustomEmbedding implements IEmbeddingFunction {
+class MyCustomEmbedding implements EmbeddingFunction {
   // Name of the embedding function
   readonly name = "my-custom-embed";
 

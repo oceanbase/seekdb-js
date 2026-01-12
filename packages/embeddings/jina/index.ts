@@ -1,4 +1,4 @@
-import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb";
+import { EmbeddingFunction, registerEmbeddingFunction } from "seekdb";
 import { toSnake } from "@seekdb/common";
 
 const name = "jina";
@@ -43,7 +43,7 @@ export interface JinaEmbeddingsResponse {
 
 const url = "https://api.jina.ai/v1/embeddings";
 
-export class JinaEmbeddingFunction implements IEmbeddingFunction {
+export class JinaEmbeddingFunction implements EmbeddingFunction {
   public readonly name = name;
   public readonly url = url;
   private readonly apiKeyEnvVar: string;

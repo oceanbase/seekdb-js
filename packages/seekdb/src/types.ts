@@ -2,9 +2,8 @@
  * Type definitions for seekdb SDK
  */
 
-import { IEmbeddingFunction } from "./embedding-function.js";
+import type { EmbeddingFunction } from "./embedding-function.js";
 import type { InternalClient } from "./internal-client.js";
-export type EmbeddingFunction = IEmbeddingFunction;
 
 // ==================== Basic Types ====================
 
@@ -223,3 +222,7 @@ export interface HybridSearchOptions {
 // ==================== Database Types ====================
 
 export type { Database } from "./database.js";
+
+// ==================== Embedding Function Types ====================
+
+export type { EmbeddingFunction, EmbeddingConfig } from "./embedding-function.js";

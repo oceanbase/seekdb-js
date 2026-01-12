@@ -1,4 +1,4 @@
-import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb";
+import { EmbeddingFunction, registerEmbeddingFunction } from "seekdb";
 import { OpenAIEmbeddingFunction, OpenAIEmbeddingConfig } from "@seekdb/openai";
 
 export interface QwenEmbeddingConfig extends Omit<
@@ -35,7 +35,7 @@ const baseURLs = {
 
 export class QwenEmbeddingFunction
   extends OpenAIEmbeddingFunction
-  implements IEmbeddingFunction
+  implements EmbeddingFunction
 {
   readonly name: string = embeddingFunctionName;
 

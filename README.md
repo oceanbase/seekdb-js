@@ -1,6 +1,8 @@
 # seekdb
 
-The Node.js client SDK for seekdb, supporting both seekdb Server mode and OceanBase mode.
+The JavaScript/TypeScript SDK for seekdb, supporting both seekdb Server mode and OceanBase mode.
+
+> This is a monorepo containing the core `seekdb` package and multiple embedding function packages.
 
 ## Installation
 
@@ -22,7 +24,7 @@ const client = new SeekdbClient({
   password: "",
   database: "test",
   // Required for OceanBase mode
-  // tenant: "sys", 
+  // tenant: "sys",
 });
 ```
 
@@ -59,7 +61,7 @@ const results = await collection.query({
 const hybridResults = await collection.hybridSearch({
   query: { whereDocument: { $contains: "seekdb" } },
   knn: { queryTexts: ["fast database"] },
-  nResults: 5
+  nResults: 5,
 });
 ```
 
@@ -102,7 +104,9 @@ const collection = await client.createCollection({
 });
 ```
 
-### 2. Qwen Embedding 
+### 2. Qwen Embedding
+
+> ⚠️ **Experimental API**: The `QwenEmbeddingFunction` is  currently experimental and may change in future versions.
 
 Uses DashScope's cloud Embedding service (Qwen/Tongyi Qianwen). Suitable for production environments.
 
@@ -119,9 +123,9 @@ import { QwenEmbeddingFunction } from "@seekdb/qwen";
 
 const qwenEmbed = new QwenEmbeddingFunction({
   // Your DashScope API Key, defaults to reading from env var
-  apiKey: "sk-...", 
+  apiKey: "sk-...",
   // Optional, defaults to text-embedding-v4
-  modelName: "text-embedding-v4" 
+  modelName: "text-embedding-v4",
 });
 
 const collection = await client.createCollection({
@@ -132,21 +136,23 @@ const collection = await client.createCollection({
 
 ### 3. Custom Embedding Function
 
+> ⚠️ **Experimental API**: The `registerEmbeddingFunction` and `getEmbeddingFunction` APIs are currently experimental and may change in future versions.
+
 You can also use your own custom embedding function.
 
-First, implement the `IEmbeddingFunction` interface.
+First, implement the `EmbeddingFunction` interface.
 
 ```typescript
-import { IEmbeddingFunction, registerEmbeddingFunction } from "seekdb";
+import { EmbeddingFunction, registerEmbeddingFunction } from "seekdb";
 
-class MyCustomEmbedding implements IEmbeddingFunction {
+class MyCustomEmbedding implements EmbeddingFunction {
   // Name of the embedding function
   readonly name = "my-custom-embed";
 
-    // Initialize your model here
+  // Initialize your model here
   constructor(private config: any) {}
 
-    // Generate embeddings for the texts
+  // Generate embeddings for the texts
   async generate(texts: string[]): Promise<number[][]> {}
 
   getConfig() {
@@ -198,4 +204,18 @@ const db = await adminClient.getDatabase("new_database");
 await adminClient.deleteDatabase("new_database");
 ```
 
+## 📚 Examples
 
+Check out the [examples](./examples) directory for complete usage examples:
+
+- [simple-example.ts](./examples/simple-example.ts) - Basic usage
+- [complete-example.ts](./examples/complete-example.ts) - All features
+- [hybrid-search-example.ts](./examples/hybrid-search-example.ts) - Hybrid search
+
+Run examples:
+
+```bash
+pnpm --filter seekdb-examples run run:simple
+```
+
+See [DEVELOP.md](./DEVELOP.md) for more details on development and testing.

@@ -1,5 +1,5 @@
 import {
-  IEmbeddingFunction,
+  EmbeddingFunction,
   registerEmbeddingFunction,
   EmbeddingConfig,
 } from "seekdb";
@@ -42,7 +42,7 @@ const remoteUrls = {
   intl: "https://huggingface.co",
 };
 
-export class DefaultEmbeddingFunction implements IEmbeddingFunction {
+export class DefaultEmbeddingFunction implements EmbeddingFunction {
   readonly name: string = embeddingFunctionName;
   private modelName: string;
   private pipe: any = null;

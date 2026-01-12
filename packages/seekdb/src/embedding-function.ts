@@ -2,7 +2,7 @@ export interface EmbeddingConfig {
   [key: string]: any;
 }
 
-export interface IEmbeddingFunction {
+export interface EmbeddingFunction {
   readonly name: string;
   generate(texts: string[]): Promise<number[][]>;
   getConfig(): EmbeddingConfig;
@@ -11,10 +11,17 @@ export interface IEmbeddingFunction {
 
 export type EmbeddingFunctionConstructor = new (
   config: EmbeddingConfig
-) => IEmbeddingFunction;
+) => EmbeddingFunction;
 
 const registry = new Map<string, EmbeddingFunctionConstructor>();
 
+/**
+ * Register a custom embedding function.
+ * 
+ * @experimental This API is experimental and may change in future versions.
+ * @param name - The name of the embedding function
+ * @param fn - The embedding function constructor
+ */
 export const registerEmbeddingFunction = (
   name: string,
   fn: EmbeddingFunctionConstructor
@@ -27,10 +34,18 @@ export const registerEmbeddingFunction = (
   registry.set(name, fn);
 };
 
+/**
+ * Get an embedding function by name.
+ * 
+ * @experimental This API is experimental and may change in future versions.
+ * @param name - The name of the embedding function, defaults to "default-embed"
+ * @param config - Optional configuration for the embedding function
+ * @returns A promise that resolves to an EmbeddingFunction instance
+ */
 export async function getEmbeddingFunction(
   name: string = "default-embed",
   config?: any
-): Promise<IEmbeddingFunction> {
+): Promise<EmbeddingFunction> {
   const finalConfig = config || ({} as any);
 
   // If the model is not registered, try to register it automatically (for built-in models)
@@ -46,7 +61,7 @@ export async function getEmbeddingFunction(
           `  2. Import: Add this at the top of your file: import '@seekdb/${name}';\n` +
           `The package will automatically register itself upon import.\n\n` +
           `--- For custom embedding function ---\n` +
-          `Please implement the IEmbeddingFunction interface, then register it using 'registerEmbeddingFunction'. \n` +
+          `Please implement the EmbeddingFunction interface, then register it using 'registerEmbeddingFunction'. \n` +
           `You can see more details in the README.md of the package.\n\n` +
           `Error: ${error instanceof Error ? error.message : String(error)}`
       );

@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import {
-  IEmbeddingFunction,
+  EmbeddingFunction,
   registerEmbeddingFunction,
   EmbeddingConfig,
 } from "seekdb";
@@ -28,7 +28,7 @@ export interface OpenAIEmbeddingConfig extends EmbeddingConfig {
 
 const embeddingFunctionName = "openai";
 
-export class OpenAIEmbeddingFunction implements IEmbeddingFunction {
+export class OpenAIEmbeddingFunction implements EmbeddingFunction {
   readonly name: string = embeddingFunctionName;
   protected apiKey: string;
   protected modelName: string;

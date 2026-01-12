@@ -11,7 +11,7 @@ import {
   registerEmbeddingFunction,
   getEmbeddingFunction,
 } from "../src/embedding-function.js";
-import { EmbeddingFunction } from "../src/types.js";
+import type { EmbeddingFunction } from "../src/types.js";
 
 describe("Collection Embedding Function Tests", () => {
   let client: SeekdbClient;
@@ -25,7 +25,18 @@ describe("Collection Embedding Function Tests", () => {
       tenant: TEST_CONFIG.tenant,
       database: TEST_CONFIG.database,
     });
-  });
+
+  //  preload default embedding function
+    try {
+      const defaultEf = await getEmbeddingFunction("default");
+      console.log("Default embedding function preloaded successfully");
+      //  test if the model is loaded
+      await defaultEf.generate(["test"]);
+      console.log("Model loaded successfully");
+    } catch (error) {
+      console.warn("Failed to preload default embedding function:", error);
+    }
+  }, 300000); // 5 minutes timeout for preloading the model
 
   afterAll(async () => {
     try {
@@ -54,7 +65,7 @@ describe("Collection Embedding Function Tests", () => {
       console.log(`   Collection dimension: ${collection.dimension}`);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    }, 120000); // 2 minutes timeout for creating the collection
 
     test("createCollection with embeddingFunction=null and explicit configuration", async () => {
       const collectionName = generateCollectionName("test_explicit_none");
@@ -163,7 +174,7 @@ describe("Collection Embedding Function Tests", () => {
       console.log(`   Collection created with default embedding function`);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    }, 120000); // 2 minutes timeout for creating the collection
   });
 
   describe("getCollection tests", () => {
@@ -192,7 +203,7 @@ describe("Collection Embedding Function Tests", () => {
       console.log(`   Collection dimension: ${retrievedCollection.dimension}`);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    }, 120000); // 2 minutes timeout for getting the collection
 
     test("getCollection with embeddingFunction=null", async () => {
       const collectionName = generateCollectionName("test_get_explicit_none");
@@ -244,7 +255,7 @@ describe("Collection Embedding Function Tests", () => {
       console.log(`   Collection dimension: ${collection.dimension}`);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    }, 120000); // 2 minutes timeout for getting the collection
 
     test("getOrCreateCollection getting existing collection", async () => {
       const collectionName = generateCollectionName(
