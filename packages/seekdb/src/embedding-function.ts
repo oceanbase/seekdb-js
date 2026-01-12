@@ -10,25 +10,25 @@ export interface EmbeddingFunction {
 }
 
 export type EmbeddingFunctionConstructor = new (
-  config: EmbeddingConfig
+  config: EmbeddingConfig,
 ) => EmbeddingFunction;
 
 const registry = new Map<string, EmbeddingFunctionConstructor>();
 
 /**
  * Register a custom embedding function.
- * 
+ *
  * @experimental This API is experimental and may change in future versions.
  * @param name - The name of the embedding function
  * @param fn - The embedding function constructor
  */
 export const registerEmbeddingFunction = (
   name: string,
-  fn: EmbeddingFunctionConstructor
+  fn: EmbeddingFunctionConstructor,
 ) => {
   if (registry.has(name)) {
     throw new Error(
-      `Embedding function with name ${name} is already registered.`
+      `Embedding function with name ${name} is already registered.`,
     );
   }
   registry.set(name, fn);
@@ -36,7 +36,7 @@ export const registerEmbeddingFunction = (
 
 /**
  * Get an embedding function by name.
- * 
+ *
  * @experimental This API is experimental and may change in future versions.
  * @param name - The name of the embedding function, defaults to "default-embed"
  * @param config - Optional configuration for the embedding function
@@ -44,7 +44,7 @@ export const registerEmbeddingFunction = (
  */
 export async function getEmbeddingFunction(
   name: string = "default-embed",
-  config?: any
+  config?: any,
 ): Promise<EmbeddingFunction> {
   const finalConfig = config || ({} as any);
 
@@ -63,7 +63,7 @@ export async function getEmbeddingFunction(
           `--- For custom embedding function ---\n` +
           `Please implement the EmbeddingFunction interface, then register it using 'registerEmbeddingFunction'. \n` +
           `You can see more details in the README.md of the package.\n\n` +
-          `Error: ${error instanceof Error ? error.message : String(error)}`
+          `Error: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
     // If the embedding function is not registered, register it
@@ -80,7 +80,7 @@ export async function getEmbeddingFunction(
     return new Ctor(finalConfig);
   } catch (error) {
     throw new Error(
-      `Failed to instantiate embedding function '${name}': ${error instanceof Error ? error.message : String(error)}`
+      `Failed to instantiate embedding function '${name}': ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }

@@ -96,7 +96,7 @@ describe("Collection DML Operations", () => {
           ids: testIds,
           embeddings: [
             [1.0, 2.0, 3.0], // Correct
-            [1.0, 2.0],      // Incorrect
+            [1.0, 2.0], // Incorrect
             [4.0, 5.0, 6.0], // Correct
           ],
         });

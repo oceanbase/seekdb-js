@@ -225,4 +225,7 @@ export type { Database } from "./database.js";
 
 // ==================== Embedding Function Types ====================
 
-export type { EmbeddingFunction, EmbeddingConfig } from "./embedding-function.js";
+export type {
+  EmbeddingFunction,
+  EmbeddingConfig,
+} from "./embedding-function.js";

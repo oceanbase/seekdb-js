@@ -26,7 +26,7 @@ describe("Collection Embedding Function Tests", () => {
       database: TEST_CONFIG.database,
     });
 
-  //  preload default embedding function
+    //  preload default embedding function
     try {
       const defaultEf = await getEmbeddingFunction("default");
       console.log("Default embedding function preloaded successfully");

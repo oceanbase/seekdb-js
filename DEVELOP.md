@@ -1,6 +1,16 @@
-## Run Examples
+# Development Guide
 
-### 1. Prerequisites
+- [Development Guide](#development-guide)
+  - [Prerequisites](#prerequisites)
+  - [Run Examples](#run-examples)
+    - [Setup](#setup)
+    - [Run Examples](#run-examples-1)
+  - [Developers](#developers)
+    - [Setup](#setup-1)
+    - [Run Tests](#run-tests)
+    - [Linting \& Formatting](#linting--formatting)
+
+## Prerequisites
 
 - **Node.js**: Version >= 20
 - **Package Manager**: pnpm
@@ -10,9 +20,11 @@
     - Port: `2881`
     - User: `root`
     - Database: `test`
-    - Tenant: `sys`
+    - Tenant: `sys` (Required for OceanBase mode)
 
-### 2. Installation & Build
+## Run Examples
+
+### Setup
 
 Run the following commands in the project root to install dependencies and build the project:
 
@@ -24,18 +36,20 @@ pnpm install
 pnpm build
 ```
 
-### 3. Run Examples
+### Run Examples
 
-This project provides several example codes in the `packages/examples` directory. You can run them directly from the root directory using the following commands:
+This project provides several example in the `packages/examples` directory. You can run them directly from the root directory using the following commands:
 
 - **Simple Example**:
   Demonstrates basic connection, collection creation, data addition, and querying.
+
   ```bash
   pnpm --filter seekdb-examples run run:simple
   ```
 
 - **Complete Example**:
   Demonstrates all SDK features, including DML (CRUD), DQL (Query), Hybrid Search, etc.
+
   ```bash
   pnpm --filter seekdb-examples run run:complete
   ```
@@ -52,25 +66,21 @@ This project provides several example codes in the `packages/examples` directory
 
 ## Developers
 
-If you want to participate in SDK development or debugging, please follow these steps.
+To participate in SDK development or debugging, follow these steps.
 
-### 1. Installation
+### Setup
+
+Run the following commands in the project root to install dependencies and build the project:
 
 ```bash
+# Install dependencies
 pnpm install
-```
 
-### 2. Build
-
-```bash
 # Build all packages
 pnpm build
-
-# Or build only the seekdb core package
-pnpm build:seekdb
 ```
 
-### 3. Run Tests
+### Run Tests
 
 The project uses Vitest for testing. Run tests for the core package `seekdb`:
 
@@ -82,14 +92,11 @@ pnpm test
 pnpm --filter seekdb run test
 ```
 
-### 4. Linting & Formatting
+### Linting & Formatting
 
 ```bash
-# Run Lint check
+# Run lint check
 pnpm lint
-
-# Run Type check
-pnpm type-check
 
 # Format code
 pnpm prettier

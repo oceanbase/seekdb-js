@@ -7,10 +7,7 @@ dist/
 .qoder
 coverage/
 .nyc_output/
-pyseekdb-code
-pyseekdb-docs
 .node
-packages/seekdb/docs/
 .npmrc
 .pnpm-store
 .cursor

@@ -1,16 +1,71 @@
 # seekdb
 
-The JavaScript/TypeScript SDK for seekdb, supporting both seekdb Server mode and OceanBase mode.
+<div align="center">
+
+[![npm version](https://img.shields.io/npm/v/seekdb.svg)](https://www.npmjs.com/package/seekdb) [![npm downloads](https://img.shields.io/npm/dm/seekdb.svg)](https://www.npmjs.com/package/seekdb) [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/) [![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/oceanbase/seekdb-js/pulls)
+<br />
+
+<strong>Vector database SDK for JavaScript/TypeScript with built-in semantic search</strong>
+<br />
+<em>Works seamlessly with seekdb and OceanBase</em>
+</div>
+
+
+## Table of contents
+[Why seekdb?](#why-seekdb)<br/>
+[Installation](#installation)<br/>
+[Quick Start](#quick-start)<br/>
+[Usage Guide](#usage-guide)<br/>
+
+## Why seekdb?
+
+- **Auto Vectorization** - Automatic embedding generation, no manual vector calculation needed
+- **Semantic Search** - Vector-based similarity search for natural language queries
+- **Hybrid Search** - Combine keyword matching with semantic search
+- **Multiple Embedding Functions** - Built-in support for local and cloud embedding providers
+- **TypeScript Native** - Full TypeScript support with complete type definitions
 
 ## Installation
+
+> Before using the SDK, you need to deploy seekdb. Please refer to the [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/).
 
 ```bash
 npm install seekdb
 ```
 
-## Basic Usage
+## Quick Start
 
-### 1. Client Connection
+```typescript
+import { SeekdbClient } from "seekdb";
+
+// 1. Connect
+const client = new SeekdbClient({
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
+  database: "test",
+});
+
+// 2. Create collection
+const collection = await client.createCollection({ name: "my_collection" });
+
+// 3. Add data (auto-vectorized)
+await collection.add({
+  ids: ["1", "2"],
+  documents: ["Hello world", "seekdb is fast"],
+});
+
+// 4. Search
+const results = await collection.query({
+  queryTexts: "Hello",
+  nResults: 5,
+});
+```
+
+## Usage Guide
+
+### Client Connection
 
 ```typescript
 import { SeekdbClient } from "seekdb";
@@ -22,11 +77,11 @@ const client = new SeekdbClient({
   password: "",
   database: "test",
   // Required for OceanBase mode
-  // tenant: "sys", 
+  // tenant: "sys",
 });
 ```
 
-### 2. Create Collection
+### Create Collection
 
 ```typescript
 const collection = await client.createCollection({
@@ -34,7 +89,7 @@ const collection = await client.createCollection({
 });
 ```
 
-### 3. Add Data
+### Add Data
 
 Supports automatic vectorization, no need to calculate vectors manually.
 
@@ -46,31 +101,36 @@ await collection.add({
 });
 ```
 
-### 4. Query Data
+### Query Data
+
+**Semantic Search**
 
 ```typescript
-// Semantic Search
 const results = await collection.query({
   queryTexts: "Hello",
   nResults: 5,
 });
+```
 
-// Hybrid Search (Keyword + Semantic)
+**Hybrid Search (Keyword + Semantic)**
+
+```typescript
 const hybridResults = await collection.hybridSearch({
   query: { whereDocument: { $contains: "seekdb" } },
   knn: { queryTexts: ["fast database"] },
-  nResults: 5
+  nResults: 5,
 });
 ```
 
-## Embedding Function
+### Embedding Functions
 
 The SDK supports multiple Embedding Functions for generating vectors locally or in the cloud.
 
-### 1. Default Embedding
+#### Default Embedding
 
 Uses a local model (`Xenova/all-MiniLM-L6-v2`) by default. No API Key required. Suitable for quick development and testing.
-No configuration is needed to use the default model.
+
+No configuration is needed to use the default model:
 
 ```typescript
 const collection = await client.createCollection({
@@ -78,22 +138,18 @@ const collection = await client.createCollection({
 });
 ```
 
-We also supports manual import of the built-in model.
-
-First install .
+For manual import of the built-in model:
 
 ```bash
 npm install @seekdb/default-embed
 ```
 
-Instantiate and use the model in your project.
-
 ```typescript
 import { DefaultEmbeddingFunction } from "@seekdb/default-embed";
 
 const defaultEmbed = new DefaultEmbeddingFunction({
-  // If you encounter download issues, try switching the region, default is 'cn'
-  // region: 'intl'
+  // If you encounter download issues, try switching the region to 'intl', defaults to 'cn'
+  region: "cn",
 });
 
 const collection = await client.createCollection({
@@ -102,28 +158,24 @@ const collection = await client.createCollection({
 });
 ```
 
-### 2. Qwen Embedding 
+#### Qwen Embedding
 
-> ⚠️ **Experimental API**: The `QwenEmbeddingFunction` is  currently experimental and may change in future versions.
+> ⚠️ **Experimental API**: The `QwenEmbeddingFunction` is currently experimental and may change in future versions.
 
 Uses DashScope's cloud Embedding service (Qwen/Tongyi Qianwen). Suitable for production environments.
-
-First install .
 
 ```bash
 npm install @seekdb/qwen
 ```
 
-Instantiate and use the model in your project.
-
 ```typescript
 import { QwenEmbeddingFunction } from "@seekdb/qwen";
 
 const qwenEmbed = new QwenEmbeddingFunction({
-  // Your DashScope API Key, defaults to reading from env var
-  apiKey: "sk-...", 
-  // Optional, defaults to text-embedding-v4
-  modelName: "text-embedding-v4" 
+  // Your DashScope env var, defaults to 'DASHSCOPE_API_KEY'
+  apiKeyEnvVar: 'DASHSCOPE_API_KEY'
+  // Optional, defaults to 'text-embedding-v4'
+  modelName: "text-embedding-v4",
 });
 
 const collection = await client.createCollection({
@@ -132,13 +184,65 @@ const collection = await client.createCollection({
 });
 ```
 
-### 3. Custom Embedding Function
+#### OpenAI Embedding
+
+> ⚠️ **Experimental API**: The `OpenAIEmbeddingFunction` is currently experimental and may change in future versions.
+
+Uses OpenAI's embedding API. Suitable for production environments with OpenAI integration.
+
+```bash
+npm install @seekdb/openai
+```
+
+```typescript
+import { OpenAIEmbeddingFunction } from "@seekdb/openai";
+
+const openaiEmbed = new OpenAIEmbeddingFunction({
+  // Your openai env var, defaults to 'OPENAI_API_KEY'
+  apiKeyEnvVar: 'OPENAI_API_KEY'
+  // Optional, defaults to 'text-embedding-3-small'
+  modelName: "text-embedding-3-small",
+});
+
+const collection = await client.createCollection({
+  name: "openai_embed_collection",
+  embeddingFunction: openaiEmbed,
+});
+```
+
+#### Jina Embedding
+
+> 🚧 **Under Development**: The `JinaEmbeddingFunction` is under active development. The API may undergo significant changes or breaking updates in future releases.
+
+Uses Jina AI's embedding API. Supports multimodal embeddings.
+
+```bash
+npm install @seekdb/jina
+```
+
+```typescript
+import { JinaEmbeddingFunction } from "@seekdb/jina";
+
+const jinaEmbed = new JinaEmbeddingFunction({
+  // Your jina env var, defaults to 'JINA_API_KEY'
+  apiKeyEnvVar: 'JINA_API_KEY'
+  // Optional, defaults to jina-clip-v2
+  modelName: "jina-clip-v2",
+});
+
+const collection = await client.createCollection({
+  name: "jina_embed_collection",
+  embeddingFunction: jinaEmbed,
+});
+```
+
+#### Custom Embedding Function
 
 > ⚠️ **Experimental API**: The `registerEmbeddingFunction` and `getEmbeddingFunction` APIs are currently experimental and may change in future versions.
 
 You can also use your own custom embedding function.
 
-First, implement the `EmbeddingFunction` interface.
+First, implement the `EmbeddingFunction` interface:
 
 ```typescript
 import { EmbeddingFunction, registerEmbeddingFunction } from "seekdb";
@@ -147,10 +251,10 @@ class MyCustomEmbedding implements EmbeddingFunction {
   // Name of the embedding function
   readonly name = "my-custom-embed";
 
-    // Initialize your model here
+  // Initialize your model here
   constructor(private config: any) {}
 
-    // Generate embeddings for the texts
+  // Generate embeddings for the texts
   async generate(texts: string[]): Promise<number[][]> {}
 
   getConfig() {
@@ -159,7 +263,7 @@ class MyCustomEmbedding implements EmbeddingFunction {
 }
 ```
 
-Then register and use it.
+Then register and use it:
 
 ```typescript
 // Register the custom embedding function
@@ -174,7 +278,7 @@ const collection = await client.createCollection({
 });
 ```
 
-## Database Management
+### Database Management
 
 The `SeekdbAdminClient` allows you to manage databases (create, list, delete).
 
@@ -186,7 +290,8 @@ const adminClient = new SeekdbAdminClient({
   port: 2881,
   user: "root",
   password: "",
-  // Optional: tenant
+  // Required for OceanBase mode
+  // tenant: "sys"
 });
 
 // Create a new database
@@ -201,5 +306,3 @@ const db = await adminClient.getDatabase("new_database");
 // Delete a database
 await adminClient.deleteDatabase("new_database");
 ```
-
-
