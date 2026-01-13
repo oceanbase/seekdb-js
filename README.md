@@ -1,6 +1,5 @@
-# seekdb-js
-
 <div align="center">
+<h1>seekdb-js</h1>
 
 [![npm version](https://img.shields.io/npm/v/seekdb.svg)](https://www.npmjs.com/package/seekdb) [![npm downloads](https://img.shields.io/npm/dm/seekdb.svg)](https://www.npmjs.com/package/seekdb) [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/) [![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/oceanbase/seekdb-js/pulls)
 <br />
@@ -19,7 +18,6 @@
 [Examples](#examples)<br/>
 [Development](#development)<br/>
 [License](#license)<br/>
-
 
 ## Why seekdb-js?
 
@@ -188,7 +186,7 @@ npm install @seekdb/qwen
 import { QwenEmbeddingFunction } from "@seekdb/qwen";
 
 const qwenEmbed = new QwenEmbeddingFunction({
-  // Your DashScope env var, defaults to 'DASHSCOPE_API_KEY'
+  // Your DashScope environment variable name, defaults to 'DASHSCOPE_API_KEY'
   apiKeyEnvVar: 'DASHSCOPE_API_KEY'
   // Optional, defaults to 'text-embedding-v4'
   modelName: "text-embedding-v4",
@@ -214,7 +212,7 @@ npm install @seekdb/openai
 import { OpenAIEmbeddingFunction } from "@seekdb/openai";
 
 const openaiEmbed = new OpenAIEmbeddingFunction({
-  // Your openai env var, defaults to 'OPENAI_API_KEY'
+  // Your openai environment variable name, defaults to 'OPENAI_API_KEY'
   apiKeyEnvVar: 'OPENAI_API_KEY'
   // Optional, defaults to 'text-embedding-3-small'
   modelName: "text-embedding-3-small",
@@ -240,7 +238,7 @@ npm install @seekdb/jina
 import { JinaEmbeddingFunction } from "@seekdb/jina";
 
 const jinaEmbed = new JinaEmbeddingFunction({
-  // Your jina env var, defaults to 'JINA_API_KEY'
+  // Your jina environment variable name, defaults to 'JINA_API_KEY'
   apiKeyEnvVar: 'JINA_API_KEY'
   // Optional, defaults to jina-clip-v2
   modelName: "jina-clip-v2",
