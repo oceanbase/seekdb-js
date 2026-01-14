@@ -1,5 +1,25 @@
 # @seekdb/jina
 
+## 1.0.0
+
+### Major Changes
+
+- Publish first major version.
+
+### Patch Changes
+
+- b8c457d: change package name
+- d2d8bee: Added dimension check for the collection.add method & improve the vectorToString method
+- 8f6a109: update tsup config and Readme.md
+- Updated dependencies [b8c457d]
+- Updated dependencies [d2d8bee]
+- Updated dependencies [dedb768]
+- Updated dependencies
+- Updated dependencies [d3d9e5a]
+- Updated dependencies [8f6a109]
+  - seekdb@1.0.0
+  - @seekdb/common@1.0.0
+
 ## 0.1.0-alpha.4
 
 ### Patch Changes
