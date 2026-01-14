@@ -1,0 +1,27 @@
+{
+  "name": "seekdb-monorepo-root",
+  "private": true,
+  "scripts": {
+    "build": "pnpm --filter seekdb run build && pnpm --filter '@seekdb/*' run build",
+    "build:seekdb": "pnpm --filter seekdb run build",
+    "build:embeddings": "pnpm --filter '@seekdb/*' run build",
+    "test": "pnpm  --filter seekdb run test",
+    "lint": "pnpm -r run lint",
+    "type-check": "pnpm -r run type-check",
+    "prettier": "prettier --write .",
+    "publish:all": "node scripts/publish.js"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.8",
+    "@types/node": "^22.10.2",
+    "dotenv": "^16.6.1",
+    "prettier": "^3.6.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "name": "seekdb",
+  "version": "1.0.0",
+  "description": "A unified JavaScript/TypeScript SDK for seekdb that supports Server mode and OceanBase mode",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "type-check": "tsc --noEmit",
+    "prettier": "prettier --write .",
+    "docs": "typedoc --entryPoints src/index.ts --out docs/v2"
+  },
+  "keywords": [
+    "seekdb",
+    "vector-database",
+    "embeddings",
+    "similarity-search",
+    "hybrid-search"
+  ],
+  "files": [
+    "dist"
+  ],
+  "author": "OceanBase",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "mysql2": "^3.11.5",
+    "node-addon-api": "^8.0.0",
+    "node-gyp": "^10.1.0"
+  },
+  "devDependencies": {
+    "@seekdb/default-embed": "workspace:*"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oceanbase/seekdb-js.git",
+    "directory": "packages/seekdb"
+  },
+  "homepage": "https://github.com/oceanbase/seekdb-js#readme",
+  "bugs": {
+    "url": "https://github.com/oceanbase/seekdb-js/issues"
+  }
+}

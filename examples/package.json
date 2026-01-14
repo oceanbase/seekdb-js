@@ -1,0 +1,19 @@
+{
+  "name": "seekdb-examples",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "run:all": "tsx run-all.ts",
+    "run:simple": "tsx simple-example.ts",
+    "run:hybrid": "tsx hybrid-search-example.ts",
+    "run:complete": "tsx complete-example.ts"
+  },
+  "dependencies": {
+    "seekdb": "workspace:*",
+    "@seekdb/default-embed": "workspace:*",
+    "@seekdb/openai": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6"
+  }
+}

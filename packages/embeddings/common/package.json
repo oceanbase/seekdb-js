@@ -1,0 +1,35 @@
+{
+  "name": "@seekdb/common",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oceanbase/seekdb-js.git",
+    "directory": "packages/embeddings/common"
+  },
+  "homepage": "https://github.com/oceanbase/seekdb-js#readme",
+  "bugs": {
+    "url": "https://github.com/oceanbase/seekdb-js/issues"
+  }
+}
