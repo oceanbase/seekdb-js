@@ -88,6 +88,8 @@ export class Collection {
       "DUMPFILE",
       "INTO OUTFILE",
       "INTO DUMPFILE",
+      "CALL",
+      "LOAD"
     ];
 
     for (const keyword of dangerousKeywords) {
