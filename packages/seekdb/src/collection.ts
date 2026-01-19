@@ -5,7 +5,7 @@
 import type { InternalClient } from "./internal-client.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError } from "./errors.js";
-import { CollectionFieldNames } from "./utils.js";
+import { CollectionFieldNames, CollectionNames } from "./utils.js";
 import { FilterBuilder, SearchFilterCondition } from "./filters.js";
 import type {
   EmbeddingFunction,
@@ -21,6 +21,7 @@ import type {
   QueryResult,
   DistanceMetric,
   CollectionConfig,
+  CollectionContext,
 } from "./types.js";
 
 /**
@@ -32,6 +33,7 @@ export class Collection {
   readonly distance: DistanceMetric;
   readonly embeddingFunction?: EmbeddingFunction;
   readonly metadata?: Metadata;
+  readonly collectionId?: string; // v2 format collection ID
   #client: InternalClient;
 
   constructor(config: CollectionConfig) {
@@ -40,7 +42,29 @@ export class Collection {
     this.distance = config.distance;
     this.embeddingFunction = config.embeddingFunction;
     this.metadata = config.metadata;
+    this.collectionId = config.collectionId;
     this.#client = config.client;
+  }
+
+  /**
+   * Get collection version (v1 or v2)
+   * @private
+   */
+  private get version(): "v1" | "v2" {
+    return this.collectionId ? "v2" : "v1";
+  }
+
+  /**
+   * Get collection context for SQL building
+   * @private
+   */
+  private get context(): CollectionContext {
+    return {
+      name: this.name,
+      collectionId: this.collectionId,
+      dimension: this.dimension,
+      distance: this.distance,
+    };
   }
 
   /**
@@ -162,7 +186,7 @@ export class Collection {
       }
     }
 
-    const { sql, params } = SQLBuilder.buildInsert(this.name, {
+    const { sql, params } = SQLBuilder.buildInsert(this.context, {
       ids: idsArray,
       documents: documentsArray ?? undefined,
       embeddings: embeddingsArray,
@@ -243,7 +267,7 @@ export class Collection {
         continue;
       }
 
-      const { sql, params } = SQLBuilder.buildUpdate(this.name, id, updates);
+      const { sql, params } = SQLBuilder.buildUpdate(this.context, {id, updates});
       await this.#client.execute(sql, params);
     }
   }
@@ -317,11 +341,7 @@ export class Collection {
         }
 
         if (Object.keys(updates).length > 0) {
-          const { sql, params } = SQLBuilder.buildUpdate(
-            this.name,
-            id,
-            updates,
-          );
+          const { sql, params } = SQLBuilder.buildUpdate(this.context, {id, updates});
           await this.#client.execute(sql, params);
         }
       } else {
@@ -350,7 +370,7 @@ export class Collection {
     }
 
     // Build DELETE SQL using SQLBuilder
-    const { sql, params } = SQLBuilder.buildDelete(this.name, {
+    const { sql, params } = SQLBuilder.buildDelete(this.context, {
       ids: ids ? (Array.isArray(ids) ? ids : [ids]) : undefined,
       where,
       whereDocument,
@@ -375,7 +395,7 @@ export class Collection {
     } = options;
 
     // Build SELECT SQL using SQLBuilder
-    const { sql, params } = SQLBuilder.buildSelect(this.name, {
+    const { sql, params } = SQLBuilder.buildSelect(this.context, {
       ids: filterIds
         ? Array.isArray(filterIds)
           ? filterIds
@@ -487,7 +507,7 @@ export class Collection {
     for (const queryVector of embeddingsArray) {
       // Build vector query SQL using SQLBuilder
       const { sql, params } = SQLBuilder.buildVectorQuery(
-        this.name,
+        this.context,
         queryVector,
         nResults,
         {
@@ -706,7 +726,7 @@ export class Collection {
 
     // Execute hybrid search using DBMS_HYBRID_SEARCH
     const searchParmJson = JSON.stringify(searchParm);
-    const tableName = `c$v1$${this.name}`;
+    const tableName = CollectionNames.tableName(this.name, this.collectionId);
 
     // Set search_parm variable
     const { sql: setVarSql, params: setVarParams } =
@@ -961,7 +981,7 @@ export class Collection {
    * Count items in collection
    */
   async count(): Promise<number> {
-    const sql = SQLBuilder.buildCount(this.name);
+    const sql = SQLBuilder.buildCount(this.context);
     const rows = await this.#client.execute(sql);
     if (!rows || rows.length === 0) return 0;
     return rows[0].cnt;

@@ -13,7 +13,16 @@ import {
   CollectionFieldNames,
   DEFAULT_DISTANCE_METRIC,
   DEFAULT_VECTOR_DIMENSION,
+  COLLECTION_V1_PREFIX,
+  resolveEmbeddingFunction,
 } from "./utils.js";
+import {
+  ensureMetadataTable,
+  insertCollectionMetadata,
+  getCollectionMetadata,
+  deleteCollectionMetadata,
+  listCollectionMetadata,
+} from "./metadata-manager.js";
 import type {
   SeekdbClientArgs,
   CreateCollectionOptions,
@@ -96,9 +105,45 @@ export class SeekdbClient {
       dimension = actualDimension || DEFAULT_VECTOR_DIMENSION;
     }
 
-    // Create table using SQLBuilder
-    const sql = SQLBuilder.buildCreateTable(name, dimension, distance);
-    await this._internal.execute(sql);
+    // Ensure metadata table exists
+    await ensureMetadataTable(this._internal);
+
+    // Prepare embedding function metadata (if ef is not null)
+    const embeddingFunctionMetadata =
+      ef !== null && ef !== undefined
+        ? {
+            name: ef.name,
+            properties: ef.getConfig(),
+          }
+        : undefined;
+
+    // Insert metadata and get collection_id
+    const collectionId = await insertCollectionMetadata(this._internal, name, {
+      dimension,
+      distance,
+      embeddingFunction: embeddingFunctionMetadata,
+    });
+
+    // Create table using SQLBuilder with collection_id (v2 format)
+    const sql = SQLBuilder.buildCreateTable(
+      name,
+      dimension,
+      distance,
+      undefined,
+      collectionId,
+    );
+
+    try {
+      await this._internal.execute(sql);
+    } catch (error) {
+      // If table creation fails, try to clean up metadata
+      try {
+        await deleteCollectionMetadata(this._internal, name);
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
+      throw error;
+    }
 
     return new Collection({
       name,
@@ -106,6 +151,7 @@ export class SeekdbClient {
       distance,
       embeddingFunction: ef ?? undefined,
       client: this._internal,
+      collectionId,
     });
   }
 
@@ -115,85 +161,117 @@ export class SeekdbClient {
   async getCollection(options: GetCollectionOptions): Promise<Collection> {
     const { name, embeddingFunction } = options;
 
-    // Check if collection exists
-    const sql = SQLBuilder.buildShowTable(name);
-    const result = await this._internal.execute(sql);
+    // Variables to store collection info
+    let dimension: number;
+    let distance: DistanceMetric;
+    let collectionId: string | undefined;
+    let metadataEmbeddingFunction:
+      | { name: string; properties: any }
+      | undefined;
 
-    if (!result || result.length === 0) {
-      throw new InvalidCollectionError(`Collection not found: ${name}`);
-    }
+    // Try v2 format first (check metadata table)
+    const metadata = await getCollectionMetadata(this._internal, name);
 
-    // Get table schema to extract dimension and distance
-    const descSql = SQLBuilder.buildDescribeTable(name);
-    const schema = await this._internal.execute(descSql);
+    if (metadata) {
+      // v2 collection found - extract from metadata
+      const { collectionId: cId, settings } = metadata;
 
-    if (!schema) {
-      throw new InvalidCollectionError(
-        `Unable to retrieve schema for collection: ${name}`,
-      );
-    }
+      // Verify table exists
+      const sql = SQLBuilder.buildShowTable(name, cId);
+      const result = await this._internal.execute(sql);
 
-    // Parse embedding field to get dimension
-    const embeddingField = schema.find(
-      (row: any) => row.Field === CollectionFieldNames.EMBEDDING,
-    );
-    if (!embeddingField) {
-      throw new InvalidCollectionError(
-        `Collection ${name} does not have embedding field`,
-      );
-    }
-
-    // Parse VECTOR(dimension) format
-    const match = embeddingField.Type.match(/VECTOR\((\d+)\)/i);
-    if (!match) {
-      throw new InvalidCollectionError(
-        `Invalid embedding type: ${embeddingField.Type}`,
-      );
-    }
-
-    const dimension = parseInt(match[1], 10);
-
-    // Extract distance from CREATE TABLE statement
-    let distance: DistanceMetric = DEFAULT_DISTANCE_METRIC;
-    try {
-      const createTableSql = SQLBuilder.buildShowCreateTable(name);
-      const createTableResult = await this._internal.execute(createTableSql);
-
-      if (createTableResult && createTableResult.length > 0) {
-        const createStmt = (createTableResult[0] as any)["Create Table"] || "";
-        // Match: with(distance=value, ...) where value can be l2, cosine, inner_product, or ip
-        const distanceMatch = createStmt.match(
-          /with\s*\([^)]*distance\s*=\s*['"]?(\w+)['"]?/i,
+      if (!result || result.length === 0) {
+        throw new InvalidCollectionError(
+          `Collection metadata exists but table not found: ${name}`,
         );
-        if (distanceMatch) {
-          const parsedDistance = distanceMatch[1].toLowerCase();
-          if (
-            parsedDistance === "l2" ||
-            parsedDistance === "cosine" ||
-            parsedDistance === "inner_product" ||
-            parsedDistance === "ip"
-          ) {
-            distance = parsedDistance as DistanceMetric;
+      }
+
+      dimension = settings.dimension ?? DEFAULT_VECTOR_DIMENSION;
+      distance = settings.distance ?? DEFAULT_DISTANCE_METRIC;
+      collectionId = cId;
+      metadataEmbeddingFunction = settings.embeddingFunction;
+    } else {
+      // Fallback to v1 format - extract from table schema
+      const sql = SQLBuilder.buildShowTable(name);
+      const result = await this._internal.execute(sql);
+
+      if (!result || result.length === 0) {
+        throw new InvalidCollectionError(`Collection not found: ${name}`);
+      }
+
+      // Get table schema to extract dimension and distance
+      const descSql = SQLBuilder.buildDescribeTable(name);
+      const schema = await this._internal.execute(descSql);
+
+      if (!schema) {
+        throw new InvalidCollectionError(
+          `Unable to retrieve schema for collection: ${name}`,
+        );
+      }
+
+      // Parse embedding field to get dimension
+      const embeddingField = schema.find(
+        (row: any) => row.Field === CollectionFieldNames.EMBEDDING,
+      );
+      if (!embeddingField) {
+        throw new InvalidCollectionError(
+          `Collection ${name} does not have embedding field`,
+        );
+      }
+
+      // Parse VECTOR(dimension) format
+      const match = embeddingField.Type.match(/VECTOR\((\d+)\)/i);
+      if (!match) {
+        throw new InvalidCollectionError(
+          `Invalid embedding type: ${embeddingField.Type}`,
+        );
+      }
+
+      dimension = parseInt(match[1], 10);
+
+      // Extract distance from CREATE TABLE statement
+      distance = DEFAULT_DISTANCE_METRIC;
+      try {
+        const createTableSql = SQLBuilder.buildShowCreateTable(name);
+        const createTableResult = await this._internal.execute(createTableSql);
+
+        if (createTableResult && createTableResult.length > 0) {
+          const createStmt =
+            (createTableResult[0] as any)["Create Table"] || "";
+          // Match: with(distance=value, ...) where value can be l2, cosine, inner_product, or ip
+          const distanceMatch = createStmt.match(
+            /with\s*\([^)]*distance\s*=\s*['"]?(\w+)['"]?/i,
+          );
+          if (distanceMatch) {
+            const parsedDistance = distanceMatch[1].toLowerCase();
+            if (
+              parsedDistance === "l2" ||
+              parsedDistance === "cosine" ||
+              parsedDistance === "inner_product" ||
+              parsedDistance === "ip"
+            ) {
+              distance = parsedDistance as DistanceMetric;
+            }
           }
         }
+      } catch (error) {
+        // If extraction fails, use default distance
       }
-    } catch (error) {
-      // If extraction fails, use default distance
     }
 
-    let ef = embeddingFunction;
-    // Use default embedding function if not provided
-    // If embeddingFunction is set to null, do not use embedding function
-    if (embeddingFunction === undefined) {
-      ef = await getEmbeddingFunction();
-    }
+    // Unified embedding function resolution
+    const ef = await resolveEmbeddingFunction(
+      metadataEmbeddingFunction,
+      embeddingFunction,
+    );
 
     return new Collection({
       name,
       dimension,
       distance,
-      embeddingFunction: ef ?? undefined,
+      embeddingFunction: ef,
       client: this._internal,
+      collectionId,
     });
   }
 
@@ -201,9 +279,28 @@ export class SeekdbClient {
    * List all collections
    */
   async listCollections(): Promise<Collection[]> {
-    const prefix = "c$v1$";
-    // Use SHOW TABLES LIKE for filtering
-    const sql = `SHOW TABLES LIKE '${prefix}%'`;
+    const collections: Collection[] = [];
+    const collectionNames = new Set<string>();
+
+    // 1. Get v2 collections from metadata table
+    const v2Metadata = await listCollectionMetadata(this._internal);
+
+    for (const metadata of v2Metadata) {
+      try {
+        const collection = await this.getCollection({
+          name: metadata.collectionName,
+        });
+        collections.push(collection);
+        collectionNames.add(metadata.collectionName);
+      } catch (error) {
+        // Skip if we can't get collection info
+        continue;
+      }
+    }
+
+    // 2. Get v1 collections
+    const v1Prefix = COLLECTION_V1_PREFIX;
+    const sql = `SHOW TABLES LIKE '${v1Prefix}%'`;
     let result: RowDataPacket[] | null = null;
 
     try {
@@ -218,45 +315,46 @@ export class SeekdbClient {
             (dbResult[0] as any)["DATABASE()"] || Object.values(dbResult[0])[0];
           if (dbName) {
             result = await this._internal.execute(
-              `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${prefix}%'`,
+              `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${v1Prefix}%'`,
             );
-          } else {
-            return [];
           }
-        } else {
-          return [];
         }
       } catch (fallbackError) {
-        // If fallback also fails, return empty list
-        return [];
+        // If fallback also fails, continue with v2 collections only
       }
     }
 
-    if (!result) return [];
+    if (result) {
+      for (const row of result) {
+        // Extract table name - handle both SHOW TABLES format and information_schema format
+        let tableName: string;
+        if ((row as any).TABLE_NAME) {
+          // information_schema format
+          tableName = (row as any).TABLE_NAME;
+        } else {
+          // SHOW TABLES format - get first value
+          tableName = Object.values(row)[0] as string;
+        }
 
-    const collections: Collection[] = [];
+        // Double check prefix although SQL filter should handle it
+        if (tableName.startsWith(v1Prefix)) {
+          const collectionName = tableName.substring(v1Prefix.length);
 
-    for (const row of result) {
-      // Extract table name - handle both SHOW TABLES format and information_schema format
-      let tableName: string;
-      if ((row as any).TABLE_NAME) {
-        // information_schema format
-        tableName = (row as any).TABLE_NAME;
-      } else {
-        // SHOW TABLES format - get first value
-        tableName = Object.values(row)[0] as string;
-      }
+          // Skip if already added as v2 collection
+          if (collectionNames.has(collectionName)) {
+            continue;
+          }
 
-      // Double check prefix although SQL filter should handle it
-      if (tableName.startsWith(prefix)) {
-        const collectionName = tableName.substring(prefix.length);
-        try {
-          // Fetch full collection details
-          const collection = await this.getCollection({ name: collectionName });
-          collections.push(collection);
-        } catch (error) {
-          // Skip if we can't get collection info
-          continue;
+          try {
+            // Fetch full collection details
+            const collection = await this.getCollection({
+              name: collectionName,
+            });
+            collections.push(collection);
+          } catch (error) {
+            // Skip if we can't get collection info
+            continue;
+          }
         }
       }
     }
@@ -273,14 +371,38 @@ export class SeekdbClient {
     if (!exists) {
       throw new Error(`Collection '${name}' does not exist`);
     }
-    const sql = SQLBuilder.buildDropTable(name);
-    await this._internal.execute(sql);
+
+    // Check if it's a v2 collection
+    const metadata = await getCollectionMetadata(this._internal, name);
+
+    if (metadata) {
+      // v2 collection - delete both table and metadata
+      const { collectionId } = metadata;
+
+      // Delete table
+      const sql = SQLBuilder.buildDropTable(name, collectionId);
+      await this._internal.execute(sql);
+
+      // Delete metadata
+      await deleteCollectionMetadata(this._internal, name);
+    } else {
+      // v1 collection - delete table only
+      const sql = SQLBuilder.buildDropTable(name);
+      await this._internal.execute(sql);
+    }
   }
 
   /**
    * Check if collection exists
    */
   async hasCollection(name: string): Promise<boolean> {
+    // Check v2 format first (metadata table)
+    const metadata = await getCollectionMetadata(this._internal, name);
+    if (metadata) {
+      return true;
+    }
+
+    // Fallback to v1 format
     const sql = SQLBuilder.buildShowTable(name);
     const result = await this._internal.execute(sql);
     return result !== null && result.length > 0;

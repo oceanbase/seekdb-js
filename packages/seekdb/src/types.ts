@@ -91,6 +91,13 @@ export interface QueryResult<TMeta extends Metadata = Metadata> {
 
 export type DistanceMetric = "l2" | "cosine" | "inner_product";
 
+export interface CollectionContext {
+  name: string;
+  collectionId?: string;
+  dimension?: number;
+  distance?: DistanceMetric;
+}
+
 export interface CollectionConfig {
   name: string;
   dimension: number;
@@ -98,6 +105,7 @@ export interface CollectionConfig {
   embeddingFunction?: EmbeddingFunction;
   metadata?: Metadata;
   client: InternalClient;
+  collectionId?: string; // v2 format collection ID
 }
 
 export interface HNSWConfiguration {

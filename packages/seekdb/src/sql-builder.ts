@@ -15,6 +15,7 @@ import type {
   Where,
   WhereDocument,
   DistanceMetric,
+  CollectionContext,
 } from "./types.js";
 
 export interface SQLResult {
@@ -27,16 +28,14 @@ export interface SQLResult {
  * Provides static methods to build SQL statements
  */
 export class SQLBuilder {
-  /**
-   * Build CREATE TABLE SQL for creating a collection
-   */
   static buildCreateTable(
     name: string,
     dimension: number,
     distance: DistanceMetric,
     comment?: string,
+    collectionId?: string,
   ): string {
-    const tableName = CollectionNames.tableName(name);
+    const tableName = CollectionNames.tableName(name, collectionId);
     const commentClause = comment
       ? ` COMMENT = '${comment.replace(/'/g, "''")}'`
       : "";
@@ -54,40 +53,40 @@ export class SQLBuilder {
   /**
    * Build SHOW TABLES LIKE SQL
    */
-  static buildShowTable(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildShowTable(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `SHOW TABLES LIKE '${tableName}'`;
   }
 
   /**
    * Build DESCRIBE TABLE SQL
    */
-  static buildDescribeTable(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildDescribeTable(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `DESCRIBE \`${tableName}\``;
   }
 
   /**
    * Build SHOW INDEX SQL
    */
-  static buildShowIndex(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildShowIndex(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `SHOW INDEX FROM \`${tableName}\` WHERE Key_name LIKE 'vec_%'`;
   }
 
   /**
    * Build SHOW CREATE TABLE SQL
    */
-  static buildShowCreateTable(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildShowCreateTable(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `SHOW CREATE TABLE \`${tableName}\``;
   }
 
   /**
    * Build DROP TABLE SQL
    */
-  static buildDropTable(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildDropTable(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `DROP TABLE IF EXISTS \`${tableName}\``;
   }
 
@@ -95,15 +94,10 @@ export class SQLBuilder {
    * Build INSERT SQL for adding data
    */
   static buildInsert(
-    collectionName: string,
-    data: {
-      ids: string[];
-      documents?: (string | null)[];
-      embeddings: number[][];
-      metadatas?: (Metadata | null)[];
-    },
+    context: CollectionContext,
+    data: { ids: string[]; documents?: (string | null)[]; embeddings: number[][]; metadatas?: (Metadata | null)[] },
   ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     const valuesList: string[] = [];
     const params: unknown[] = [];
     const numItems = data.ids.length;
@@ -131,7 +125,7 @@ export class SQLBuilder {
    * Build SELECT SQL for getting data
    */
   static buildSelect(
-    collectionName: string,
+    context: CollectionContext,
     options: {
       ids?: string[];
       where?: Where;
@@ -141,7 +135,7 @@ export class SQLBuilder {
       include?: string[];
     },
   ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     const { ids, where, whereDocument, limit, offset, include } = options;
     const params: unknown[] = [];
 
@@ -216,8 +210,8 @@ export class SQLBuilder {
   /**
    * Build COUNT SQL
    */
-  static buildCount(collectionName: string): string {
-    const tableName = CollectionNames.tableName(collectionName);
+  static buildCount(context: CollectionContext): string {
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     return `SELECT COUNT(*) as cnt FROM \`${tableName}\``;
   }
 
@@ -225,15 +219,18 @@ export class SQLBuilder {
    * Build UPDATE SQL
    */
   static buildUpdate(
-    collectionName: string,
-    id: string,
-    updates: {
-      document?: string;
-      embedding?: number[];
-      metadata?: Metadata;
+    context: CollectionContext,
+    data: {
+      id: string;
+      updates: {
+        document?: string;
+        embedding?: number[];
+        metadata?: Metadata;
+      };
     },
   ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
+    const { id, updates } = data;
     const setClauses: string[] = [];
     const params: unknown[] = [];
 
@@ -262,14 +259,14 @@ export class SQLBuilder {
    * Build DELETE SQL
    */
   static buildDelete(
-    collectionName: string,
+    context: CollectionContext,
     options: {
       ids?: string[];
       where?: Where;
       whereDocument?: WhereDocument;
     },
   ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     const { ids, where, whereDocument } = options;
     const whereClauses: string[] = [];
     const params: unknown[] = [];
@@ -314,7 +311,7 @@ export class SQLBuilder {
    * Build vector query SQL
    */
   static buildVectorQuery(
-    collectionName: string,
+    context: CollectionContext,
     queryVector: number[],
     nResults: number,
     options: {
@@ -324,8 +321,8 @@ export class SQLBuilder {
       distance?: DistanceMetric;
       approximate?: boolean;
     },
-  ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+  ): SQLResult{
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     const {
       where,
       whereDocument,

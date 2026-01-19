@@ -3,7 +3,8 @@
  */
 
 import { SeekdbValueError } from "./errors.js";
-import type { Metadata } from "./types.js";
+import type { Metadata, EmbeddingFunction, EmbeddingConfig } from "./types.js";
+import { getEmbeddingFunction } from "./embedding-function.js";
 
 /**
  * Normalize input to array
@@ -115,8 +116,56 @@ export function vectorToSqlString(vector: number[]): string {
  * Collection name utilities
  */
 export class CollectionNames {
-  static tableName(collectionName: string): string {
-    return `c$v1$${collectionName}`;
+  /**
+   * Generate table name for collection
+   * @param collectionName - Name of the collection
+   * @param collectionId - Optional collection ID (for v2 format)
+   * @returns Table name in v1 or v2 format
+   */
+  static tableName(collectionName: string, collectionId?: string): string {
+    if (collectionId) {
+      return `${COLLECTION_V2_PREFIX}${collectionId}`;
+    }
+    return `${COLLECTION_V1_PREFIX}${collectionName}`;
+  }
+
+  /**
+   * Detect table version from table name
+   * @param tableName - Full table name
+   * @returns "v1" | "v2" | null
+   */
+  static detectTableVersion(tableName: string): "v1" | "v2" | null {
+    if (tableName.startsWith(COLLECTION_V1_PREFIX)) {
+      return "v1";
+    }
+    if (tableName.startsWith(COLLECTION_V2_PREFIX)) {
+      return "v2";
+    }
+    return null;
+  }
+
+  /**
+   * Extract collection name from v1 table name
+   * @param tableName - Full v1 table name (c$v1$collection_name)
+   * @returns Collection name or null if not v1 format
+   */
+  static extractCollectionName(tableName: string): string | null {
+    if (tableName.startsWith(COLLECTION_V1_PREFIX)) {
+      return tableName.substring(COLLECTION_V1_PREFIX.length);
+    }
+    return null;
+  }
+
+  /**
+   * Extract collection ID from v2 table name
+   * @param tableName - Full v2 table name (c$v2$collection_id)
+   * @returns Collection ID or null if not v2 format
+   */
+  static extractCollectionId(tableName: string): string | null {
+    if (tableName.startsWith(COLLECTION_V2_PREFIX)) {
+      return tableName.substring(COLLECTION_V2_PREFIX.length);
+    }
+    return null;
   }
 }
 
@@ -140,3 +189,43 @@ export const DEFAULT_DATABASE = "test";
 export const DEFAULT_PORT = 2881;
 export const DEFAULT_USER = "root";
 export const DEFAULT_CHARSET = "utf8mb4";
+
+/**
+ * Collection table name prefixes
+ */
+export const COLLECTION_V1_PREFIX = "c$v1$";
+export const COLLECTION_V2_PREFIX = "c$v2$";
+
+/**
+ * Resolve embedding function from metadata or props
+ * Priority:
+ * 1. If metadataEmbeddingFunction exists, use it to instantiate
+ * 2. If propsEmbeddingFunction is not undefined, use it
+ * 3. If propsEmbeddingFunction is undefined, use default embedding function
+ * 4. If propsEmbeddingFunction is null, return undefined (no embedding function)
+ */
+export async function resolveEmbeddingFunction(
+  metadataEmbeddingFunction?: { name: string; properties: EmbeddingConfig },
+  propsEmbeddingFunction?: EmbeddingFunction | null,
+): Promise<EmbeddingFunction | undefined> {
+  // Priority 1: Use metadata embedding function config
+  if (metadataEmbeddingFunction) {
+    return await getEmbeddingFunction(
+      metadataEmbeddingFunction.name,
+      metadataEmbeddingFunction.properties,
+    );
+  }
+
+  // Priority 2: If propsEmbeddingFunction is explicitly null, return undefined
+  if (propsEmbeddingFunction === null) {
+    return undefined;
+  }
+
+  // Priority 3: If propsEmbeddingFunction is provided (not undefined), use it
+  if (propsEmbeddingFunction !== undefined) {
+    return propsEmbeddingFunction;
+  }
+
+  // Priority 4: Default - use default embedding function
+  return await getEmbeddingFunction();
+}
