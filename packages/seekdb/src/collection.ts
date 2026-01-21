@@ -7,6 +7,7 @@ import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError } from "./errors.js";
 import { CollectionFieldNames, CollectionNames } from "./utils.js";
 import { FilterBuilder, SearchFilterCondition } from "./filters.js";
+import { updateCollectionTimestamp } from "./metadata-manager.js";
 import type {
   EmbeddingFunction,
   Metadata,
@@ -194,6 +195,11 @@ export class Collection {
     });
 
     await this.#client.execute(sql, params);
+
+    // Update collection timestamp for v2 collections
+    if (this.version === "v2") {
+      await updateCollectionTimestamp(this.#client, this.name);
+    }
   }
 
   /**
@@ -267,8 +273,13 @@ export class Collection {
         continue;
       }
 
-      const { sql, params } = SQLBuilder.buildUpdate(this.context, {id, updates});
+      const { sql, params } = SQLBuilder.buildUpdate(this.context, { id, updates });
       await this.#client.execute(sql, params);
+    }
+
+    // Update collection timestamp for v2 collections
+    if (this.version === "v2") {
+      await updateCollectionTimestamp(this.#client, this.name);
     }
   }
 
@@ -341,7 +352,7 @@ export class Collection {
         }
 
         if (Object.keys(updates).length > 0) {
-          const { sql, params } = SQLBuilder.buildUpdate(this.context, {id, updates});
+          const { sql, params } = SQLBuilder.buildUpdate(this.context, { id, updates });
           await this.#client.execute(sql, params);
         }
       } else {
@@ -353,6 +364,11 @@ export class Collection {
           embeddings: vec ? [vec] : undefined,
         });
       }
+    }
+
+    // Update collection timestamp for v2 collections
+    if (this.version === "v2") {
+      await updateCollectionTimestamp(this.#client, this.name);
     }
   }
 
@@ -377,6 +393,11 @@ export class Collection {
     });
 
     await this.#client.execute(sql, params);
+
+    // Update collection timestamp for v2 collections
+    if (this.version === "v2") {
+      await updateCollectionTimestamp(this.#client, this.name);
+    }
   }
 
   /**
@@ -643,18 +664,18 @@ export class Collection {
       } else {
         throw new SeekdbValueError(
           "knn.queryTexts provided but no knn.queryEmbeddings and no embedding function. " +
-            "Either:\n" +
-            "  1. Provide knn.queryEmbeddings directly, or\n" +
-            "  2. Provide embedding function to auto-generate embeddings from knn.queryTexts.",
+          "Either:\n" +
+          "  1. Provide knn.queryEmbeddings directly, or\n" +
+          "  2. Provide embedding function to auto-generate embeddings from knn.queryTexts.",
         );
       }
     } else {
       // Neither queryEmbeddings nor queryTexts provided, raise an error
       throw new SeekdbValueError(
         "knn requires either queryEmbeddings or queryTexts. " +
-          "Please provide either:\n" +
-          "  1. knn.queryEmbeddings directly, or\n" +
-          "  2. knn.queryTexts with embedding function to generate embeddings.",
+        "Please provide either:\n" +
+        "  1. knn.queryEmbeddings directly, or\n" +
+        "  2. knn.queryTexts with embedding function to generate embeddings.",
       );
     }
 

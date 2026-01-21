@@ -22,12 +22,14 @@ import {
   getCollectionMetadata,
   deleteCollectionMetadata,
   listCollectionMetadata,
+  CollectionMetadata,
 } from "./metadata-manager.js";
 import type {
   SeekdbClientArgs,
   CreateCollectionOptions,
   GetCollectionOptions,
   DistanceMetric,
+  EmbeddingConfig,
 } from "./types.js";
 
 /**
@@ -63,6 +65,14 @@ export class SeekdbClient {
     options: CreateCollectionOptions,
   ): Promise<Collection> {
     const { name, configuration, embeddingFunction } = options;
+
+    // Check if collection name already exists (including v1 collections)
+    const exists = await this.hasCollection(name);
+    if (exists) {
+      throw new SeekdbValueError(
+        `Collection '${name}' already exists. Please use a different name or use getOrCreateCollection() instead.`,
+      );
+    }
 
     let ef = embeddingFunction;
     let distance = configuration?.distance ?? DEFAULT_DISTANCE_METRIC;
@@ -110,17 +120,11 @@ export class SeekdbClient {
 
     // Prepare embedding function metadata (if ef is not null)
     const embeddingFunctionMetadata =
-      ef !== null && ef !== undefined
-        ? {
-            name: ef.name,
-            properties: ef.getConfig(),
-          }
-        : undefined;
+      ef !== null && ef !== undefined ? { name: ef.name, properties: ef.getConfig(), } : undefined;
 
     // Insert metadata and get collection_id
     const collectionId = await insertCollectionMetadata(this._internal, name, {
-      dimension,
-      distance,
+      configuration,
       embeddingFunction: embeddingFunctionMetadata,
     });
 
@@ -165,16 +169,15 @@ export class SeekdbClient {
     let dimension: number;
     let distance: DistanceMetric;
     let collectionId: string | undefined;
-    let metadataEmbeddingFunction:
-      | { name: string; properties: any }
-      | undefined;
+
+    let embeddingFunctionConfig: CollectionMetadata['settings']['embeddingFunction'] | undefined;
 
     // Try v2 format first (check metadata table)
     const metadata = await getCollectionMetadata(this._internal, name);
 
     if (metadata) {
       // v2 collection found - extract from metadata
-      const { collectionId: cId, settings } = metadata;
+      const { collectionId: cId, settings: { embeddingFunction: embeddingFunctionMeta, configuration } = {} } = metadata;
 
       // Verify table exists
       const sql = SQLBuilder.buildShowTable(name, cId);
@@ -186,10 +189,10 @@ export class SeekdbClient {
         );
       }
 
-      dimension = settings.dimension ?? DEFAULT_VECTOR_DIMENSION;
-      distance = settings.distance ?? DEFAULT_DISTANCE_METRIC;
+      dimension = configuration?.dimension ?? DEFAULT_VECTOR_DIMENSION;
+      distance = configuration?.distance ?? DEFAULT_DISTANCE_METRIC;
       collectionId = cId;
-      metadataEmbeddingFunction = settings.embeddingFunction;
+      embeddingFunctionConfig = embeddingFunctionMeta;
     } else {
       // Fallback to v1 format - extract from table schema
       const sql = SQLBuilder.buildShowTable(name);
@@ -261,7 +264,7 @@ export class SeekdbClient {
 
     // Unified embedding function resolution
     const ef = await resolveEmbeddingFunction(
-      metadataEmbeddingFunction,
+      embeddingFunctionConfig,
       embeddingFunction,
     );
 

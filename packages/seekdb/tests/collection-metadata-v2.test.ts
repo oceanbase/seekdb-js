@@ -5,11 +5,24 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekdbClient } from "../src/client.js";
 import { Collection } from "../src/collection.js";
-import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
+import {
+  TEST_CONFIG,
+  generateCollectionName,
+  MockEmbeddingFunction,
+} from "./test-utils.js";
 import {
   getCollectionMetadata,
   metadataTableExists,
 } from "../src/metadata-manager.js";
+import { registerEmbeddingFunction } from "../src/embedding-function.js";
+import { COLLECTION_V1_PREFIX } from "../src/utils.js";
+
+// Register the mock embedding function
+try {
+  registerEmbeddingFunction("mock-embed", MockEmbeddingFunction as any);
+} catch (e) {
+  // Ignore if already registered
+}
 
 describe("Collection Metadata V2", () => {
   let client: SeekdbClient;
@@ -31,9 +44,12 @@ describe("Collection Metadata V2", () => {
 
     afterAll(async () => {
       try {
-        await client.deleteCollection(collectionName);
+        const exists = await client.hasCollection(collectionName);
+        if (exists) {
+          await client.deleteCollection(collectionName);
+        }
       } catch (error) {
-        // Ignore cleanup errors
+        console.error(`Failed to cleanup collection ${collectionName}:`, error);
       }
     });
 
@@ -65,8 +81,8 @@ describe("Collection Metadata V2", () => {
       expect(metadata).toBeDefined();
       expect(metadata?.collectionName).toBe(collectionName);
       expect(metadata?.collectionId).toBeDefined();
-      expect(metadata?.settings.dimension).toBe(3);
-      expect(metadata?.settings.distance).toBe("cosine");
+      expect(metadata?.settings.configuration?.dimension).toBe(3);
+      expect(metadata?.settings.configuration?.distance).toBe("cosine");
     });
 
     test("should retrieve v2 collection with collectionId", async () => {
@@ -152,21 +168,36 @@ describe("Collection Metadata V2", () => {
     });
 
     afterAll(async () => {
+      // Cleanup v1 collection
       try {
-        await client.deleteCollection(v1CollectionName);
+        const v1Exists = await client.hasCollection(v1CollectionName);
+        if (v1Exists) {
+          await client.deleteCollection(v1CollectionName);
+        }
       } catch (error) {
-        // Ignore cleanup errors
+        console.error(
+          `Failed to cleanup v1 collection ${v1CollectionName}:`,
+          error,
+        );
       }
+
+      // Cleanup v2 collection
       try {
-        await client.deleteCollection(v2CollectionName);
+        const v2Exists = await client.hasCollection(v2CollectionName);
+        if (v2Exists) {
+          await client.deleteCollection(v2CollectionName);
+        }
       } catch (error) {
-        // Ignore cleanup errors
+        console.error(
+          `Failed to cleanup v2 collection ${v2CollectionName}:`,
+          error,
+        );
       }
     });
 
     test("should create v1 format collection (without metadata table)", async () => {
       // Manually create a v1 format table (simulating old SDK behavior)
-      const v1TableName = `c$v1$${v1CollectionName}`;
+      const v1TableName = `${COLLECTION_V1_PREFIX}${v1CollectionName}`;
       const createV1TableSql = `
         CREATE TABLE \`${v1TableName}\` (
           _id VARBINARY(512) PRIMARY KEY NOT NULL,
@@ -349,6 +380,124 @@ describe("Collection Metadata V2", () => {
         // If it fails, it might be due to database limitations
         // This is acceptable as long as it doesn't crash
       }
+    });
+  });
+
+  describe("Embedding Function Persistence", () => {
+    const testCollections: string[] = [];
+
+    afterAll(async () => {
+      // Cleanup all test collections
+      for (const name of testCollections) {
+        try {
+          const exists = await client.hasCollection(name);
+          if (exists) {
+            await client.deleteCollection(name);
+          }
+        } catch (error) {
+          console.error(`Failed to cleanup collection ${name}:`, error);
+        }
+      }
+    });
+
+    test("should store default embedding function metadata", async () => {
+      const name = generateCollectionName("test_ef_default");
+      testCollections.push(name);
+
+      await client.createCollection({
+        name,
+        configuration: { dimension: 384 }, // Default dimension
+        // embeddingFunction: undefined // Should use default
+      });
+
+      const metadata = await getCollectionMetadata(
+        (client as any)._internal,
+        name,
+      );
+
+      expect(metadata).toBeDefined();
+      expect(metadata?.settings.embeddingFunction).toBeDefined();
+      expect(metadata?.settings.embeddingFunction?.name).toBe("default-embed");
+    });
+
+    test("should store custom embedding function metadata", async () => {
+      const name = generateCollectionName("test_ef_custom");
+      testCollections.push(name);
+
+      const ef = new MockEmbeddingFunction({
+        dimension: 3,
+        model: "test-model",
+      });
+
+      await client.createCollection({
+        name,
+        embeddingFunction: ef,
+      });
+
+      const metadata = await getCollectionMetadata(
+        (client as any)._internal,
+        name,
+      );
+
+      expect(metadata).toBeDefined();
+      expect(metadata?.settings.embeddingFunction).toBeDefined();
+      expect(metadata?.settings.embeddingFunction?.name).toBe("mock-embed");
+      expect(metadata?.settings.embeddingFunction?.properties).toEqual({
+        dimension: 3,
+        model: "test-model",
+      });
+    });
+
+    test("should restore embedding function from metadata", async () => {
+      const name = generateCollectionName("test_ef_restore");
+      testCollections.push(name);
+
+      const ef = new MockEmbeddingFunction({
+        dimension: 3,
+        customParam: "value",
+      });
+
+      await client.createCollection({
+        name,
+        embeddingFunction: ef,
+      });
+
+      // Get collection without providing embedding function
+      const collection = await client.getCollection({ name });
+
+      expect(collection.embeddingFunction).toBeDefined();
+      expect(collection.embeddingFunction?.name).toBe("mock-embed");
+      expect(collection.embeddingFunction?.getConfig()).toEqual({
+        dimension: 3,
+        customParam: "value",
+      });
+    });
+
+    test("should override stored embedding function when provided explicitly", async () => {
+      const name = generateCollectionName("test_ef_override");
+      testCollections.push(name);
+
+      const ef1 = new MockEmbeddingFunction({ dimension: 3, version: 1 });
+
+      await client.createCollection({
+        name,
+        embeddingFunction: ef1,
+      });
+
+      const ef2 = new MockEmbeddingFunction({ dimension: 3, version: 2 });
+
+      // Get collection with explicit embedding function
+      const collection = await client.getCollection({
+        name,
+        embeddingFunction: ef2,
+      });
+
+      expect(collection.embeddingFunction).toBeDefined();
+      expect(collection.embeddingFunction).toBe(ef2); // Should be the exact instance
+      expect(collection.embeddingFunction?.getConfig()).toEqual({
+        dimension: 3,
+        version: 2,
+      });
     });
   });
 });

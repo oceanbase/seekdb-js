@@ -9,9 +9,10 @@ export interface EmbeddingFunction {
   dispose?(): Promise<void>;
 }
 
-export type EmbeddingFunctionConstructor = new (
-  config: EmbeddingConfig,
-) => EmbeddingFunction;
+export interface EmbeddingFunctionConstructor {
+  new(config: EmbeddingConfig): EmbeddingFunction;
+  buildFromConfig(config: EmbeddingConfig): EmbeddingFunction;
+}
 
 const registry = new Map<string, EmbeddingFunctionConstructor>();
 
@@ -56,14 +57,14 @@ export async function getEmbeddingFunction(
     } catch (error: any) {
       throw new Error(
         `Embedding function '${name}' is not registered. \n\n` +
-          `--- For seekdb built-in embedding function ---\n` +
-          `  1. Install: npm install @seekdb/${name}\n` +
-          `  2. Import: Add this at the top of your file: import '@seekdb/${name}';\n` +
-          `The package will automatically register itself upon import.\n\n` +
-          `--- For custom embedding function ---\n` +
-          `Please implement the EmbeddingFunction interface, then register it using 'registerEmbeddingFunction'. \n` +
-          `You can see more details in the README.md of the package.\n\n` +
-          `Error: ${error instanceof Error ? error.message : String(error)}`,
+        `--- For seekdb built-in embedding function ---\n` +
+        `  1. Install: npm install @seekdb/${name}\n` +
+        `  2. Import: Add this at the top of your file: import '@seekdb/${name}';\n` +
+        `The package will automatically register itself upon import.\n\n` +
+        `--- For custom embedding function ---\n` +
+        `Please implement the EmbeddingFunction interface, then register it using 'registerEmbeddingFunction'. \n` +
+        `You can see more details in the README.md of the package.\n\n` +
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
     // If the embedding function is not registered, register it
@@ -76,6 +77,9 @@ export async function getEmbeddingFunction(
     if (!registry.has(name)) {
       throw new Error(`Embedding function '${name}' is not registered.`);
     }
+    if (Ctor.buildFromConfig) {
+      return Ctor.buildFromConfig(finalConfig);
+    };
     // Instantiate (if configuration is incorrect, the constructor will throw)
     return new Ctor(finalConfig);
   } catch (error) {

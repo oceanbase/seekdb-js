@@ -12,3 +12,4 @@ coverage/
 .pnpm-store
 .cursor
 spec/
+.vscode

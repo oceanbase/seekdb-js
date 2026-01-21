@@ -3,7 +3,7 @@
  * Provides common configuration and helper functions
  */
 
-import type { EmbeddingFunction } from "../src/types.js";
+import type { EmbeddingFunction, EmbeddingConfig } from "../src/types.js";
 
 /**
  * Get test configuration based on test mode
@@ -121,4 +121,59 @@ function simpleHash(str: string): number {
     hash = hash & hash; // Convert to 32bit integer
   }
   return Math.abs(hash);
+}
+
+/**
+ * Mock Embedding Function for testing
+ * Supports configurable dimension and custom parameters
+ */
+export class MockEmbeddingFunction implements EmbeddingFunction {
+  readonly name = "mock-embed";
+  private config: EmbeddingConfig;
+
+  constructor(config: EmbeddingConfig) {
+    if (config.shouldThrow) {
+      throw new Error("Config validation failed");
+    }
+    this.config = config;
+  }
+
+  async generate(texts: string[]): Promise<number[][]> {
+    // Generate mock embeddings based on dimension in config or default 3
+    const dim = this.config.dimension || 3;
+    return texts.map(() => Array(dim).fill(0.1));
+  }
+
+  getConfig(): EmbeddingConfig {
+    return this.config;
+  }
+
+  static buildFromConfig(config: EmbeddingConfig): EmbeddingFunction {
+    return new MockEmbeddingFunction(config);
+  }
+}
+
+/**
+ * Mock Default Embedding Function for testing
+ */
+export class MockDefaultEmbeddingFunction implements EmbeddingFunction {
+  readonly name = "default-embed";
+  private config: EmbeddingConfig;
+
+  constructor(config: EmbeddingConfig = {}) {
+    this.config = config;
+  }
+
+  async generate(texts: string[]): Promise<number[][]> {
+    const dim = this.config.dimension || 384;
+    return texts.map(() => Array(dim).fill(0.1));
+  }
+
+  getConfig(): EmbeddingConfig {
+    return this.config;
+  }
+
+  static buildFromConfig(config: EmbeddingConfig): EmbeddingFunction {
+    return new MockDefaultEmbeddingFunction(config);
+  }
 }

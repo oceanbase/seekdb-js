@@ -199,33 +199,33 @@ export const COLLECTION_V2_PREFIX = "c$v2$";
 /**
  * Resolve embedding function from metadata or props
  * Priority:
- * 1. If metadataEmbeddingFunction exists, use it to instantiate
- * 2. If propsEmbeddingFunction is not undefined, use it
- * 3. If propsEmbeddingFunction is undefined, use default embedding function
- * 4. If propsEmbeddingFunction is null, return undefined (no embedding function)
+ * 1. If customEmbeddingFunction is explicitly null, return undefined (no embedding function)
+ * 2. If customEmbeddingFunction is provided (not undefined), use it
+ * 3. If embeddingFunctionMetadata exists, use buildFromConfig to instantiate from snake_case config
+ * 4. If both are undefined, use default embedding function
+ * 
+ * Also validates dimension compatibility between metadata and props embedding functions
  */
 export async function resolveEmbeddingFunction(
-  metadataEmbeddingFunction?: { name: string; properties: EmbeddingConfig },
-  propsEmbeddingFunction?: EmbeddingFunction | null,
+  embeddingFunctionMetadata?: { name: string; properties: EmbeddingConfig },
+  customEmbeddingFunction?: EmbeddingFunction | null,
 ): Promise<EmbeddingFunction | undefined> {
-  // Priority 1: Use metadata embedding function config
-  if (metadataEmbeddingFunction) {
-    return await getEmbeddingFunction(
-      metadataEmbeddingFunction.name,
-      metadataEmbeddingFunction.properties,
-    );
-  }
-
-  // Priority 2: If propsEmbeddingFunction is explicitly null, return undefined
-  if (propsEmbeddingFunction === null) {
+  // If customEmbeddingFunction is explicitly null, return undefined
+  if (customEmbeddingFunction === null) {
     return undefined;
   }
 
-  // Priority 3: If propsEmbeddingFunction is provided (not undefined), use it
-  if (propsEmbeddingFunction !== undefined) {
-    return propsEmbeddingFunction;
+  // If customEmbeddingFunction is provided (not undefined), use it
+  if (customEmbeddingFunction !== undefined) return customEmbeddingFunction;
+
+  // Use metadata embedding function with buildFromConfig (snake_case config from storage)
+  if (embeddingFunctionMetadata) {
+    return await getEmbeddingFunction(
+      embeddingFunctionMetadata.name,
+      embeddingFunctionMetadata.properties,
+    );
   }
 
-  // Priority 4: Default - use default embedding function
+  // Default - use default embedding function
   return await getEmbeddingFunction();
 }
