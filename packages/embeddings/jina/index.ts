@@ -1,9 +1,9 @@
-import { EmbeddingFunction, registerEmbeddingFunction } from "seekdb";
+import { EmbeddingFunction, registerEmbeddingFunction, EmbeddingConfig } from "seekdb";
 import { toSnake } from "@seekdb/common";
 
 const name = "jina";
 
-export interface JinaConfig {
+export interface JinaConfig extends EmbeddingConfig {
   /**
    * Defaults to 'JINA_API_KEY'
    */
@@ -81,7 +81,7 @@ export class JinaEmbeddingFunction implements EmbeddingFunction {
     };
   }
 
-  public async generate(texts: string[]): Promise<number[][]> {
+  async generate(texts: string[]): Promise<number[][]> {
     const body: JinaRequestBody = {
       input: texts,
       model: this.modelName,
@@ -112,17 +112,30 @@ export class JinaEmbeddingFunction implements EmbeddingFunction {
     }
   }
 
-  public getConfig(): JinaConfig {
+  getConfig(): JinaConfig {
     return {
-      apiKeyEnvVar: this.apiKeyEnvVar,
-      modelName: this.modelName,
+      api_key_env_var: this.apiKeyEnvVar,
+      model_name: this.modelName,
       task: this.task,
-      lateChunking: this.lateChunking,
+      late_chunking: this.lateChunking,
       truncate: this.truncate,
       dimensions: this.dimensions,
-      embeddingType: this.embeddingType,
+      embedding_type: this.embeddingType,
       normalized: this.normalized,
     };
+  }
+
+  static buildFromConfig(config: EmbeddingConfig): JinaEmbeddingFunction {
+    return new JinaEmbeddingFunction({
+      apiKeyEnvVar: config.api_key_env_var,
+      modelName: config.model_name,
+      task: config.task,
+      lateChunking: config.late_chunking,
+      truncate: config.truncate,
+      dimensions: config.dimensions,
+      embeddingType: config.embedding_type,
+      normalized: config.normalized,
+    });
   }
 }
 

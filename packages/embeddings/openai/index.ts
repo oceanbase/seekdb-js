@@ -70,12 +70,24 @@ export class OpenAIEmbeddingFunction implements EmbeddingFunction {
 
   getConfig(): OpenAIEmbeddingConfig {
     return {
-      apiKey: this.apiKey,
-      modelName: this.modelName,
+      api_key: this.apiKey,
+      model_name: this.modelName,
       dimensions: this.dimensions,
-      organizationId: this.organizationId,
-      apiKeyEnvVar: this.apiKeyEnvVar,
+      organization_id: this.organizationId,
+      api_key_env_var: this.apiKeyEnvVar,
+      base_url: this.baseURL,
     };
+  }
+
+  static buildFromConfig(config: EmbeddingConfig): OpenAIEmbeddingFunction {
+    return new OpenAIEmbeddingFunction({
+      apiKey: config.api_key,
+      modelName: config.model_name,
+      dimensions: config.dimensions,
+      organizationId: config.organization_id,
+      apiKeyEnvVar: config.api_key_env_var,
+      baseURL: config.base_url,
+    });
   }
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { DefaultEmbeddingFunction } from "./index";
+import { DefaultEmbeddingFunction, DefaultEmbeddingFunctionConfig, DType } from "./index";
 
 // Mock the transformers pipeline
 vi.mock("@huggingface/transformers", () => {
@@ -42,7 +42,7 @@ describe("DefaultEmbeddingFunction", () => {
   it("should initialize with default parameters", () => {
     expect(embedder.name).toBe("default-embed");
     const config = embedder.getConfig();
-    expect(config.modelName).toBe("Xenova/all-MiniLM-L6-v2");
+    expect(config.model_name).toBe("Xenova/all-MiniLM-L6-v2");
     expect(config.revision).toBeUndefined();
     expect(config.dtype).toBeUndefined();
   });
@@ -55,7 +55,7 @@ describe("DefaultEmbeddingFunction", () => {
     });
 
     const config = customEmbedder.getConfig();
-    expect(config.modelName).toBe("custom-model");
+    expect(config.model_name).toBe("custom-model");
     expect(config.revision).toBe("custom-revision");
     expect(config.dtype).toBe("fp16");
   });
@@ -74,12 +74,12 @@ describe("DefaultEmbeddingFunction", () => {
     });
 
     const config = customEmbedder.getConfig();
-    expect(config.modelName).toBe("test-model");
+    expect(config.model_name).toBe("test-model");
     expect(config.revision).toBe("test-revision");
     expect(config.dtype).toBe("fp32");
-    expect(config.cacheDir).toBe("/tmp/cache");
-    expect(config.localFilesOnly).toBe(true);
-    expect(config.progressCallback).toBe(progressCallback);
+    expect(config.cache_dir).toBe("/tmp/cache");
+    expect(config.local_files_only).toBe(true);
+    expect(config.progress_callback).toBe(progressCallback);
   });
 
   it("should generate embeddings with correct dimensions", async () => {
@@ -132,13 +132,94 @@ describe("DefaultEmbeddingFunction", () => {
 
     const config = embedder.getConfig();
     expect(config).toEqual({
+      model_name: "test-model",
+      revision: "v1.0",
+      dtype: "fp16",
+      cache_dir: "/cache",
+      local_files_only: false,
+      progress_callback: undefined,
+    });
+  });
+
+  it("should return config in snake_case format", () => {
+    const embedder = new DefaultEmbeddingFunction({
       modelName: "test-model",
       revision: "v1.0",
       dtype: "fp16",
       cacheDir: "/cache",
       localFilesOnly: false,
-      progressCallback: undefined,
     });
+
+    const config = embedder.getConfig();
+
+    // Verify snake_case keys exist
+    expect(config).toHaveProperty("model_name");
+    expect(config).toHaveProperty("cache_dir");
+    expect(config).toHaveProperty("local_files_only");
+    expect(config).toHaveProperty("progress_callback");
+
+    // Verify values are correct
+    expect(config.model_name).toBe("test-model");
+    expect(config.cache_dir).toBe("/cache");
+    expect(config.local_files_only).toBe(false);
+  });
+
+  it("should build instance from snake_case config", () => {
+    const snakeCaseConfig = {
+      model_name: "custom-model",
+      revision: "v2.0",
+      dtype: "fp32",
+      cache_dir: "/custom/cache",
+      local_files_only: true,
+    };
+
+    const embedder = DefaultEmbeddingFunction.buildFromConfig(snakeCaseConfig);
+
+    expect(embedder).toBeInstanceOf(DefaultEmbeddingFunction);
+    expect(embedder.name).toBe("default-embed");
+
+    // Verify config is correctly converted
+    const config = embedder.getConfig();
+    expect(config.model_name).toBe("custom-model");
+    expect(config.revision).toBe("v2.0");
+    expect(config.dtype).toBe("fp32");
+    expect(config.cache_dir).toBe("/custom/cache");
+    expect(config.local_files_only).toBe(true);
+  });
+
+  it("should maintain consistency in round-trip conversion", () => {
+    const originalConfig: DefaultEmbeddingFunctionConfig = {
+      modelName: "round-trip-model",
+      revision: "v1.5",
+      dtype: "q8",
+      cacheDir: "/round/trip/cache",
+      localFilesOnly: true,
+    };
+
+    const embedder1 = new DefaultEmbeddingFunction(originalConfig);
+    const snakeConfig = embedder1.getConfig();
+    const embedder2 = DefaultEmbeddingFunction.buildFromConfig(snakeConfig);
+    const finalConfig = embedder2.getConfig();
+
+    // Verify configs match after round-trip
+    expect(finalConfig).toEqual(snakeConfig);
+    expect(finalConfig.model_name).toBe("round-trip-model");
+    expect(finalConfig.revision).toBe("v1.5");
+    expect(finalConfig.dtype).toBe("q8");
+    expect(finalConfig.cache_dir).toBe("/round/trip/cache");
+    expect(finalConfig.local_files_only).toBe(true);
+  });
+
+  it("should build instance with default values from empty config", () => {
+    const embedder = DefaultEmbeddingFunction.buildFromConfig({});
+
+    expect(embedder).toBeInstanceOf(DefaultEmbeddingFunction);
+    expect(embedder.name).toBe("default-embed");
+
+    const config = embedder.getConfig();
+    expect(config.model_name).toBe("Xenova/all-MiniLM-L6-v2");
+    expect(config.revision).toBeUndefined();
+    expect(config.dtype).toBeUndefined();
   });
 
   it("should dispose pipeline correctly", async () => {

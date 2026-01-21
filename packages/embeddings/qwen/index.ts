@@ -1,4 +1,4 @@
-import { EmbeddingFunction, registerEmbeddingFunction } from "seekdb";
+import { EmbeddingFunction, registerEmbeddingFunction, EmbeddingConfig } from "seekdb";
 import { OpenAIEmbeddingFunction, OpenAIEmbeddingConfig } from "@seekdb/openai";
 
 export interface QwenEmbeddingConfig extends Omit<
@@ -35,8 +35,7 @@ const baseURLs = {
 
 export class QwenEmbeddingFunction
   extends OpenAIEmbeddingFunction
-  implements EmbeddingFunction
-{
+  implements EmbeddingFunction {
   readonly name: string = embeddingFunctionName;
 
   constructor(config: QwenEmbeddingConfig = {}) {
@@ -60,10 +59,19 @@ export class QwenEmbeddingFunction
 
     return resp.data.map((d) => d.embedding);
   }
-
   getConfig(): QwenEmbeddingConfig {
-    const { organizationId, ...restConfig } = super.getConfig();
+    const { organization_id, ...restConfig } = super.getConfig();
     return restConfig;
+  }
+
+  static buildFromConfig(config: EmbeddingConfig): QwenEmbeddingFunction {
+    return new QwenEmbeddingFunction({
+      modelName: config.model_name,
+      apiKey: config.api_key,
+      apiKeyEnvVar: config.api_key_env_var,
+      dimensions: config.dimensions,
+      region: config.region,
+    });
   }
 }
 

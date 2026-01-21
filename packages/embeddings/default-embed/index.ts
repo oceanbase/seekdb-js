@@ -88,13 +88,24 @@ export class DefaultEmbeddingFunction implements EmbeddingFunction {
 
   getConfig(): DefaultEmbeddingFunctionConfig {
     return {
-      modelName: this.modelName,
+      model_name: this.modelName,
       revision: this.revision,
       dtype: this.dtype,
-      cacheDir: this.cacheDir,
-      localFilesOnly: this.localFilesOnly,
-      progressCallback: this.progressCallback,
+      cache_dir: this.cacheDir,
+      local_files_only: this.localFilesOnly,
+      progress_callback: this.progressCallback,
     };
+  }
+
+  static buildFromConfig(config: EmbeddingConfig): DefaultEmbeddingFunction {
+    return new DefaultEmbeddingFunction({
+      modelName: config.model_name,
+      revision: config.revision,
+      dtype: config.dtype,
+      cacheDir: config.cache_dir,
+      localFilesOnly: config.local_files_only,
+      progressCallback: config.progress_callback,
+    });
   }
 
   async dispose(): Promise<void> {
