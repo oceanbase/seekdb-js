@@ -112,7 +112,7 @@ export class JinaEmbeddingFunction implements EmbeddingFunction {
     }
   }
 
-  getConfig(): JinaConfig {
+  getConfig(): any {
     return {
       api_key_env_var: this.apiKeyEnvVar,
       model_name: this.modelName,
@@ -125,7 +125,7 @@ export class JinaEmbeddingFunction implements EmbeddingFunction {
     };
   }
 
-  static buildFromConfig(config: EmbeddingConfig): JinaEmbeddingFunction {
+  static buildFromConfig(config: any): JinaEmbeddingFunction {
     return new JinaEmbeddingFunction({
       apiKeyEnvVar: config.api_key_env_var,
       modelName: config.model_name,
