@@ -44,7 +44,7 @@ This is a monorepo containing:
 > Before using the SDK, you need to deploy seekdb. Please refer to the [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/).
 
 ```bash
-npm install seekdb
+npm install seekdb @seekdb/default-embed
 ```
 
 ## Quick Start
