@@ -2,6 +2,7 @@
 // https://docs.ollama.com/api/openai-compatibility
 // todo: 是否直接support openai兼容？
 
+import { Config } from "ollama";
 import {
   EmbeddingFunction,
   registerEmbeddingFunction,
@@ -18,24 +19,30 @@ const isBrowser = (): boolean =>
 
 export interface OllamaConfig extends EmbeddingConfig {
   /**
-   * Defaults to 'https://ollama.com'.
+   * Defaults to 'http://localhost:11434/v1', you can use other url if you want to use a remote ollama server.
    */
   url?: string;
   /**
-   * Defaults to 'all-minilm'.
+   * Defaults to 'nomic-embed-text'.
    */
   modelName?: string;
+  /**
+   * Defaults to 'OLLAMA_API_KEY'.
+   */
+  apiKeyEnv?: string;
 }
 
 export class OllamaEmbeddingFunction implements EmbeddingFunction {
   readonly name: string = embeddingFunctionName;
   private readonly url: string;
   private readonly modelName: string;
+  private readonly apiKeyEnv: string;
   private client: any = undefined;
 
   constructor(config: OllamaConfig = {}) {
-    this.url = config.url || "https://ollama.com";
-    this.modelName = config.modelName || "all-minilm";
+    this.url = config.url || "http://localhost:11434/v1";
+    this.modelName = config.modelName || "nomic-embed-text";
+    this.apiKeyEnv = config.apiKeyEnv || "OLLAMA_API_KEY";
   }
 
   private async importClient() {
@@ -49,7 +56,14 @@ export class OllamaEmbeddingFunction implements EmbeddingFunction {
         this.client = new Ollama({ host: this.url });
       } else {
         const { Ollama } = await import("ollama");
-        this.client = new Ollama({ host: this.url });
+        const apiKey = process.env[this.apiKeyEnv];
+        const clientProps: Config = { host: this.url, };
+        if (apiKey) {
+          clientProps.headers = {
+            Authorization: "Bearer " + apiKey,
+          };
+        }
+        this.client = new Ollama(clientProps);
       }
     } catch (error) {
       throw new Error(
@@ -74,6 +88,7 @@ export class OllamaEmbeddingFunction implements EmbeddingFunction {
     return {
       url: this.url,
       model_name: this.modelName,
+      api_key_env: this.apiKeyEnv,
     };
   }
 
@@ -81,6 +96,7 @@ export class OllamaEmbeddingFunction implements EmbeddingFunction {
     return new OllamaEmbeddingFunction({
       url: config.url,
       modelName: config.model_name,
+      apiKeyEnv: config.api_key_env,
     });
   }
 }

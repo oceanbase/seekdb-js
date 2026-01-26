@@ -18,7 +18,7 @@ export interface VoyageAIConfig extends EmbeddingConfig {
    */
   apiKey?: string;
   /**
-   * Model name is required.
+   * Default to 'voyage-4-large'.
    */
   modelName?: string;
   inputType?: EmbedRequestInputType;
@@ -34,12 +34,8 @@ export class VoyageAIEmbeddingFunction implements EmbeddingFunction {
   private client: VoyageAIClient;
 
   constructor(config: VoyageAIConfig) {
-    if (!config.modelName) {
-      throw new Error("VoyageAI model name is required");
-    }
-
     this.apiKeyEnvVar = config.apiKeyEnvVar || "VOYAGE_API_KEY";
-    this.modelName = config.modelName;
+    this.modelName = config.modelName || "voyage-4-large";
     this.inputType = config.inputType;
     this.truncation = config.truncation;
 
@@ -79,9 +75,6 @@ export class VoyageAIEmbeddingFunction implements EmbeddingFunction {
   }
 
   static buildFromConfig(config: EmbeddingConfig): VoyageAIEmbeddingFunction {
-    if (!config.model_name) {
-      throw new Error("VoyageAI model name is required");
-    }
     return new VoyageAIEmbeddingFunction({
       modelName: config.model_name,
       apiKeyEnvVar: config.api_key_env_var,
