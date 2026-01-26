@@ -224,7 +224,7 @@ describe("Client Creation and Collection Management", () => {
         try {
           await client.deleteCollection(testCollectionName1);
           await client.deleteCollection(testCollectionName2);
-        } catch (e) {}
+        } catch (e) { }
       }
     });
 
@@ -359,6 +359,164 @@ describe("Client Creation and Collection Management", () => {
       // Test peek with different limit
       const previewAll = await collection.peek(10);
       expect(previewAll.ids.length).toBe(3);
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+  });
+
+  describe("Configuration Parameter Tests", () => {
+    test("create_collection - with HNSWConfiguration (simplified form)", async () => {
+      const testCollectionName = generateCollectionName("test_config_hnsw");
+      const testDimension = 128;
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          dimension: testDimension,
+          distance: "cosine",
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(testDimension);
+      expect(collection.distance).toBe("cosine");
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration (full form with hnsw)", async () => {
+      const testCollectionName = generateCollectionName("test_config_full");
+      const testDimension = 256;
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          hnsw: {
+            dimension: testDimension,
+            distance: "l2",
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(testDimension);
+      expect(collection.distance).toBe("l2");
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration including fulltextConfig", async () => {
+      const testCollectionName = generateCollectionName("test_config_fulltext");
+      const testDimension = 128;
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          hnsw: {
+            dimension: testDimension,
+            distance: "cosine",
+          },
+          fulltextConfig: {
+            analyzer: "ik",
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(testDimension);
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration fulltextConfig with properties (IK mode)", async () => {
+      const testCollectionName = generateCollectionName(
+        "test_config_fulltext_ik_props",
+      );
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          hnsw: {
+            dimension: 256,
+            distance: "l2",
+          },
+          fulltextConfig: {
+            analyzer: "ik",
+            properties: {
+              ik_mode: "smart",
+            },
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(256);
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration fulltextConfig with properties (NGRAM size)", async () => {
+      const testCollectionName = generateCollectionName(
+        "test_config_fulltext_ngram_props",
+      );
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          hnsw: {
+            dimension: 128,
+            distance: "cosine",
+          },
+          fulltextConfig: {
+            analyzer: "ngram",
+            properties: {
+              ngram_token_size: 2,
+            },
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(128);
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration only fulltextConfig (no hnsw)", async () => {
+      const testCollectionName = generateCollectionName(
+        "test_config_fulltext_only",
+      );
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          fulltextConfig: {
+            analyzer: "space",
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      // Should use default dimension when hnsw is not provided
+      expect(collection.dimension).toBe(384);
 
       // Cleanup
       await client.deleteCollection(testCollectionName);

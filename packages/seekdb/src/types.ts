@@ -113,6 +113,50 @@ export interface HNSWConfiguration {
   distance?: DistanceMetric;
 }
 
+export type FulltextAnalyzer = "space" | "ngram" | "ngram2" | "beng" | "ik";
+
+export interface SpaceProperties {
+  min_token_size?: number; // [1, 16]
+  max_token_size?: number; // [10, 84]
+}
+
+export interface NgramProperties {
+  ngram_token_size?: number; // [1, 10]
+}
+
+export interface Ngram2Properties {
+  min_ngram_size?: number; // [1, 16]
+  max_ngram_size?: number; // [1, 16]
+}
+
+export interface BengProperties {
+  min_token_size?: number; // [1, 16]
+  max_token_size?: number; // [10, 84]
+}
+
+export interface IkProperties {
+  ik_mode?: "smart" | "max_word";
+}
+
+export type FulltextProperties =
+  | SpaceProperties
+  | NgramProperties
+  | Ngram2Properties
+  | BengProperties
+  | IkProperties;
+
+export interface FulltextAnalyzerConfig {
+  analyzer?: FulltextAnalyzer;
+  properties?: FulltextProperties;
+}
+
+export interface Configuration {
+  hnsw?: HNSWConfiguration;
+  fulltextConfig?: FulltextAnalyzerConfig;
+}
+
+export type ConfigurationParam = HNSWConfiguration | Configuration;
+
 // ==================== Client Configuration ====================
 
 export interface SeekdbClientArgs {
@@ -138,7 +182,7 @@ export interface SeekdbAdminClientArgs {
 
 export interface CreateCollectionOptions {
   name: string;
-  configuration?: HNSWConfiguration | null;
+  configuration?: ConfigurationParam | null;
   embeddingFunction?: EmbeddingFunction | null;
 }
 

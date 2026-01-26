@@ -16,6 +16,7 @@ import type {
   WhereDocument,
   DistanceMetric,
   CollectionContext,
+  FulltextAnalyzerConfig,
 } from "./types.js";
 
 export interface SQLResult {
@@ -34,20 +35,51 @@ export class SQLBuilder {
     distance: DistanceMetric,
     comment?: string,
     collectionId?: string,
+    fulltextConfig?: FulltextAnalyzerConfig,
   ): string {
     const tableName = CollectionNames.tableName(name, collectionId);
     const commentClause = comment
       ? ` COMMENT = '${comment.replace(/'/g, "''")}'`
       : "";
 
+    const fulltextClause = this.buildFulltextClause(fulltextConfig);
+
     return `CREATE TABLE \`${tableName}\` (
       ${CollectionFieldNames.ID} VARBINARY(512) PRIMARY KEY NOT NULL,
       ${CollectionFieldNames.DOCUMENT} STRING,
       ${CollectionFieldNames.EMBEDDING} VECTOR(${dimension}),
       ${CollectionFieldNames.METADATA} JSON,
-      FULLTEXT INDEX idx_fts (${CollectionFieldNames.DOCUMENT}) WITH PARSER ik,
+      FULLTEXT INDEX idx_fts (${CollectionFieldNames.DOCUMENT}) ${fulltextClause},
       VECTOR INDEX idx_vec (${CollectionFieldNames.EMBEDDING}) WITH(distance=${distance}, type=hnsw, lib=vsag)
     ) ORGANIZATION = HEAP${commentClause}`;
+  }
+
+  /**
+   * Build fulltext clause for CREATE TABLE
+   */
+  static buildFulltextClause(config?: FulltextAnalyzerConfig): string {
+    if (!config) {
+      return "WITH PARSER ik";
+    }
+
+    const { analyzer, properties } = config;
+    if (!properties || Object.keys(properties).length === 0) {
+      return `WITH PARSER ${analyzer}`;
+    }
+
+    const props = Object.entries(properties)
+      .map(([key, value]) => {
+        let valStr: string;
+        if (typeof value === "string") {
+          valStr = `'${value.replace(/'/g, "''")}'`;
+        } else {
+          valStr = String(value);
+        }
+        return `${key}=${valStr}`;
+      })
+      .join(", ");
+
+    return `WITH PARSER ${analyzer} PARSER_PROPERTIES=(${props})`;
   }
 
   /**
@@ -321,7 +353,7 @@ export class SQLBuilder {
       distance?: DistanceMetric;
       approximate?: boolean;
     },
-  ): SQLResult{
+  ): SQLResult {
     const tableName = CollectionNames.tableName(context.name, context.collectionId);
     const {
       where,

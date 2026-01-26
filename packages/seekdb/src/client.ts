@@ -29,7 +29,9 @@ import type {
   CreateCollectionOptions,
   GetCollectionOptions,
   DistanceMetric,
-  EmbeddingConfig,
+  Configuration,
+  HNSWConfiguration,
+  FulltextAnalyzerConfig,
 } from "./types.js";
 
 /**
@@ -75,8 +77,21 @@ export class SeekdbClient {
     }
 
     let ef = embeddingFunction;
-    let distance = configuration?.distance ?? DEFAULT_DISTANCE_METRIC;
-    let dimension = configuration?.dimension ?? DEFAULT_VECTOR_DIMENSION;
+    let hnsw: HNSWConfiguration | undefined;
+    let fulltextConfig: FulltextAnalyzerConfig | undefined;
+
+    if (configuration) {
+      if ("hnsw" in configuration || "fulltextConfig" in configuration) {
+        const config = configuration as Configuration;
+        hnsw = config.hnsw;
+        fulltextConfig = config.fulltextConfig;
+      } else {
+        hnsw = configuration as HNSWConfiguration;
+      }
+    }
+
+    let distance = hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
+    let dimension = hnsw?.dimension ?? DEFAULT_VECTOR_DIMENSION;
 
     // If embeddingFunction is provided, use it to generate embeddings and validate dimension
     if (!!ef) {
@@ -84,12 +99,9 @@ export class SeekdbClient {
       const actualDimension = testEmbeddings[0].length;
 
       // Validate dimension matches if is already provided
-      if (
-        configuration?.dimension &&
-        configuration.dimension !== actualDimension
-      ) {
+      if (hnsw?.dimension && hnsw.dimension !== actualDimension) {
         throw new SeekdbValueError(
-          `Configuration dimension (${configuration.dimension}) does not match embedding function dimension (${actualDimension})`,
+          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`,
         );
       }
 
@@ -103,12 +115,9 @@ export class SeekdbClient {
       const actualDimension = testEmbeddings[0].length;
 
       // Validate dimension matches if is already provided
-      if (
-        configuration?.dimension &&
-        configuration.dimension !== actualDimension
-      ) {
+      if (hnsw?.dimension && hnsw.dimension !== actualDimension) {
         throw new SeekdbValueError(
-          `Configuration dimension (${configuration.dimension}) does not match embedding function dimension (${actualDimension})`,
+          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`,
         );
       }
 
@@ -135,6 +144,7 @@ export class SeekdbClient {
       distance,
       undefined,
       collectionId,
+      fulltextConfig,
     );
 
     try {
@@ -189,8 +199,17 @@ export class SeekdbClient {
         );
       }
 
-      dimension = configuration?.dimension ?? DEFAULT_VECTOR_DIMENSION;
-      distance = configuration?.distance ?? DEFAULT_DISTANCE_METRIC;
+      let hnsw: HNSWConfiguration | undefined;
+      if (configuration) {
+        if ("hnsw" in configuration) {
+          hnsw = configuration.hnsw;
+        } else {
+          hnsw = configuration as HNSWConfiguration;
+        }
+      }
+
+      dimension = hnsw?.dimension ?? DEFAULT_VECTOR_DIMENSION;
+      distance = hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
       collectionId = cId;
       embeddingFunctionConfig = embeddingFunctionMeta;
     } else {

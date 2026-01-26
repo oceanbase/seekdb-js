@@ -5,7 +5,11 @@
     { "path": "./packages/embeddings/default-embed" },
     { "path": "./packages/embeddings/openai" },
     { "path": "./packages/embeddings/jina" },
-    { "path": "./packages/embeddings/common" }
+    { "path": "./packages/embeddings/common" },
+    { "path": "./packages/embeddings/siliconflow" },
+    { "path": "./packages/embeddings/tencent-hunyuan" },
+    { "path": "./packages/embeddings/google-vertex" },
+    { "path": "./packages/embeddings/amazon-bedrock" }
   ],
   "compilerOptions": {
     "target": "ES2020",
@@ -26,7 +30,11 @@
       "@seekdb/default-embed": ["packages/embeddings/default-embed/index.ts"],
       "@seekdb/openai": ["packages/embeddings/openai/index.ts"],
       "@seekdb/jina": ["packages/embeddings/jina/index.ts"],
-      "@seekdb/common": ["packages/embeddings/common/index.ts"]
+      "@seekdb/common": ["packages/embeddings/common/index.ts"],
+      "@seekdb/siliconflow": ["packages/embeddings/siliconflow/index.ts"],
+      "@seekdb/hunyuan": ["packages/embeddings/tencent-hunyuan/index.ts"],
+      "@seekdb/google-vertex": ["packages/embeddings/google-vertex/index.ts"],
+      "@seekdb/bedrock": ["packages/embeddings/amazon-bedrock/index.ts"]
     }
   }
 }
