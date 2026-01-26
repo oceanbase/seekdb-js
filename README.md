@@ -7,9 +7,11 @@
 <strong>Vector database SDK for JavaScript/TypeScript with built-in semantic search</strong>
 <br />
 <em>Works seamlessly with seekdb and OceanBase</em>
+
 </div>
 
 ## Table of contents
+
 [Why seekdb-js?](#why-seekdb-js)<br/>
 [Packages](#packages)<br/>
 [Installation](#installation)<br/>
@@ -37,7 +39,7 @@ This is a monorepo containing:
 | `@seekdb/default-embed` | Local embedding (no API key)            |
 | `@seekdb/qwen` ⚠️       | Qwen cloud embedding (**Experimental**) |
 | `@seekdb/openai` ⚠️     | OpenAI embedding (**Experimental**)     |
-| `@seekdb/jina` 🚧        | Jina multimodal embedding (**WIP**)     |
+| `@seekdb/jina` 🚧       | Jina multimodal embedding (**WIP**)     |
 
 ## Installation
 

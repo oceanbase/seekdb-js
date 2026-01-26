@@ -7,10 +7,11 @@
 <strong>Vector database SDK for JavaScript/TypeScript with built-in semantic search</strong>
 <br />
 <em>Works seamlessly with seekdb and OceanBase</em>
+
 </div>
 
-
 ## Table of contents
+
 [Why seekdb?](#why-seekdb)<br/>
 [Installation](#installation)<br/>
 [Quick Start](#quick-start)<br/>
