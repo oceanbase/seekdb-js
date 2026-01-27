@@ -7,7 +7,7 @@ import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError } from "./errors.js";
 import { CollectionFieldNames, CollectionNames } from "./utils.js";
 import { FilterBuilder, SearchFilterCondition } from "./filters.js";
-import { updateCollectionTimestamp } from "./metadata-manager.js";
+import { CollectionMetadata, deleteCollectionMetadata, getCollectionMetadata, insertCollectionMetadata, updateCollectionTimestamp } from "./metadata-manager.js";
 import type {
   EmbeddingFunction,
   Metadata,
@@ -23,7 +23,9 @@ import type {
   DistanceMetric,
   CollectionConfig,
   CollectionContext,
+  ForkOptions,
 } from "./types.js";
+import { SeekdbClient } from "./client.js";
 
 /**
  * Collection - manages a collection of documents with embeddings
@@ -35,6 +37,7 @@ export class Collection {
   readonly embeddingFunction?: EmbeddingFunction;
   readonly metadata?: Metadata;
   readonly collectionId?: string; // v2 format collection ID
+  readonly client: SeekdbClient;
   #client: InternalClient;
 
   constructor(config: CollectionConfig) {
@@ -44,7 +47,8 @@ export class Collection {
     this.embeddingFunction = config.embeddingFunction;
     this.metadata = config.metadata;
     this.collectionId = config.collectionId;
-    this.#client = config.client;
+    this.client = config.client;
+    this.#client = config.internalClient;
   }
 
   /**
@@ -844,6 +848,63 @@ export class Collection {
     };
 
     return result;
+  }
+
+  async fork(options: ForkOptions): Promise<Collection> {
+    const { name: targetName } = options;
+
+    if (await this.client.hasCollection(targetName)) {
+      throw new SeekdbValueError(
+        `Collection '${targetName}' already exists. Please use a different name.`,
+      );
+    }
+
+    let targetCollectionId: string
+    let sourceSettings: CollectionMetadata['settings']
+    let targetCollectionName = ''
+
+    const sourceMetadata = await getCollectionMetadata(this.#client, this.name);
+    if (sourceMetadata) sourceSettings = sourceMetadata.settings
+    else {
+      // if source collection has no metadata, it's a v1 collection
+      sourceSettings = {
+        configuration: {
+          dimension: this.dimension,
+          distance: this.distance,
+        },
+        embeddingFunction: this.embeddingFunction ? {
+          name: this.embeddingFunction.name,
+          properties: this.embeddingFunction.getConfig()
+        } : undefined
+      }
+    }
+
+    try {
+      // coyp metadata and get collection_id
+      targetCollectionId = await insertCollectionMetadata(this.#client, targetName, sourceSettings);
+      targetCollectionName = CollectionNames.tableName(targetName, targetCollectionId);
+
+      const sql = SQLBuilder.buildFork(this.name, targetCollectionName);
+      await this.#client.execute(sql);
+    } catch (error) {
+      // If table creation fails, try to clean up metadata
+      try {
+        await deleteCollectionMetadata(this.#client, targetName);
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
+      throw error;
+    }
+
+    return new Collection({
+      name: targetCollectionName,
+      dimension: this.dimension,
+      distance: this.distance,
+      embeddingFunction: this.embeddingFunction,
+      client: this.client,
+      internalClient: this.#client,
+      collectionId: targetCollectionId,
+    });
   }
 
   /**

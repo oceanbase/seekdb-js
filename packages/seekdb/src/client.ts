@@ -164,7 +164,8 @@ export class SeekdbClient {
       dimension,
       distance,
       embeddingFunction: ef ?? undefined,
-      client: this._internal,
+      internalClient: this._internal,
+      client: this,
       collectionId,
     });
   }
@@ -292,7 +293,8 @@ export class SeekdbClient {
       dimension,
       distance,
       embeddingFunction: ef,
-      client: this._internal,
+      internalClient: this._internal,
+      client: this,
       collectionId,
     });
   }

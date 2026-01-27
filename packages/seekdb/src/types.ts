@@ -2,6 +2,7 @@
  * Type definitions for seekdb SDK
  */
 
+import { SeekdbClient } from "./client.js";
 import type { EmbeddingFunction } from "./embedding-function.js";
 import type { InternalClient } from "./internal-client.js";
 
@@ -104,7 +105,8 @@ export interface CollectionConfig {
   distance: DistanceMetric;
   embeddingFunction?: EmbeddingFunction;
   metadata?: Metadata;
-  client: InternalClient;
+  client: SeekdbClient;
+  internalClient: InternalClient;
   collectionId?: string; // v2 format collection ID
 }
 
@@ -269,6 +271,10 @@ export interface HybridSearchOptions {
   rank?: HybridSearchRank;
   nResults?: number;
   include?: readonly ("documents" | "metadatas" | "embeddings" | "distances")[];
+}
+
+export interface ForkOptions {
+  name: string
 }
 
 // ==================== Database Types ====================

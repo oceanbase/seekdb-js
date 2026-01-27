@@ -447,4 +447,8 @@ export class SQLBuilder {
     // use user variable @search_parm
     return `SELECT DBMS_HYBRID_SEARCH.GET_SQL('${tableName}', @search_parm) as query_sql FROM dual`;
   }
+
+  static buildFork(sourceName: string, targetName: string): string {
+    return `FORK TABLE \`${sourceName}\` TO \`${targetName}\`;`;
+  }
 }
