@@ -3,7 +3,6 @@
  */
 
 import { SeekdbClient } from "./client.js";
-import type { EmbeddingFunction } from "./embedding-function.js";
 import type { InternalClient } from "./internal-client.js";
 
 // ==================== Basic Types ====================
@@ -283,7 +282,20 @@ export type { Database } from "./database.js";
 
 // ==================== Embedding Function Types ====================
 
-export type {
-  EmbeddingFunction,
-  EmbeddingConfig,
-} from "./embedding-function.js";
+export interface EmbeddingConfig {
+  [key: string]: any;
+}
+
+export interface EmbeddingFunction {
+  readonly name: string;
+  generate(texts: string[]): Promise<number[][]>;
+  getConfig(): EmbeddingConfig;
+  dispose?(): Promise<void>;
+  dimension?: number;
+}
+
+export interface EmbeddingFunctionConstructor {
+  new(config: EmbeddingConfig): EmbeddingFunction;
+  buildFromConfig(config: EmbeddingConfig): EmbeddingFunction;
+  getModelDimensions?: () => Record<string, number>;
+}

@@ -1,4 +1,3 @@
-// https://docs.cohere.com/docs/cohere-embed
 import {
   EmbeddingFunction,
   registerEmbeddingFunction,

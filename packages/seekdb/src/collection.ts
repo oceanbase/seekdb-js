@@ -7,7 +7,7 @@ import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError } from "./errors.js";
 import { CollectionFieldNames, CollectionNames } from "./utils.js";
 import { FilterBuilder, SearchFilterCondition } from "./filters.js";
-import { CollectionMetadata, deleteCollectionMetadata, getCollectionMetadata, insertCollectionMetadata, updateCollectionTimestamp } from "./metadata-manager.js";
+import { CollectionMetadata, deleteCollectionMetadata, getCollectionMetadata, insertCollectionMetadata } from "./metadata-manager.js";
 import type {
   EmbeddingFunction,
   Metadata,
@@ -199,11 +199,6 @@ export class Collection {
     });
 
     await this.#client.execute(sql, params);
-
-    // Update collection timestamp for v2 collections
-    if (this.version === "v2") {
-      await updateCollectionTimestamp(this.#client, this.name);
-    }
   }
 
   /**
@@ -279,11 +274,6 @@ export class Collection {
 
       const { sql, params } = SQLBuilder.buildUpdate(this.context, { id, updates });
       await this.#client.execute(sql, params);
-    }
-
-    // Update collection timestamp for v2 collections
-    if (this.version === "v2") {
-      await updateCollectionTimestamp(this.#client, this.name);
     }
   }
 
@@ -369,11 +359,6 @@ export class Collection {
         });
       }
     }
-
-    // Update collection timestamp for v2 collections
-    if (this.version === "v2") {
-      await updateCollectionTimestamp(this.#client, this.name);
-    }
   }
 
   /**
@@ -397,11 +382,6 @@ export class Collection {
     });
 
     await this.#client.execute(sql, params);
-
-    // Update collection timestamp for v2 collections
-    if (this.version === "v2") {
-      await updateCollectionTimestamp(this.#client, this.name);
-    }
   }
 
   /**

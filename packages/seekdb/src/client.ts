@@ -8,21 +8,23 @@ import { Collection } from "./collection.js";
 import { InternalClient } from "./internal-client.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError, InvalidCollectionError } from "./errors.js";
-import { getEmbeddingFunction } from "./embedding-function.js";
+import { getEmbeddingFunction, supportsPersistence } from "./embedding-function.js";
 import {
   CollectionFieldNames,
   DEFAULT_DISTANCE_METRIC,
   DEFAULT_VECTOR_DIMENSION,
   COLLECTION_V1_PREFIX,
   resolveEmbeddingFunction,
+  validateCollectionName,
+  CollectionNames,
 } from "./utils.js";
 import {
-  ensureMetadataTable,
   insertCollectionMetadata,
   getCollectionMetadata,
   deleteCollectionMetadata,
   listCollectionMetadata,
   CollectionMetadata,
+  METADATA_TABLE_NAME,
 } from "./metadata-manager.js";
 import type {
   SeekdbClientArgs,
@@ -68,18 +70,14 @@ export class SeekdbClient {
   ): Promise<Collection> {
     const { name, configuration, embeddingFunction } = options;
 
-    // Check if collection name already exists (including v1 collections)
-    const exists = await this.hasCollection(name);
-    if (exists) {
-      throw new SeekdbValueError(
-        `Collection '${name}' already exists. Please use a different name or use getOrCreateCollection() instead.`,
-      );
-    }
+    // Validate collection name
+    validateCollectionName(name);
 
     let ef = embeddingFunction;
     let hnsw: HNSWConfiguration | undefined;
     let fulltextConfig: FulltextAnalyzerConfig | undefined;
 
+    // Extract HNSW and fulltext config
     if (configuration) {
       if ("hnsw" in configuration || "fulltextConfig" in configuration) {
         const config = configuration as Configuration;
@@ -91,45 +89,65 @@ export class SeekdbClient {
     }
 
     let distance = hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
-    let dimension = hnsw?.dimension ?? DEFAULT_VECTOR_DIMENSION;
+    let dimension: number;
 
-    // If embeddingFunction is provided, use it to generate embeddings and validate dimension
-    if (!!ef) {
-      const testEmbeddings = await ef.generate(["seekdb"]);
-      const actualDimension = testEmbeddings[0].length;
+    // Calculate actual dimension from embedding function if provided
+    let actualDimension: number | undefined;
 
-      // Validate dimension matches if is already provided
-      if (hnsw?.dimension && hnsw.dimension !== actualDimension) {
-        throw new SeekdbValueError(
-          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`,
-        );
-      }
-
-      dimension = actualDimension || DEFAULT_VECTOR_DIMENSION;
-    }
-
-    // Default behavior: if neither provided, use DefaultEmbeddingFunction
+    // Handle embedding function: undefined means use default, null means no EF
     if (ef === undefined) {
       ef = await getEmbeddingFunction();
-      const testEmbeddings = await ef.generate(["seekdb"]);
-      const actualDimension = testEmbeddings[0].length;
+    }
 
-      // Validate dimension matches if is already provided
-      if (hnsw?.dimension && hnsw.dimension !== actualDimension) {
+    // If embedding function exists, try to get dimension
+    if (ef !== null) {
+      // Priority 1: Read dimension property (avoid model initialization)
+      if ("dimension" in ef && typeof ef.dimension === "number") {
+        actualDimension = ef.dimension;
+      } else {
+        // Priority 2: Call generate to calculate dimension
+        const testEmbeddings = await ef.generate(["seekdb"]);
+        actualDimension = testEmbeddings[0]?.length;
+        if (!actualDimension) {
+          throw new SeekdbValueError(
+            "Embedding function returned empty result when called with 'seekdb'",
+          );
+        }
+      }
+    }
+
+    // Determine final dimension based on configuration and embedding function
+    if (configuration === null) {
+      // configuration=null: MUST have embedding function to infer dimension
+      if (ef === null || actualDimension === undefined) {
+        throw new SeekdbValueError(
+          "Cannot create collection: configuration is explicitly set to null and " +
+          "embedding_function is also null. Cannot determine dimension without either a configuration " +
+          "or an embedding function. Please either:\n" +
+          "  1. Provide a configuration with dimension specified (e.g., { dimension: 128, distance: 'cosine' }), or\n" +
+          "  2. Provide an embeddingFunction to calculate dimension automatically, or\n" +
+          "  3. Do not set configuration=null (use default configuration).",
+        );
+      }
+      dimension = actualDimension;
+    } else if (hnsw?.dimension !== undefined) {
+      // configuration has explicit dimension
+      if (actualDimension !== undefined && hnsw.dimension !== actualDimension) {
         throw new SeekdbValueError(
           `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`,
         );
       }
-
-      dimension = actualDimension || DEFAULT_VECTOR_DIMENSION;
+      dimension = hnsw.dimension;
+    } else {
+      // configuration has no dimension: use actualDimension or default
+      dimension = actualDimension ?? DEFAULT_VECTOR_DIMENSION;
     }
 
-    // Ensure metadata table exists
-    await ensureMetadataTable(this._internal);
-
-    // Prepare embedding function metadata (if ef is not null)
-    const embeddingFunctionMetadata =
-      ef !== null && ef !== undefined ? { name: ef.name, properties: ef.getConfig(), } : undefined;
+    // Prepare embedding function metadata (only if ef supports persistence)
+    let embeddingFunctionMetadata: { name: string; properties: any } | undefined;
+    if (supportsPersistence(ef)) {
+      embeddingFunctionMetadata = { name: ef.name, properties: ef.getConfig() };
+    }
 
     // Insert metadata and get collection_id
     const collectionId = await insertCollectionMetadata(this._internal, name, {
@@ -323,8 +341,7 @@ export class SeekdbClient {
     }
 
     // 2. Get v1 collections
-    const v1Prefix = COLLECTION_V1_PREFIX;
-    const sql = `SHOW TABLES LIKE '${v1Prefix}%'`;
+    const sql = `SHOW TABLES LIKE '${COLLECTION_V1_PREFIX}%'`;
     let result: RowDataPacket[] | null = null;
 
     try {
@@ -339,7 +356,7 @@ export class SeekdbClient {
             (dbResult[0] as any)["DATABASE()"] || Object.values(dbResult[0])[0];
           if (dbName) {
             result = await this._internal.execute(
-              `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${v1Prefix}%'`,
+              `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${COLLECTION_V1_PREFIX}%'`,
             );
           }
         }
@@ -361,24 +378,22 @@ export class SeekdbClient {
         }
 
         // Double check prefix although SQL filter should handle it
-        if (tableName.startsWith(v1Prefix)) {
-          const collectionName = tableName.substring(v1Prefix.length);
+        const collectionName = CollectionNames.extractCollectionName(tableName);
 
-          // Skip if already added as v2 collection
-          if (collectionNames.has(collectionName)) {
-            continue;
-          }
+        // Skip if already added as v2 collection
+        if (collectionName && collectionNames.has(collectionName)) {
+          continue;
+        }
 
-          try {
-            // Fetch full collection details
-            const collection = await this.getCollection({
-              name: collectionName,
-            });
-            collections.push(collection);
-          } catch (error) {
-            // Skip if we can't get collection info
-            continue;
-          }
+        try {
+          // Fetch full collection details
+          const collection = await this.getCollection({
+            name: collectionName,
+          });
+          collections.push(collection);
+        } catch (error) {
+          // Skip if we can't get collection info
+          continue;
         }
       }
     }
@@ -448,7 +463,55 @@ export class SeekdbClient {
    * Count collections
    */
   async countCollection(): Promise<number> {
-    const collections = await this.listCollections();
-    return collections.length;
+    const collectionNames = new Set<string>();
+
+    // 1. Count v2 collections from metadata table
+    const v2Metadata = await listCollectionMetadata(this._internal);
+    const v2Count = v2Metadata.length;
+
+    // 2. Count v1 collections
+    let v1Count = 0;
+    const sql = `SELECT collection_name as TABLE_NAME FROM ${METADATA_TABLE_NAME}`;
+    let result: RowDataPacket[] | null = null;
+
+    try {
+      result = await this._internal.execute(sql);
+    } catch (error) {
+      // Fallback: try to query information_schema
+      try {
+        const dbResult = await this._internal.execute("SELECT DATABASE()");
+        if (dbResult && dbResult.length > 0) {
+          const dbName =
+            (dbResult[0] as any)["DATABASE()"] || Object.values(dbResult[0])[0];
+          if (dbName) {
+            result = await this._internal.execute(
+              `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${COLLECTION_V1_PREFIX}%'`,
+            );
+          }
+        }
+      } catch (fallbackError) {
+        // If fallback also fails, continue with v2 count only
+      }
+    }
+
+    if (result) {
+      for (const row of result) {
+        // Extract table name
+        let tableName: string;
+        if ((row as any).TABLE_NAME) {
+          tableName = (row as any).TABLE_NAME;
+        } else {
+          tableName = Object.values(row)[0] as string;
+        }
+
+        const collectionName = CollectionNames.extractCollectionName(tableName);
+        // Only count if not already in v2
+        if (collectionName && !collectionNames.has(collectionName)) {
+          v1Count++;
+        }
+      }
+    }
+
+    return v2Count + v1Count;
   }
 }

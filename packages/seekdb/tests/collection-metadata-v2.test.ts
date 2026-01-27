@@ -4,7 +4,6 @@
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekdbClient } from "../src/client.js";
-import { Collection } from "../src/collection.js";
 import {
   TEST_CONFIG,
   generateCollectionName,
@@ -498,6 +497,36 @@ describe("Collection Metadata V2", () => {
         dimension: 3,
         version: 2,
       });
+    });
+
+    test("should NOT persist embedding function without buildFromConfig support", async () => {
+      const name = generateCollectionName("test_ef_no_persist");
+      testCollections.push(name);
+
+      // Create a plain object EF without constructor.buildFromConfig
+      const plainObjectEF = {
+        name: "plain-embed",
+        async generate(texts: string[]): Promise<number[][]> {
+          return texts.map(() => [0.1, 0.2, 0.3]);
+        },
+        getConfig() {
+          return { dimension: 3 };
+        },
+      };
+
+      await client.createCollection({
+        name,
+        embeddingFunction: plainObjectEF as any,
+      });
+
+      const metadata = await getCollectionMetadata(
+        (client as any)._internal,
+        name,
+      );
+
+      expect(metadata).toBeDefined();
+      // Embedding function metadata should NOT be stored
+      expect(metadata?.settings.embeddingFunction).toBeUndefined();
     });
   });
 });

@@ -10,6 +10,7 @@ export { Database } from "./database.js";
 export {
   registerEmbeddingFunction,
   getEmbeddingFunction,
+  supportsPersistence,
 } from "./embedding-function.js";
 
 export * from "./errors.js";

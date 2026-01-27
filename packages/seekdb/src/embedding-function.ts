@@ -1,18 +1,4 @@
-export interface EmbeddingConfig {
-  [key: string]: any;
-}
-
-export interface EmbeddingFunction {
-  readonly name: string;
-  generate(texts: string[]): Promise<number[][]>;
-  getConfig(): EmbeddingConfig;
-  dispose?(): Promise<void>;
-}
-
-export interface EmbeddingFunctionConstructor {
-  new(config: EmbeddingConfig): EmbeddingFunction;
-  buildFromConfig(config: EmbeddingConfig): EmbeddingFunction;
-}
+import { EmbeddingFunction, EmbeddingFunctionConstructor } from "./types.js";
 
 const registry = new Map<string, EmbeddingFunctionConstructor>();
 
@@ -34,6 +20,44 @@ export const registerEmbeddingFunction = (
   }
   registry.set(name, fn);
 };
+
+/**
+ * Check if an embedding function supports persistence (can be restored from config).
+ * 
+ * An embedding function supports persistence if:
+ * - It is not null/undefined
+ * - It has a getConfig() method
+ * - Its constructor has a buildFromConfig() static method
+ * - Calling getConfig() does not throw an error
+ * 
+ * @param ef - The embedding function to check
+ * @returns true if the embedding function supports persistence
+ */
+export function supportsPersistence(
+  ef: EmbeddingFunction | null | undefined,
+): ef is EmbeddingFunction {
+  if (ef == null) {
+    return false;
+  }
+
+  // Check if getConfig method exists
+  if (typeof ef.getConfig !== "function") {
+    return false;
+  }
+
+  // Check if constructor.buildFromConfig exists
+  if (typeof (ef as any).constructor?.buildFromConfig !== "function") {
+    return false;
+  }
+
+  // Try calling getConfig() to ensure it doesn't throw
+  try {
+    ef.getConfig();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Get an embedding function by name.

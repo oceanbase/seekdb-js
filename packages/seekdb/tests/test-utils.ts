@@ -62,6 +62,7 @@ export function createTestEmbeddingFunction(dimension: number) {
 export function Simple3DEmbeddingFunction(): EmbeddingFunction {
   return {
     name: "test-embedding",
+    dimension: 3,
     getConfig: () => ({ dimension: 3 }),
     async generate(input: string | string[]): Promise<number[][]> {
       const texts = Array.isArray(input) ? input : [input];
@@ -90,6 +91,7 @@ export function Simple3DEmbeddingFunction(): EmbeddingFunction {
 export function Simple128DEmbeddingFunction(): EmbeddingFunction {
   return {
     name: "test-embedding",
+    dimension: 128,
     getConfig: () => ({ dimension: 128 }),
     async generate(input: string | string[]): Promise<number[][]> {
       const texts = Array.isArray(input) ? input : [input];
@@ -137,6 +139,12 @@ export class MockEmbeddingFunction implements EmbeddingFunction {
     }
     this.config = config;
   }
+  dispose?(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  get dimension(): number {
+    return this.config.dimension || 3;
+  }
 
   async generate(texts: string[]): Promise<number[][]> {
     // Generate mock embeddings based on dimension in config or default 3
@@ -153,27 +161,3 @@ export class MockEmbeddingFunction implements EmbeddingFunction {
   }
 }
 
-/**
- * Mock Default Embedding Function for testing
- */
-export class MockDefaultEmbeddingFunction implements EmbeddingFunction {
-  readonly name = "default-embed";
-  private config: EmbeddingConfig;
-
-  constructor(config: EmbeddingConfig = {}) {
-    this.config = config;
-  }
-
-  async generate(texts: string[]): Promise<number[][]> {
-    const dim = this.config.dimension || 384;
-    return texts.map(() => Array(dim).fill(0.1));
-  }
-
-  getConfig(): EmbeddingConfig {
-    return this.config;
-  }
-
-  static buildFromConfig(config: EmbeddingConfig): EmbeddingFunction {
-    return new MockDefaultEmbeddingFunction(config);
-  }
-}

@@ -72,6 +72,51 @@ export function validateIDs(ids: string[]): void {
 }
 
 /**
+ * Maximum allowed length for collection names
+ */
+const MAX_COLLECTION_NAME_LENGTH = 512;
+
+/**
+ * Pattern for valid collection names (only letters, digits, and underscore)
+ */
+const COLLECTION_NAME_PATTERN = /^[A-Za-z0-9_]+$/;
+
+/**
+ * Validate collection name against allowed charset and length constraints.
+ * 
+ * Rules:
+ * - Type must be string
+ * - Length between 1 and MAX_COLLECTION_NAME_LENGTH (512)
+ * - Only [a-zA-Z0-9_]
+ * 
+ * @param name - Collection name to validate
+ * @throws TypeError if name is not a string
+ * @throws SeekdbValueError if name is empty, too long, or contains invalid characters
+ */
+export function validateCollectionName(name: unknown): asserts name is string {
+  if (typeof name !== "string") {
+    throw new SeekdbValueError(`Collection name must be a string, got ${typeof name}`,);
+  }
+
+  if (name.length === 0) {
+    throw new SeekdbValueError("Collection name must not be empty");
+  }
+
+  if (name.length > MAX_COLLECTION_NAME_LENGTH) {
+    throw new SeekdbValueError(
+      `Collection name too long: ${name.length} characters; maximum allowed is ${MAX_COLLECTION_NAME_LENGTH}`,
+    );
+  }
+
+  if (!COLLECTION_NAME_PATTERN.test(name)) {
+    throw new SeekdbValueError(
+      "Collection name contains invalid characters. " +
+      "Only letters, digits, and underscore are allowed: [a-zA-Z0-9_]",
+    );
+  }
+}
+
+/**
  * Serialize metadata to JSON string
  */
 export function serializeMetadata(metadata: Metadata): string {
@@ -150,6 +195,9 @@ export class CollectionNames {
    * @returns Collection name or null if not v1 format
    */
   static extractCollectionName(tableName: string): string | null {
+    if (tableName.length === 0) {
+      return null;
+    }
     if (tableName.startsWith(COLLECTION_V1_PREFIX)) {
       return tableName.substring(COLLECTION_V1_PREFIX.length);
     }

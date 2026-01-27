@@ -1,7 +1,3 @@
-// https://github.com/ollama/ollama-js?tab=readme-ov-file
-// https://docs.ollama.com/api/openai-compatibility
-// todo: 是否直接support openai兼容？
-
 import { Config } from "ollama";
 import {
   EmbeddingFunction,
