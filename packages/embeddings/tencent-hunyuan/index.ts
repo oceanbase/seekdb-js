@@ -1,6 +1,14 @@
 import { EmbeddingFunction, registerEmbeddingFunction, EmbeddingConfig } from "seekdb";
 import { OpenAIEmbeddingFunction, OpenAIEmbeddingConfig } from "@seekdb/openai";
 
+// Known Tencent Hunyuan embedding model dimensions
+// Source: https://cloud.tencent.com/document/product/1729/111007
+// Note: The embedding interface currently only supports input and model parameters.
+// Model is fixed as hunyuan-embedding, dimensions is fixed at 1024.
+const TENCENT_HUNYUAN_MODEL_DIMENSIONS: Record<string, number> = {
+  "hunyuan-embedding": 1024,
+};
+
 export interface HunyuanEmbeddingConfig extends Omit<
   OpenAIEmbeddingConfig,
   "organizationId"
@@ -40,6 +48,21 @@ export class HunyuanEmbeddingFunction
       organizationId: undefined,
       baseURL: config?.baseURL || baseURL,
     });
+  }
+
+  /**
+   * Get the dimension of embeddings produced by this function.
+   * Dimensions are fixed at 1024 for Tencent Hunyuan.
+   */
+  get dimension(): number {
+    return 1024;
+  }
+
+  /**
+   * Get model dimensions dictionary.
+   */
+  static getModelDimensions(): Record<string, number> {
+    return { ...TENCENT_HUNYUAN_MODEL_DIMENSIONS };
   }
 
   async generate(texts: string[]): Promise<number[][]> {

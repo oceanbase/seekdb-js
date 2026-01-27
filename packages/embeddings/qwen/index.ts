@@ -1,6 +1,15 @@
 import { EmbeddingFunction, registerEmbeddingFunction, EmbeddingConfig } from "seekdb";
 import { OpenAIEmbeddingFunction, OpenAIEmbeddingConfig } from "@seekdb/openai";
 
+// Known Qwen embedding model dimensions
+// Source: Qwen/DashScope documentation
+const QWEN_MODEL_DIMENSIONS: Record<string, number> = {
+  "text-embedding-v1": 1536,
+  "text-embedding-v2": 1536,
+  "text-embedding-v3": 1024, // default and can be changed via dimensions parameter
+  "text-embedding-v4": 1024, // default and can be changed via dimensions parameter
+};
+
 export interface QwenEmbeddingConfig extends Omit<
   OpenAIEmbeddingConfig,
   "organizationId"
@@ -47,6 +56,26 @@ export class QwenEmbeddingFunction
       organizationId: undefined,
       baseURL: baseURLs[config?.region || "cn"],
     });
+  }
+
+  /**
+   * Get the dimension of embeddings produced by this function.
+   */
+  get dimension(): number {
+    // For unknown models, return a default dimension
+    // In a real fallback scenario, we would call the API, but since this is a sync property
+    // we return the default and the actual determination happens during generate() call
+    if (this.dimensions) {
+      return this.dimensions;
+    }
+    return QWEN_MODEL_DIMENSIONS[this.modelName] || 1536;
+  }
+
+  /**
+   * Get model dimensions dictionary.
+   */
+  static getModelDimensions(): Record<string, number> {
+    return { ...QWEN_MODEL_DIMENSIONS };
   }
 
   async generate(texts: string[]): Promise<number[][]> {

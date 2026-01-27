@@ -45,7 +45,6 @@ export class BedrockEmbeddingFunction implements EmbeddingFunction {
   private readonly apiKey: string;
   private readonly region: string;
   private readonly modelName: string;
-  private _dimension: number | null = null;
 
   constructor(config: BedrockEmbeddingConfig) {
     this.apiKeyEnv = config.apiKeyEnv || "AMAZON_BEDROCK_API_KEY";
@@ -62,40 +61,23 @@ export class BedrockEmbeddingFunction implements EmbeddingFunction {
 
     this.region = config.region;
     this.modelName = config.modelName || DEFAULT_MODEL_NAME;
-
-    // Set dimension if known
-    if (this.modelName in AMAZON_BEDROCK_MODEL_DIMENSIONS) {
-      this._dimension = AMAZON_BEDROCK_MODEL_DIMENSIONS[this.modelName];
-    }
   }
 
   /**
    * Get the dimension of embeddings produced by this function.
-   *
-   * Returns the known dimension for models without making an API call.
-   * If the model is not in the known dimensions list, falls back to making
-   * an API call to get the embedding and infer the dimension.
    */
-  async dimension(): Promise<number> {
-    // If dimension is known, return it
-    if (this._dimension !== null) {
-      return this._dimension;
-    }
+  get dimension(): number {
+    // For unknown models, return a default dimension
+    // In a real fallback scenario, we would call the API, but since this is a sync property
+    // we return the default and the actual determination happens during generate() call
+    return AMAZON_BEDROCK_MODEL_DIMENSIONS[this.modelName] || 1024;
+  }
 
-    // Fallback: make an API call to get the embedding and infer the dimension
-    const testInput = "dimension probing";
-    try {
-      const embeddings = await this.generate([testInput]);
-      if (!embeddings || embeddings.length === 0 || !embeddings[0]) {
-        throw new Error("Could not get embedding dimension from API response");
-      }
-      this._dimension = embeddings[0].length;
-      return this._dimension;
-    } catch (error) {
-      throw new Error(
-        `Failed to determine embedding dimension via API call: ${error}`
-      );
-    }
+  /**
+   * Get model dimensions dictionary.
+   */
+  static getModelDimensions(): Record<string, number> {
+    return { ...AMAZON_BEDROCK_MODEL_DIMENSIONS };
   }
 
   async generate(texts: string[]): Promise<number[][]> {

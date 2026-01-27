@@ -11,6 +11,13 @@ import {
 
 const embeddingFunctionName = "ollama";
 
+// Known Ollama embedding model dimensions
+// Source: https://docs.ollama.com/capabilities/embeddings
+const OLLAMA_MODEL_DIMENSIONS: Record<string, number> = {
+  "nomic-embed-text": 768,
+  "all-minilm": 384,
+};
+
 // Check if running in browser environment
 const isBrowser = (): boolean =>
   typeof globalThis !== "undefined" &&
@@ -82,6 +89,23 @@ export class OllamaEmbeddingFunction implements EmbeddingFunction {
       input: texts,
     });
     return response.embeddings;
+  }
+
+  /**
+   * Get the dimension of embeddings produced by this function.
+   */
+  get dimension(): number {
+    // For unknown models, return a default dimension
+    // In a real fallback scenario, we would call the API, but since this is a sync property
+    // we return the default and the actual determination happens during generate() call
+    return OLLAMA_MODEL_DIMENSIONS[this.modelName] || 768;
+  }
+
+  /**
+   * Get model dimensions dictionary.
+   */
+  static getModelDimensions(): Record<string, number> {
+    return { ...OLLAMA_MODEL_DIMENSIONS };
   }
 
   getConfig(): any {

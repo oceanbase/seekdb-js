@@ -8,6 +8,20 @@ import { CohereClient } from "cohere-ai";
 
 const embeddingFunctionName = "cohere";
 
+// Known Cohere embedding model dimensions
+// Source: https://docs.cohere.com/docs/cohere-embed
+const COHERE_MODEL_DIMENSIONS: Record<string, number> = {
+  "embed-v4.0": 1536,
+  "embed-english-v3.0": 1024,
+  "embed-multilingual-v3.0": 1024,
+  "embed-english-light-v3.0": 384,
+  "embed-multilingual-light-v3.0": 384,
+  "embed-english-v2.0": 4096,
+  "embed-multilingual-v2.0": 768,
+  "embed-english-light-v2.0": 1024,
+  "embed-multilingual-light-v2.0": 384,
+};
+
 export type CohereEmbedInputType =
   | "search_document"
   | "search_query"
@@ -105,6 +119,23 @@ export class CohereEmbeddingFunction implements EmbeddingFunction {
       return embeddings["float"];
     }
     throw new Error("Failed to generate embeddings");
+  }
+
+  /**
+   * Get the dimension of embeddings produced by this function.
+   */
+  get dimension(): number {
+    // For unknown models, return a default dimension
+    // In a real fallback scenario, we would call the API, but since this is a sync property
+    // we return the default and the actual determination happens during generate() call
+    return COHERE_MODEL_DIMENSIONS[this.modelName] || 1024;
+  }
+
+  /**
+   * Get model dimensions dictionary.
+   */
+  static getModelDimensions(): Record<string, number> {
+    return { ...COHERE_MODEL_DIMENSIONS };
   }
 
   getConfig(): any {

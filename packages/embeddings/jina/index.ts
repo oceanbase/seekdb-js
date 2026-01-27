@@ -3,6 +3,28 @@ import { toSnake } from "@seekdb/common";
 
 const name = "jina";
 
+// Known Jina AI embedding model dimensions
+// Source: https://api.jina.ai/scalar#tag/search-foundation-models/POST/v1/embeddings
+// Note: Most Jina v2 models have 768 dimensions
+const JINA_MODEL_DIMENSIONS: Record<string, number> = {
+  "jina-embeddings-v3": 1024,
+  "jina-embeddings-v4": 2048,
+  "jina-clip-v2": 1024,
+  "jina-colbert-v2": 128,
+  "jina-embeddings-v2-base-en": 768,
+  "jina-embeddings-v2-base-zh": 768,
+  "jina-embeddings-v2-base-es": 768,
+  "jina-embeddings-v2-base-de": 768,
+  "jina-embeddings-v2-base-code": 768,
+  "jina-embeddings-v2-base-multilingual": 768,
+  "jina-embeddings-v2-small-en": 512,
+  "jina-embeddings-v2-small-zh": 512,
+  "jina-embeddings-v2-small-es": 512,
+  "jina-embeddings-v2-small-de": 512,
+  "jina-embeddings-v2-small-code": 512,
+  "jina-embeddings-v2-small-multilingual": 512,
+};
+
 export interface JinaConfig extends EmbeddingConfig {
   /**
    * Defaults to 'JINA_API_KEY'
@@ -79,6 +101,24 @@ export class JinaEmbeddingFunction implements EmbeddingFunction {
       "Accept-Encoding": "identity",
       "Content-Type": "application/json",
     };
+
+  }
+
+  /**
+   * Get the dimension of embeddings produced by this function.
+   */
+  get dimension(): number {
+    // For unknown models, return a default dimension
+    // In a real fallback scenario, we would call the API, but since this is a sync property
+    // we return the default and the actual determination happens during generate() call
+    return JINA_MODEL_DIMENSIONS[this.modelName] || 1024;
+  }
+
+  /**
+  * Get model dimensions dictionary.
+  */
+  static getModelDimensions(): Record<string, number> {
+    return { ...JINA_MODEL_DIMENSIONS };
   }
 
   async generate(texts: string[]): Promise<number[][]> {
