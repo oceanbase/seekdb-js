@@ -8,6 +8,7 @@
  */
 
 import type { Where, WhereDocument } from "./types.js";
+import { CollectionFieldNames } from "./utils.js";
 
 /**
  * Result of building a filter
@@ -376,9 +377,10 @@ export class FilterBuilder {
       }
 
       // Use JSON_EXTRACT format for hybrid search, simple format otherwise
-      const fieldName = useJsonExtract
-        ? `(JSON_EXTRACT(metadata, '$.${key}'))`
-        : `metadata.${key}`;
+      const fieldName =
+        key === "#id" || key === CollectionFieldNames.ID
+          ? CollectionFieldNames.ID
+          : `JSON_EXTRACT(${CollectionFieldNames.METADATA}, '$.${key}')`;
 
       if (
         typeof value === "object" &&

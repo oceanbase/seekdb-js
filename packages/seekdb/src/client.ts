@@ -378,7 +378,7 @@ export class SeekdbClient {
         }
 
         // Double check prefix although SQL filter should handle it
-        const collectionName = CollectionNames.extractCollectionName(tableName);
+        const collectionName = CollectionNames.extractCollectionName(tableName) || '';
 
         // Skip if already added as v2 collection
         if (collectionName && collectionNames.has(collectionName)) {
