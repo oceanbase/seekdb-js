@@ -2,6 +2,7 @@ import {
   EmbeddingFunction,
   registerEmbeddingFunction,
   EmbeddingConfig,
+  SeekdbValueError,
 } from "seekdb";
 import { VoyageAIClient } from "voyageai";
 import { EmbedRequestInputType } from "voyageai/api/index.js";
@@ -116,6 +117,7 @@ export class VoyageAIEmbeddingFunction implements EmbeddingFunction {
   }
 
   static buildFromConfig(config: EmbeddingConfig): VoyageAIEmbeddingFunction {
+    if (!config) throw new SeekdbValueError("config is required");
     return new VoyageAIEmbeddingFunction({
       modelName: config.model_name,
       apiKeyEnvVar: config.api_key_env_var,

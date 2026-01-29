@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { SiliconFlowEmbeddingFunction, SiliconFlowEmbeddingConfig } from "./index";
+import { SiliconFlowEmbeddingFunction } from "./index";
 
 // Mock OpenAI client
 vi.mock("openai", () => {
@@ -26,7 +26,7 @@ describe("SiliconFlowEmbeddingFunction", () => {
 
   it("should initialize with default parameters", () => {
     process.env.SILICONFLOW_API_KEY = "test-api-key";
-    
+
     const embedder = new SiliconFlowEmbeddingFunction();
     expect(embedder.name).toBe("siliconflow");
 
@@ -37,7 +37,7 @@ describe("SiliconFlowEmbeddingFunction", () => {
 
   it("should initialize with custom parameters", () => {
     process.env.SILICONFLOW_API_KEY = "test-api-key";
-    
+
     const embedder = new SiliconFlowEmbeddingFunction({
       modelName: "custom-model",
       dimensions: 1024,
@@ -52,7 +52,7 @@ describe("SiliconFlowEmbeddingFunction", () => {
 
   it("should generate embeddings", async () => {
     process.env.SILICONFLOW_API_KEY = "test-api-key";
-    
+
     const embedder = new SiliconFlowEmbeddingFunction();
     const texts = ["Hello world", "Test text"];
     const embeddings = await embedder.generate(texts);
@@ -65,7 +65,7 @@ describe("SiliconFlowEmbeddingFunction", () => {
 
   it("should build from config", () => {
     process.env.SILICONFLOW_API_KEY = "test-api-key";
-    
+
     const snakeCaseConfig = {
       model_name: "custom-model",
       api_key: "custom-key",
@@ -86,7 +86,7 @@ describe("SiliconFlowEmbeddingFunction", () => {
 
   it("should not include organization_id in config", () => {
     process.env.SILICONFLOW_API_KEY = "test-api-key";
-    
+
     const embedder = new SiliconFlowEmbeddingFunction();
     const config = embedder.getConfig();
 

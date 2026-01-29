@@ -9,7 +9,7 @@ const TENCENT_HUNYUAN_MODEL_DIMENSIONS: Record<string, number> = {
   "hunyuan-embedding": 1024,
 };
 
-export interface HunyuanEmbeddingConfig extends Omit<
+export interface TencentHunyuanEmbeddingConfig extends Omit<
   OpenAIEmbeddingConfig,
   "organizationId"
 > {
@@ -34,12 +34,12 @@ export interface HunyuanEmbeddingConfig extends Omit<
 const embeddingFunctionName = "tencent-hunyuan";
 const baseURL = "https://api.hunyuan.cloud.tencent.com/v1";
 
-export class HunyuanEmbeddingFunction
+export class TencentHunyuanEmbeddingFunction
   extends OpenAIEmbeddingFunction
   implements EmbeddingFunction {
   readonly name: string = embeddingFunctionName;
 
-  constructor(config: HunyuanEmbeddingConfig = {}) {
+  constructor(config: TencentHunyuanEmbeddingConfig = {}) {
     super({
       ...config,
       apiKeyEnvVar: config?.apiKeyEnvVar || "HUNYUAN_API_KEY",
@@ -76,13 +76,13 @@ export class HunyuanEmbeddingFunction
     return resp.data.map((d) => d.embedding);
   }
 
-  getConfig(): HunyuanEmbeddingConfig {
+  getConfig(): TencentHunyuanEmbeddingConfig {
     const { organization_id, ...restConfig } = super.getConfig();
     return restConfig;
   }
 
-  static buildFromConfig(config: EmbeddingConfig): HunyuanEmbeddingFunction {
-    return new HunyuanEmbeddingFunction({
+  static buildFromConfig(config: EmbeddingConfig): TencentHunyuanEmbeddingFunction {
+    return new TencentHunyuanEmbeddingFunction({
       modelName: config.model_name,
       apiKey: config.api_key,
       apiKeyEnvVar: config.api_key_env_var,
@@ -93,4 +93,4 @@ export class HunyuanEmbeddingFunction
 }
 
 // Register at the bottom
-registerEmbeddingFunction(embeddingFunctionName, HunyuanEmbeddingFunction);
+registerEmbeddingFunction(embeddingFunctionName, TencentHunyuanEmbeddingFunction);

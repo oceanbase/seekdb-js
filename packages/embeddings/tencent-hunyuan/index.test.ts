@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { HunyuanEmbeddingFunction, HunyuanEmbeddingConfig } from "./index";
+import { TencentHunyuanEmbeddingFunction } from "./index";
 
 // Mock OpenAI client
 vi.mock("openai", () => {
@@ -19,16 +19,16 @@ vi.mock("openai", () => {
   };
 });
 
-describe("HunyuanEmbeddingFunction", () => {
+describe("TencentHunyuanEmbeddingFunction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("should initialize with default parameters", () => {
     process.env.HUNYUAN_API_KEY = "test-api-key";
-    
-    const embedder = new HunyuanEmbeddingFunction();
-    expect(embedder.name).toBe("hunyuan");
+
+    const embedder = new TencentHunyuanEmbeddingFunction();
+    expect(embedder.name).toBe("tencent-hunyuan");
 
     const config = embedder.getConfig();
     expect(config.api_key_env_var).toBe("HUNYUAN_API_KEY");
@@ -37,8 +37,8 @@ describe("HunyuanEmbeddingFunction", () => {
 
   it("should initialize with custom parameters", () => {
     process.env.HUNYUAN_API_KEY = "test-api-key";
-    
-    const embedder = new HunyuanEmbeddingFunction({
+
+    const embedder = new TencentHunyuanEmbeddingFunction({
       modelName: "custom-model",
       dimensions: 1024,
       apiKeyEnvVar: "HUNYUAN_API_KEY",
@@ -52,8 +52,8 @@ describe("HunyuanEmbeddingFunction", () => {
 
   it("should generate embeddings", async () => {
     process.env.HUNYUAN_API_KEY = "test-api-key";
-    
-    const embedder = new HunyuanEmbeddingFunction();
+
+    const embedder = new TencentHunyuanEmbeddingFunction();
     const texts = ["Hello world", "Test text"];
     const embeddings = await embedder.generate(texts);
 
@@ -65,7 +65,7 @@ describe("HunyuanEmbeddingFunction", () => {
 
   it("should build from config", () => {
     process.env.HUNYUAN_API_KEY = "test-api-key";
-    
+
     const snakeCaseConfig = {
       model_name: "custom-model",
       api_key: "custom-key",
@@ -74,10 +74,10 @@ describe("HunyuanEmbeddingFunction", () => {
       base_url: "https://api.hunyuan.cloud.tencent.com/v1",
     };
 
-    const embedder = HunyuanEmbeddingFunction.buildFromConfig(snakeCaseConfig);
+    const embedder = TencentHunyuanEmbeddingFunction.buildFromConfig(snakeCaseConfig);
 
-    expect(embedder).toBeInstanceOf(HunyuanEmbeddingFunction);
-    expect(embedder.name).toBe("hunyuan");
+    expect(embedder).toBeInstanceOf(TencentHunyuanEmbeddingFunction);
+    expect(embedder.name).toBe("tencent-hunyuan");
 
     const config = embedder.getConfig();
     expect(config.model_name).toBe("custom-model");
@@ -86,8 +86,8 @@ describe("HunyuanEmbeddingFunction", () => {
 
   it("should not include organization_id in config", () => {
     process.env.HUNYUAN_API_KEY = "test-api-key";
-    
-    const embedder = new HunyuanEmbeddingFunction();
+
+    const embedder = new TencentHunyuanEmbeddingFunction();
     const config = embedder.getConfig();
 
     expect(config).not.toHaveProperty("organization_id");

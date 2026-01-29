@@ -17,7 +17,7 @@ const AMAZON_BEDROCK_MODEL_DIMENSIONS: Record<string, number> = {
 
 const DEFAULT_MODEL_NAME = "amazon.titan-embed-text-v2";
 
-export interface BedrockEmbeddingConfig extends EmbeddingConfig {
+export interface AmazonBedrockEmbeddingConfig extends EmbeddingConfig {
   /**
    * Amazon Bedrock API key.
    * To generate an API key, visit:https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys-generate.html
@@ -39,14 +39,14 @@ export interface BedrockEmbeddingConfig extends EmbeddingConfig {
   modelName?: string;
 }
 
-export class BedrockEmbeddingFunction implements EmbeddingFunction {
+export class AmazonBedrockEmbeddingFunction implements EmbeddingFunction {
   readonly name: string = embeddingFunctionName;
   private readonly apiKeyEnv: string;
   private readonly apiKey: string;
   private readonly region: string;
   private readonly modelName: string;
 
-  constructor(config: BedrockEmbeddingConfig) {
+  constructor(config: AmazonBedrockEmbeddingConfig) {
     this.apiKeyEnv = config.apiKeyEnv || "AMAZON_BEDROCK_API_KEY";
     this.apiKey = config.apiKey || process.env[this.apiKeyEnv] || "";
     if (!this.apiKey) {
@@ -136,14 +136,14 @@ export class BedrockEmbeddingFunction implements EmbeddingFunction {
     };
   }
 
-  static buildFromConfig(config: EmbeddingConfig): BedrockEmbeddingFunction {
+  static buildFromConfig(config: EmbeddingConfig): AmazonBedrockEmbeddingFunction {
     if (!config.api_key || !config.region) {
       throw new Error(
         "api_key and region are required in config. Generate API key at: https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys-generate.html"
       );
     }
 
-    return new BedrockEmbeddingFunction({
+    return new AmazonBedrockEmbeddingFunction({
       apiKey: config.api_key,
       region: config.region,
       modelName: config.model_name,
@@ -151,4 +151,4 @@ export class BedrockEmbeddingFunction implements EmbeddingFunction {
   }
 }
 
-registerEmbeddingFunction(embeddingFunctionName, BedrockEmbeddingFunction);
+registerEmbeddingFunction(embeddingFunctionName, AmazonBedrockEmbeddingFunction);

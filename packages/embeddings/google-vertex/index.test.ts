@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { GoogleVertexEmbeddingFunction, GoogleVertexEmbeddingConfig } from "./index";
+import { GoogleVertexEmbeddingFunction } from "./index";
 
 // Mock Google Cloud AI Platform client
 vi.mock("@google-cloud/aiplatform", () => {
@@ -69,14 +69,14 @@ describe("GoogleVertexEmbeddingFunction", () => {
     const config = embedder.getConfig();
     expect(config.project_id).toBe("test-project");
     expect(config.location).toBe("us-central1");
-    expect(config.model_name).toBe("gemini-embedding-001");
+    expect(config.model_name).toBe("textembedding-gecko");
     expect(config.api_endpoint).toBe("us-central1-aiplatform.googleapis.com");
   });
 
   it("should initialize with custom parameters", () => {
     const embedder = new GoogleVertexEmbeddingFunction({
       projectId: "test-project",
-      location: "us-west1",
+      location: "us-central1",
       modelName: "custom-model",
       taskType: "RETRIEVAL_QUERY",
       outputDimensionality: 512,
@@ -84,7 +84,7 @@ describe("GoogleVertexEmbeddingFunction", () => {
 
     const config = embedder.getConfig();
     expect(config.project_id).toBe("test-project");
-    expect(config.location).toBe("us-west1");
+    expect(config.location).toBe("us-central1");
     expect(config.model_name).toBe("custom-model");
     expect(config.task_type).toBe("RETRIEVAL_QUERY");
     expect(config.output_dimensionality).toBe(512);
@@ -107,11 +107,11 @@ describe("GoogleVertexEmbeddingFunction", () => {
   it("should build from config", () => {
     const snakeCaseConfig = {
       project_id: "test-project",
-      location: "us-west1",
+      location: "us-central1",
       model_name: "custom-model",
       task_type: "SEMANTIC_SIMILARITY",
       output_dimensionality: 256,
-      api_endpoint: "us-west1-aiplatform.googleapis.com",
+      api_endpoint: "us-central1-aiplatform.googleapis.com",
     };
 
     const embedder = GoogleVertexEmbeddingFunction.buildFromConfig(snakeCaseConfig);
@@ -121,7 +121,7 @@ describe("GoogleVertexEmbeddingFunction", () => {
 
     const config = embedder.getConfig();
     expect(config.project_id).toBe("test-project");
-    expect(config.location).toBe("us-west1");
+    expect(config.location).toBe("us-central1");
     expect(config.model_name).toBe("custom-model");
   });
 

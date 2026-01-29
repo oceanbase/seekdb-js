@@ -2,6 +2,7 @@ import {
   EmbeddingFunction,
   registerEmbeddingFunction,
   EmbeddingConfig,
+  SeekdbValueError,
 } from "seekdb";
 import { pipeline } from "@huggingface/transformers";
 
@@ -14,7 +15,7 @@ export interface SentenceTransformerConfig extends EmbeddingConfig {
   modelName?: string;
   device?: string;
   normalizeEmbeddings?: boolean;
-  kwargs?: Record<string, any>;
+  extra?: Record<string, any>;
 }
 
 export class SentenceTransformerEmbeddingFunction implements EmbeddingFunction {
@@ -22,7 +23,7 @@ export class SentenceTransformerEmbeddingFunction implements EmbeddingFunction {
   private readonly modelName: string;
   private readonly device: string;
   private readonly normalizeEmbeddings: boolean;
-  private readonly kwargs: Record<string, any>;
+  private readonly extra: Record<string, any>;
   private pipelinePromise: Promise<any> | null = null;
   private pipeline: any = null;
 
@@ -30,12 +31,12 @@ export class SentenceTransformerEmbeddingFunction implements EmbeddingFunction {
     this.modelName = config.modelName || "Xenova/all-MiniLM-L6-v2";
     this.device = config.device || "cpu";
     this.normalizeEmbeddings = config.normalizeEmbeddings || false;
-    this.kwargs = config.kwargs || {};
+    this.extra = config.extra || {};
 
-    // Validate kwargs are JSON-serializable
-    for (const [key, value] of Object.entries(this.kwargs)) {
+    // Validate extra are JSON-serializable
+    for (const [key, value] of Object.entries(this.extra)) {
       if (typeof value === "function" || typeof value === "symbol") {
-        throw new Error(
+        throw new SeekdbValueError(
           `Keyword argument '${key}' has a value of type '${typeof value}', which is not supported. Only JSON-serializable values are allowed.`,
         );
       }
@@ -56,7 +57,7 @@ export class SentenceTransformerEmbeddingFunction implements EmbeddingFunction {
 
       this.pipelinePromise = pipeline("feature-extraction", resolvedModelName, {
         device: this.device as any,
-        ...this.kwargs,
+        ...this.extra,
       } as any).catch((error) => {
         // Reset pipelinePromise on error to allow retry on next call
         this.pipelinePromise = null;
@@ -90,16 +91,17 @@ export class SentenceTransformerEmbeddingFunction implements EmbeddingFunction {
       model_name: this.modelName,
       device: this.device,
       normalize_embeddings: this.normalizeEmbeddings,
-      kwargs: this.kwargs,
+      extra: this.extra,
     };
   }
 
   static buildFromConfig(config: any,): SentenceTransformerEmbeddingFunction {
+    if (!config) throw new SeekdbValueError("config is required");
     return new SentenceTransformerEmbeddingFunction({
       modelName: config.model_name,
       device: config.device,
       normalizeEmbeddings: config.normalize_embeddings,
-      kwargs: config.kwargs || {},
+      extra: config.extra || {},
     });
   }
 

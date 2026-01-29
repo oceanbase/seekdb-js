@@ -1,44 +1,35 @@
-# Jina AI Embedding Function for seekdb
+# @seekdb/jina
 
-> 🚧 **Under Development**: This embedding function is under active development. The API may undergo significant changes or breaking updates in future releases.
+Jina embedding function for SeekDB.
 
-This package provides an embedding function using the Jina AI Embeddings API. Jina AI offers high-quality text and multimodal embedding services.
+Jina AI provides embedding models for semantic search and related retrieval tasks. seekdb provides a `JinaEmbeddingFunction` wrapper (powered by LiteLLM) to generate Jina embeddings and use them with seekdb collections.
+
+## Dependencies and authentication
+
+`JinaEmbeddingFunction` calls the Jina embedding API via LiteLLM. In practice, you typically need:
+
+- A Jina API key with access to the embedding models you plan to use
+- Authentication is usually provided via environment variables (by default, `JINA_API_KEY`). If you use a different environment variable name, set `api_key_env`.
 
 ## Installation
 
 ```bash
-npm install @seekdb/jina
+npm i seekdb @seekdb/jina
 ```
 
 ## Usage
 
-### Quick Start
-
 ```typescript
 import { JinaEmbeddingFunction } from "@seekdb/jina";
 
-const jinaEmbed = new JinaEmbeddingFunction({
-  apiKeyEnvVar: "JINA_API_KEY", // Environment variable name for the API key (default: `'JINA_API_KEY'`)
-});
-
-const collection = await client.createCollection({
-  name: "jina_collection",
-  embeddingFunction: jinaEmbed,
+const ef = new JinaEmbeddingFunction({
+  modelName: "jina-clip-v2",
+  // apiKeyEnvVar: "JINA_API_KEY",
 });
 ```
 
-## Configuration Options
+## Configuration
 
-- **apiKey**: Jina AI API key (optional, defaults to environment variable)
-- **apiKeyEnvVar**: Environment variable name for the API key (default: `'JINA_API_KEY'`)
-- **modelName**: Model name to use (default: `'jina-clip-v2'`)
-- **task**: Task type (optional)
-- **lateChunking**: Whether to use late chunking (optional)
-- **truncate**: Whether to truncate input (optional)
-- **dimensions**: Embedding dimensions (optional)
-- **normalized**: Whether to normalize embedding vectors (optional)
-- **embeddingType**: Embedding type (optional)
-
-## Getting an API Key
-
-Visit [Jina AI](https://jina.ai/) to sign up and obtain your API key.
+- **apiKey**: API key (optional; can be provided via env var)
+- **apiKeyEnvVar**: API key env var name (default: `"JINA_API_KEY"`)
+- **modelName**: model name (default: `"jina-clip-v2"`)

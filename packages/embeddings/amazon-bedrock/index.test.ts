@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { BedrockEmbeddingFunction, BedrockEmbeddingConfig } from "./index";
+import { AmazonBedrockEmbeddingFunction } from "./index";
 
 // Mock AWS Bedrock Runtime client
 vi.mock("@aws-sdk/client-bedrock-runtime", () => {
@@ -21,13 +21,13 @@ vi.mock("@aws-sdk/client-bedrock-runtime", () => {
   };
 });
 
-describe("BedrockEmbeddingFunction", () => {
+describe("AmazonBedrockEmbeddingFunction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("should initialize with default parameters", () => {
-    const embedder = new BedrockEmbeddingFunction();
+    const embedder = new AmazonBedrockEmbeddingFunction({});
     expect(embedder.name).toBe("bedrock");
 
     const config = embedder.getConfig();
@@ -35,7 +35,7 @@ describe("BedrockEmbeddingFunction", () => {
   });
 
   it("should initialize with custom parameters", () => {
-    const embedder = new BedrockEmbeddingFunction({
+    const embedder = new AmazonBedrockEmbeddingFunction({
       region: "us-west-2",
       modelId: "custom-model-id",
     });
@@ -46,7 +46,7 @@ describe("BedrockEmbeddingFunction", () => {
   });
 
   it("should generate embeddings", async () => {
-    const embedder = new BedrockEmbeddingFunction();
+    const embedder = new AmazonBedrockEmbeddingFunction({});
     const texts = ["Hello world", "Test text"];
     const embeddings = await embedder.generate(texts);
 
@@ -62,9 +62,9 @@ describe("BedrockEmbeddingFunction", () => {
       model_id: "amazon.titan-embed-text-v2:0",
     };
 
-    const embedder = BedrockEmbeddingFunction.buildFromConfig(snakeCaseConfig);
+    const embedder = AmazonBedrockEmbeddingFunction.buildFromConfig(snakeCaseConfig);
 
-    expect(embedder).toBeInstanceOf(BedrockEmbeddingFunction);
+    expect(embedder).toBeInstanceOf(AmazonBedrockEmbeddingFunction);
     expect(embedder.name).toBe("bedrock");
 
     const config = embedder.getConfig();
@@ -73,9 +73,9 @@ describe("BedrockEmbeddingFunction", () => {
   });
 
   it("should handle empty config", () => {
-    const embedder = BedrockEmbeddingFunction.buildFromConfig({});
+    const embedder = AmazonBedrockEmbeddingFunction.buildFromConfig({});
 
-    expect(embedder).toBeInstanceOf(BedrockEmbeddingFunction);
+    expect(embedder).toBeInstanceOf(AmazonBedrockEmbeddingFunction);
     const config = embedder.getConfig();
     expect(config.model_id).toBe("amazon.titan-embed-text-v1");
   });

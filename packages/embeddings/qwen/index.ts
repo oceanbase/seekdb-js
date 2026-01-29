@@ -46,6 +46,7 @@ export class QwenEmbeddingFunction
   extends OpenAIEmbeddingFunction
   implements EmbeddingFunction {
   readonly name: string = embeddingFunctionName;
+  private readonly region?: "cn" | "intl";
 
   constructor(config: QwenEmbeddingConfig = {}) {
     super({
@@ -56,6 +57,7 @@ export class QwenEmbeddingFunction
       organizationId: undefined,
       baseURL: baseURLs[config?.region || "cn"],
     });
+    this.region = config?.region || "cn";
   }
 
   /**
@@ -90,7 +92,7 @@ export class QwenEmbeddingFunction
   }
   getConfig(): QwenEmbeddingConfig {
     const { organization_id, ...restConfig } = super.getConfig();
-    return restConfig;
+    return { ...restConfig, region: this.region };
   }
 
   static buildFromConfig(config: EmbeddingConfig): QwenEmbeddingFunction {

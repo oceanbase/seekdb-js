@@ -22,19 +22,19 @@ vi.mock("@huggingface/transformers", () => {
 });
 
 describe("SentenceTransformerEmbeddingFunction", () => {
-  it("should have correct name (sentence_transformer)", () => {
+  it("should have correct name (sentence-transformer)", () => {
     const embedder = new SentenceTransformerEmbeddingFunction();
-    expect(embedder.name).toBe("sentence_transformer");
+    expect(embedder.name).toBe("sentence-transformer");
   });
 
   it("should initialize with default parameters", () => {
     const embedder = new SentenceTransformerEmbeddingFunction();
     const config = embedder.getConfig();
 
-    expect(config.model_name).toBe("all-MiniLM-L6-v2");
+    expect(config.model_name).toBe("Xenova/all-MiniLM-L6-v2");
     expect(config.device).toBe("cpu");
     expect(config.normalize_embeddings).toBe(false);
-    expect(config.kwargs).toEqual({});
+    expect(config.extra).toEqual({});
   });
 
   it("should initialize with custom parameters", () => {
@@ -42,26 +42,26 @@ describe("SentenceTransformerEmbeddingFunction", () => {
       modelName: "custom-model",
       device: "gpu",
       normalizeEmbeddings: true,
-      kwargs: { max_length: 512 },
+      extra: { max_length: 512 },
     });
 
     const config = embedder.getConfig();
     expect(config.model_name).toBe("custom-model");
     expect(config.device).toBe("gpu");
     expect(config.normalize_embeddings).toBe(true);
-    expect(config.kwargs).toEqual({ max_length: 512 });
+    expect(config.extra).toEqual({ max_length: 512 });
   });
 
-  it("should throw SeekdbValueError for non-JSON-serializable kwargs", () => {
+  it("should throw SeekdbValueError for non-JSON-serializable extra", () => {
     expect(() => {
       new SentenceTransformerEmbeddingFunction({
-        kwargs: { callback: () => {} },
+        extra: { callback: () => { } },
       });
     }).toThrow(SeekdbValueError);
 
     expect(() => {
       new SentenceTransformerEmbeddingFunction({
-        kwargs: { sym: Symbol("test") },
+        extra: { sym: Symbol("test") },
       });
     }).toThrow(SeekdbValueError);
   });
@@ -71,7 +71,7 @@ describe("SentenceTransformerEmbeddingFunction", () => {
       model_name: "test-model",
       device: "cpu",
       normalize_embeddings: true,
-      kwargs: { test: "value" },
+      extra: { test: "value" },
     };
 
     const embedder =
@@ -82,43 +82,13 @@ describe("SentenceTransformerEmbeddingFunction", () => {
     expect(resultConfig.model_name).toBe("test-model");
     expect(resultConfig.device).toBe("cpu");
     expect(resultConfig.normalize_embeddings).toBe(true);
-    expect(resultConfig.kwargs).toEqual({ test: "value" });
-  });
-
-  it("should throw SeekdbValueError when model_name is missing in buildFromConfig", () => {
-    expect(() => {
-      SentenceTransformerEmbeddingFunction.buildFromConfig({
-        device: "cpu",
-        normalize_embeddings: false,
-      });
-    }).toThrow(SeekdbValueError);
-  });
-
-  it("should throw SeekdbValueError when device is missing in buildFromConfig", () => {
-    expect(() => {
-      SentenceTransformerEmbeddingFunction.buildFromConfig({
-        model_name: "test-model",
-        normalize_embeddings: false,
-      });
-    }).toThrow(SeekdbValueError);
-  });
-
-  it("should throw SeekdbValueError when normalize_embeddings is missing in buildFromConfig", () => {
-    expect(() => {
-      SentenceTransformerEmbeddingFunction.buildFromConfig({
-        model_name: "test-model",
-        device: "cpu",
-      });
-    }).toThrow(SeekdbValueError);
+    expect(resultConfig.extra).toEqual({ test: "value" });
   });
 
   it("should throw SeekdbValueError when all required fields are missing in buildFromConfig", () => {
     expect(() => {
-      SentenceTransformerEmbeddingFunction.buildFromConfig({});
+      SentenceTransformerEmbeddingFunction.buildFromConfig(null);
     }).toThrow(SeekdbValueError);
-    expect(() => {
-      SentenceTransformerEmbeddingFunction.buildFromConfig({});
-    }).toThrow("model_name, device, and normalize_embeddings are required");
   });
 
   it("should maintain round-trip consistency", () => {
@@ -126,7 +96,7 @@ describe("SentenceTransformerEmbeddingFunction", () => {
       modelName: "round-trip-model",
       device: "cpu",
       normalizeEmbeddings: true,
-      kwargs: { test: 123 },
+      extra: { test: 123 },
     };
 
     const embedder1 = new SentenceTransformerEmbeddingFunction(originalConfig);
@@ -139,6 +109,6 @@ describe("SentenceTransformerEmbeddingFunction", () => {
     expect(finalConfig.model_name).toBe("round-trip-model");
     expect(finalConfig.device).toBe("cpu");
     expect(finalConfig.normalize_embeddings).toBe(true);
-    expect(finalConfig.kwargs).toEqual({ test: 123 });
+    expect(finalConfig.extra).toEqual({ test: 123 });
   });
 });

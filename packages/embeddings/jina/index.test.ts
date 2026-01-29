@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { JinaEmbeddingFunction, JinaConfig } from "./index";
+import { JinaEmbeddingFunction } from "./index";
 
 // Mock fetch globally
 global.fetch = vi.fn();

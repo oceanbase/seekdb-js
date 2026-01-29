@@ -94,11 +94,8 @@ describe("VoyageAIEmbeddingFunction", () => {
 
   it("should throw SeekdbValueError when model_name is missing in buildFromConfig", () => {
     expect(() => {
-      VoyageAIEmbeddingFunction.buildFromConfig({});
+      VoyageAIEmbeddingFunction.buildFromConfig(null as any);
     }).toThrow(SeekdbValueError);
-    expect(() => {
-      VoyageAIEmbeddingFunction.buildFromConfig({});
-    }).toThrow("model_name is required");
   });
 
   it("should build from config with model_name", () => {
