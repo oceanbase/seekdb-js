@@ -10,18 +10,21 @@
 
 import { SeekdbClient } from "seekdb";
 
+const COLLECTION_NAME = "hybrid_search_demo";
+
 async function main() {
+  // Connecting to seekdb server or OceanBase)
   const client = new SeekdbClient({
     host: "127.0.0.1",
     port: 2881,
     database: "test",
     user: "root",
     password: "",
+    // for OceanBase, set tenant to "sys"
+    // tenant: "sys",
   });
 
-  const collection = await client.getOrCreateCollection({
-    name: "hybrid_search_demo",
-  });
+  const collection = await client.getOrCreateCollection({ name: COLLECTION_NAME, });
 
   const documents = [
     "Machine learning is revolutionizing artificial intelligence and data science",
@@ -203,7 +206,8 @@ hybridSearch() advantages:
   - Handles scenarios requiring both keyword and semantic matching
 `);
 
-  await client.deleteCollection("hybrid_search_demo");
+  await client.deleteCollection(COLLECTION_NAME);
+  console.log(`\nCleaned up collection '${COLLECTION_NAME}'`);
   await client.close();
 }
 

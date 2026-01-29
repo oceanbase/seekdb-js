@@ -20,24 +20,27 @@ async function main() {
   // PART 1: CLIENT CONNECTION
   // ============================================================================
 
+  // Connecting to seekdb server or OceanBase)
   const client = new SeekdbClient({
     host: "127.0.0.1",
     port: 2881,
     database: "test",
     user: "root",
     password: "",
+    // for OceanBase, set tenant to "sys"
+    // tenant: "sys",
   });
 
   // ============================================================================
   // PART 2: COLLECTION MANAGEMENT
   // ============================================================================
 
-  const collectionName = "comprehensive_example";
+  const COLLECTION_NAME = "comprehensive_example";
   const dimension = 384;
 
   // 2.1 Create a collection
   const collection = await client.getOrCreateCollection({
-    name: collectionName,
+    name: COLLECTION_NAME,
     configuration: {
       dimension,
       distance: "cosine",
@@ -45,12 +48,12 @@ async function main() {
   });
 
   // 2.2 Check if collection exists
-  const exists = await client.hasCollection(collectionName);
+  const exists = await client.hasCollection(COLLECTION_NAME);
   console.log(`Collection exists: ${exists}`);
 
   // 2.3 Get collection object
   const retrievedCollection = await client.getCollection({
-    name: collectionName,
+    name: COLLECTION_NAME,
   });
   console.log(`Retrieved collection: ${retrievedCollection.name}`);
 
@@ -397,9 +400,9 @@ async function main() {
   // PART 11: CLEANUP
   // ============================================================================
 
-  await client.deleteCollection(collectionName);
+  await client.deleteCollection(COLLECTION_NAME);
 
-  console.log("Cleanup complete");
+  console.log(`\nCleaned up collection '${COLLECTION_NAME}'`);
 
   await client.close();
 }

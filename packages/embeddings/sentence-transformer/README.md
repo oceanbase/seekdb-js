@@ -32,4 +32,4 @@ const ef = new SentenceTransformerEmbeddingFunction({
 - **modelName**: model name (default: `"Xenova/all-MiniLM-L6-v2"`)
 - **device**: device (default: `"cpu"`)
 - **normalizeEmbeddings**: normalize output vectors (default: `false`)
-- **extra**: extra pipeline options (optional; JSON-serializable)
+- **kwargs**: task pipeline options (optional; JSON-serializable)

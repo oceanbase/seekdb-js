@@ -34,7 +34,7 @@ describe("SentenceTransformerEmbeddingFunction", () => {
     expect(config.model_name).toBe("Xenova/all-MiniLM-L6-v2");
     expect(config.device).toBe("cpu");
     expect(config.normalize_embeddings).toBe(false);
-    expect(config.extra).toEqual({});
+    expect(config.kwargs).toEqual({});
   });
 
   it("should initialize with custom parameters", () => {
@@ -42,26 +42,26 @@ describe("SentenceTransformerEmbeddingFunction", () => {
       modelName: "custom-model",
       device: "gpu",
       normalizeEmbeddings: true,
-      extra: { max_length: 512 },
+      kwargs: { max_length: 512 },
     });
 
     const config = embedder.getConfig();
     expect(config.model_name).toBe("custom-model");
     expect(config.device).toBe("gpu");
     expect(config.normalize_embeddings).toBe(true);
-    expect(config.extra).toEqual({ max_length: 512 });
+    expect(config.kwargs).toEqual({ max_length: 512 });
   });
 
-  it("should throw SeekdbValueError for non-JSON-serializable extra", () => {
+  it("should throw SeekdbValueError for non-JSON-serializable kwargs", () => {
     expect(() => {
       new SentenceTransformerEmbeddingFunction({
-        extra: { callback: () => { } },
+        kwargs: { callback: () => { } },
       });
     }).toThrow(SeekdbValueError);
 
     expect(() => {
       new SentenceTransformerEmbeddingFunction({
-        extra: { sym: Symbol("test") },
+        kwargs: { sym: Symbol("test") },
       });
     }).toThrow(SeekdbValueError);
   });
@@ -71,7 +71,7 @@ describe("SentenceTransformerEmbeddingFunction", () => {
       model_name: "test-model",
       device: "cpu",
       normalize_embeddings: true,
-      extra: { test: "value" },
+      kwargs: { test: "value" },
     };
 
     const embedder =
@@ -82,7 +82,7 @@ describe("SentenceTransformerEmbeddingFunction", () => {
     expect(resultConfig.model_name).toBe("test-model");
     expect(resultConfig.device).toBe("cpu");
     expect(resultConfig.normalize_embeddings).toBe(true);
-    expect(resultConfig.extra).toEqual({ test: "value" });
+    expect(resultConfig.kwargs).toEqual({ test: "value" });
   });
 
   it("should throw SeekdbValueError when all required fields are missing in buildFromConfig", () => {
@@ -96,7 +96,7 @@ describe("SentenceTransformerEmbeddingFunction", () => {
       modelName: "round-trip-model",
       device: "cpu",
       normalizeEmbeddings: true,
-      extra: { test: 123 },
+      kwargs: { test: 123 },
     };
 
     const embedder1 = new SentenceTransformerEmbeddingFunction(originalConfig);
@@ -109,6 +109,6 @@ describe("SentenceTransformerEmbeddingFunction", () => {
     expect(finalConfig.model_name).toBe("round-trip-model");
     expect(finalConfig.device).toBe("cpu");
     expect(finalConfig.normalize_embeddings).toBe(true);
-    expect(finalConfig.extra).toEqual({ test: 123 });
+    expect(finalConfig.kwargs).toEqual({ test: 123 });
   });
 });
