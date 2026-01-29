@@ -15,6 +15,7 @@ import {
 } from "../src/metadata-manager.js";
 import { registerEmbeddingFunction } from "../src/embedding-function.js";
 import { COLLECTION_V1_PREFIX } from "../src/utils.js";
+import { Configuration } from "../src/types.js";
 
 // Register the mock embedding function
 try {
@@ -55,7 +56,7 @@ describe("Collection Metadata V2", () => {
     test("should create metadata table on first collection creation", async () => {
       const collection = await client.createCollection({
         name: collectionName,
-        configuration: { dimension: 3, distance: "cosine" },
+        configuration: { hnsw: { dimension: 3, distance: "cosine" } },
         embeddingFunction: null,
       });
 
@@ -80,8 +81,8 @@ describe("Collection Metadata V2", () => {
       expect(metadata).toBeDefined();
       expect(metadata?.collectionName).toBe(collectionName);
       expect(metadata?.collectionId).toBeDefined();
-      expect(metadata?.settings.configuration?.dimension).toBe(3);
-      expect(metadata?.settings.configuration?.distance).toBe("cosine");
+      expect((metadata?.settings.configuration as Configuration)?.hnsw?.dimension).toBe(3);
+      expect((metadata?.settings.configuration as Configuration)?.hnsw?.distance).toBe("cosine");
     });
 
     test("should retrieve v2 collection with collectionId", async () => {

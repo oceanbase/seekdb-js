@@ -23,7 +23,6 @@ async function main() {
   const client = new SeekdbClient({
     host: "127.0.0.1",
     port: 2881,
-    tenant: "sys",
     database: "test",
     user: "root",
     password: "",

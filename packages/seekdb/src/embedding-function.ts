@@ -86,7 +86,7 @@ export async function getEmbeddingFunction(
         `  2. Import: Add this at the top of your file: import '@seekdb/${name}';\n` +
         `The package will automatically register itself upon import.\n\n` +
         `--- For custom embedding function ---\n` +
-        `Please implement the EmbeddingFunction interface, then register it using 'registerEmbeddingFunction'. \n` +
+        `Please create your own embedding function class that implements the EmbeddingFunction interface. \n` +
         `You can see more details in the README.md of the package.\n\n` +
         `Error: ${error instanceof Error ? error.message : String(error)}`,
       );

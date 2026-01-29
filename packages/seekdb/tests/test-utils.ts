@@ -15,7 +15,6 @@ function getTestConfig() {
     user: process.env.SERVER_USER || "root",
     password: process.env.SERVER_PASSWORD || "",
     database: process.env.SERVER_DATABASE || "test",
-    tenant: process.env.SERVER_TENANT || "sys",
   };
 
   return baseConfig;
@@ -23,6 +22,7 @@ function getTestConfig() {
 
 // Test configuration from environment variables
 export const TEST_CONFIG = getTestConfig();
+export const TEST_CONFIG_OB = { ...TEST_CONFIG, tenant: process.env.SERVER_TENANT || "sys" };
 
 /**
  * Generate a unique collection name for testing

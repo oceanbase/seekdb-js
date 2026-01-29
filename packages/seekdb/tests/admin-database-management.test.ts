@@ -5,20 +5,15 @@
  */
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
 import { SeekdbAdminClient } from "../src/admin-client.js";
+import { OBDatabase, Database } from "../src/database.js";
 import { DEFAULT_TENANT } from "../src/utils.js";
-import { TEST_CONFIG, generateDatabaseName } from "./test-utils.js";
+import { TEST_CONFIG, TEST_CONFIG_OB, generateDatabaseName } from "./test-utils.js";
 
 describe("AdminClient Database Management", () => {
   let adminClient: SeekdbAdminClient;
 
   beforeAll(async () => {
-    adminClient = new SeekdbAdminClient({
-      host: TEST_CONFIG.host,
-      port: TEST_CONFIG.port,
-      user: TEST_CONFIG.user,
-      password: TEST_CONFIG.password,
-      tenant: TEST_CONFIG.tenant,
-    });
+    adminClient = new SeekdbAdminClient(TEST_CONFIG);
   });
 
   afterAll(async () => {
@@ -30,7 +25,7 @@ describe("AdminClient Database Management", () => {
     }
   });
 
-  describe("Server Mode Admin Database Operations", () => {
+  describe("seekdb Mode Admin Database Operations", () => {
     test("list all databases before test", async () => {
       const databasesBefore = await adminClient.listDatabases();
       expect(databasesBefore).toBeDefined();
@@ -57,13 +52,13 @@ describe("AdminClient Database Management", () => {
       await adminClient.createDatabase(testDbName);
 
       const db = await adminClient.getDatabase(testDbName);
+
       expect(db).toBeDefined();
       expect(db.name).toBe(testDbName);
 
       expect(db.charset).toBeDefined();
       expect(db.collation).toBeDefined();
-      // Verify tenant is set correctly (Server mode has tenant)
-      expect(db.tenant).toBe(TEST_CONFIG.tenant);
+      expect(db).toBeInstanceOf(Database);
 
       // Cleanup
       await adminClient.deleteDatabase(testDbName);
@@ -78,9 +73,8 @@ describe("AdminClient Database Management", () => {
       const dbNames = databases.map((db) => db.name);
       expect(dbNames).toContain(testDbName);
 
-      // Verify all databases have correct tenant (Server mode)
       for (const db of databases) {
-        expect(db.tenant).toBe(TEST_CONFIG.tenant);
+        expect(db).toBeInstanceOf(Database);
       }
 
       // Cleanup
@@ -147,72 +141,6 @@ describe("AdminClient Database Management", () => {
 
       // Cleanup
       await adminClient.deleteDatabase(testDbName);
-    });
-
-    test("database operations use client tenant when different tenant specified", async () => {
-      const testDbName = generateDatabaseName("test_server_db");
-      const differentTenant = "different_tenant";
-
-      // Mock console.warn to capture warnings
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-      try {
-        // Create database with different tenant (should use client tenant)
-        await adminClient.createDatabase(testDbName, differentTenant);
-
-        // Verify warning was issued
-        expect(warnSpy).toHaveBeenCalledWith(
-          expect.stringContaining(
-            `Specified tenant '${differentTenant}' differs from client tenant '${TEST_CONFIG.tenant}', using client tenant`,
-          ),
-        );
-
-        // Verify database was created with client tenant
-        const db = await adminClient.getDatabase(testDbName, differentTenant);
-        expect(db.tenant).toBe(TEST_CONFIG.tenant); // Should use client tenant, not specified tenant
-
-        // Verify warning was issued again for getDatabase
-        expect(warnSpy).toHaveBeenCalledTimes(2);
-
-        // Cleanup
-        await adminClient.deleteDatabase(testDbName, differentTenant);
-        expect(warnSpy).toHaveBeenCalledTimes(3); // Warning for deleteDatabase too
-      } finally {
-        warnSpy.mockRestore();
-      }
-    });
-
-    test("database operations use client tenant when DEFAULT_TENANT specified", async () => {
-      const testDbName = generateDatabaseName("test_server_db");
-
-      // Mock console.warn to verify no warning is issued for DEFAULT_TENANT
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-      try {
-        // Create database with DEFAULT_TENANT (should not warn if it matches client tenant)
-        await adminClient.createDatabase(testDbName, DEFAULT_TENANT);
-
-        // Get database - should use client tenant
-        const db = await adminClient.getDatabase(testDbName);
-        expect(db.tenant).toBe(TEST_CONFIG.tenant);
-
-        // Cleanup
-        await adminClient.deleteDatabase(testDbName);
-      } finally {
-        warnSpy.mockRestore();
-      }
-    });
-
-    test("list databases returns databases with correct tenant", async () => {
-      const databases = await adminClient.listDatabases();
-
-      // Verify all databases have the correct tenant (Server mode)
-      for (const db of databases) {
-        expect(db.tenant).toBe(TEST_CONFIG.tenant);
-        expect(db.name).toBeDefined();
-        expect(db.charset).toBeDefined();
-        expect(db.collation).toBeDefined();
-      }
     });
 
     test("get database throws error for non-existent database", async () => {
@@ -291,7 +219,7 @@ describe("AdminClient Database Management", () => {
 
         // Verify all expected properties exist
         expect(db.name).toBe(testDbName);
-        expect(db.tenant).toBe(TEST_CONFIG.tenant);
+        expect(db).toBeInstanceOf(Database);
         expect(typeof db.charset).toBe("string");
         expect(db.charset.length).toBeGreaterThan(0);
         expect(typeof db.collation).toBe("string");
@@ -376,5 +304,107 @@ describe("AdminClient Database Management", () => {
         }
       }
     });
+  });
+
+  describe("oceanbase Mode Admin Database Operations", () => {
+    let obAdminClient: SeekdbAdminClient;
+
+    beforeAll(async () => {
+      obAdminClient = new SeekdbAdminClient(TEST_CONFIG_OB);
+    });
+
+    afterAll(async () => {
+      await obAdminClient.close();
+    });
+
+    test("getDatabase returns database with tenant", async () => {
+      const testDbName = generateDatabaseName("test_seekdb_db");
+      await obAdminClient.createDatabase(testDbName);
+
+      const db = await obAdminClient.getDatabase(testDbName);
+      expect(db.name).toBe(testDbName);
+      expect(db).toBeInstanceOf(OBDatabase);
+      expect((db as OBDatabase).tenant).toBe(TEST_CONFIG_OB.tenant);
+
+      await obAdminClient.deleteDatabase(testDbName);
+    });
+
+    test("listDatabases returns databases with tenant", async () => {
+      const databases = await obAdminClient.listDatabases();
+      for (const db of databases) {
+        expect(db).toBeInstanceOf(OBDatabase);
+        expect((db as OBDatabase).tenant).toBe(TEST_CONFIG_OB.tenant);
+      }
+    });
+
+    test("database operations use client tenant when different tenant specified", async () => {
+      const testDbName = generateDatabaseName("test_server_db");
+      const differentTenant = "different_tenant";
+
+      // Mock console.warn to capture warnings
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+
+      try {
+        // Create database with different tenant (should use client tenant)
+        await obAdminClient.createDatabase(testDbName, differentTenant);
+
+        // Verify warning was issued
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining(
+            `Specified tenant '${differentTenant}' differs from client tenant '${TEST_CONFIG_OB.tenant}', using client tenant`,
+          ),
+        );
+
+        // Verify database was created with client tenant
+        const db = await obAdminClient.getDatabase(testDbName, differentTenant);
+        expect(db).toBeInstanceOf(OBDatabase);
+        expect((db as OBDatabase).tenant).toBe(TEST_CONFIG_OB.tenant); // Should use client tenant, not specified tenant
+
+        // Verify warning was issued again for getDatabase
+        expect(warnSpy).toHaveBeenCalledTimes(2);
+
+        // Cleanup
+        await obAdminClient.deleteDatabase(testDbName, differentTenant);
+        expect(warnSpy).toHaveBeenCalledTimes(3); // Warning for deleteDatabase too
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    test("database operations use client tenant when DEFAULT_TENANT specified", async () => {
+      const testDbName = generateDatabaseName("test_server_db");
+
+      // Mock console.warn to verify no warning is issued for DEFAULT_TENANT
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+
+      try {
+        // Create database with DEFAULT_TENANT (should not warn if it matches client tenant)
+        await obAdminClient.createDatabase(testDbName, DEFAULT_TENANT);
+
+        // Get database - should use client tenant
+        const db = await obAdminClient.getDatabase(testDbName);
+        expect(db).toBeInstanceOf(OBDatabase);
+        expect((db as OBDatabase).tenant).toBe(TEST_CONFIG_OB.tenant);
+
+        // Cleanup
+        await obAdminClient.deleteDatabase(testDbName);
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    test("list databases returns databases with correct tenant", async () => {
+      const databases = await obAdminClient.listDatabases();
+
+      // Verify all databases have the correct tenant (Server mode)
+      for (const db of databases) {
+        expect(db).toBeInstanceOf(OBDatabase);
+        expect((db as OBDatabase).tenant).toBe(TEST_CONFIG_OB.tenant);
+        expect(db.name).toBeDefined();
+        expect(db.charset).toBeDefined();
+        expect(db.collation).toBeDefined();
+      }
+    });
+
   });
 });
