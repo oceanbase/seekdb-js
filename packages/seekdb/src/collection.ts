@@ -863,8 +863,9 @@ export class Collection {
       // coyp metadata and get collection_id
       targetCollectionId = await insertCollectionMetadata(this.#client, targetName, sourceSettings);
       targetCollectionName = CollectionNames.tableName(targetName, targetCollectionId);
+      const sourceTableName = CollectionNames.tableName(this.name, this.collectionId);
 
-      const sql = SQLBuilder.buildFork(this.name, targetCollectionName);
+      const sql = SQLBuilder.buildFork(sourceTableName, targetCollectionName);
       await this.#client.execute(sql);
     } catch (error) {
       // If table creation fails, try to clean up metadata
@@ -877,7 +878,7 @@ export class Collection {
     }
 
     return new Collection({
-      name: targetCollectionName,
+      name: targetName,
       dimension: this.dimension,
       distance: this.distance,
       embeddingFunction: this.embeddingFunction,
