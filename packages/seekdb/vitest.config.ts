@@ -14,6 +14,14 @@ export default defineConfig({
         __dirname,
         "../embeddings/default-embed/index.ts",
       ),
+      "@seekdb/js-bindings": resolve(
+        __dirname,
+        "../bindings/pkgs/js-bindings/seekdb.js",
+      ),
     },
+  },
+  optimizeDeps: {
+    // Force Vite to pre-bundle these dependencies
+    include: ["seekdb"],
   },
 });

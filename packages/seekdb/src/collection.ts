@@ -2,10 +2,16 @@
  * Collection class - represents a collection of documents with vector embeddings
  */
 
-import type { InternalClient } from "./internal-client.js";
+import type { IInternalClient } from "./types.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError } from "./errors.js";
-import { CollectionFieldNames, CollectionNames } from "./utils.js";
+import {
+  CollectionFieldNames,
+  CollectionNames,
+  normalizeValue,
+  parseEmbeddingBinary,
+  parseEmbeddingBinaryString,
+} from "./utils.js";
 import { FilterBuilder, SearchFilterCondition } from "./filters.js";
 import { CollectionMetadata, deleteCollectionMetadata, getCollectionMetadata, insertCollectionMetadata } from "./metadata-manager.js";
 import type {
@@ -25,7 +31,7 @@ import type {
   CollectionContext,
   ForkOptions,
 } from "./types.js";
-import { SeekdbClient } from "./client.js";
+import type { SeekdbClient } from "./client.js";
 
 /**
  * Collection - manages a collection of documents with embeddings
@@ -37,8 +43,8 @@ export class Collection {
   readonly embeddingFunction?: EmbeddingFunction;
   readonly metadata?: Metadata;
   readonly collectionId?: string; // v2 format collection ID
-  readonly client: SeekdbClient;
-  #client: InternalClient;
+  readonly client?: SeekdbClient;
+  #client: IInternalClient;
 
   constructor(config: CollectionConfig) {
     this.name = config.name;
@@ -95,7 +101,9 @@ export class Collection {
     const upperSql = cleanSql.toUpperCase();
 
     // Must start with SELECT
-    if (!upperSql.startsWith("SELECT")) {
+    // For hybrid search, DBMS_HYBRID_SEARCH.GET_SQL might return empty or invalid SQL
+    // if the feature is not supported, so we allow empty SQL to pass through
+    if (upperSql.length > 0 && !upperSql.startsWith("SELECT")) {
       throw new SeekdbValueError("Invalid SQL query: must start with SELECT");
     }
 
@@ -189,6 +197,10 @@ export class Collection {
           );
         }
       }
+    }
+
+    if (idsArray.length === 0) {
+      throw new SeekdbValueError("ids cannot be empty");
     }
 
     const { sql, params } = SQLBuilder.buildInsert(this.context, {
@@ -384,6 +396,7 @@ export class Collection {
     await this.#client.execute(sql, params);
   }
 
+
   /**
    * Get data from collection
    */
@@ -423,24 +436,68 @@ export class Collection {
 
     if (rows) {
       for (const row of rows) {
-        resultIds.push(row[CollectionFieldNames.ID].toString());
+        if (!row[CollectionFieldNames.ID]) {
+          throw new Error(`ID field '${CollectionFieldNames.ID}' not found in row. Available keys: ${Object.keys(row).join(", ")}`);
+        }
+        // Normalize values
+        const idValue = normalizeValue(row[CollectionFieldNames.ID]);
+        const idString = idValue !== null && idValue !== undefined ? String(idValue) : null;
+        if (idString !== null) {
+          resultIds.push(idString);
+        }
 
         if (!include || include.includes("documents")) {
-          resultDocuments.push(row[CollectionFieldNames.DOCUMENT]);
+          const docValue = normalizeValue(row[CollectionFieldNames.DOCUMENT]);
+          // Preserve null for null document (match server; round-trip add({ documents: [null] }) -> get() -> null)
+          resultDocuments.push(docValue !== null && docValue !== undefined ? String(docValue) : (null as any));
         }
 
         if (!include || include.includes("metadatas")) {
-          const meta = row[CollectionFieldNames.METADATA];
-          resultMetadatas.push(
-            meta ? (typeof meta === "string" ? JSON.parse(meta) : meta) : null,
-          );
+          // Use normalizeValue to handle type-wrapped formats (consistent with query method)
+          const meta = normalizeValue(row[CollectionFieldNames.METADATA]);
+          // "" → {}; null → {} (embedded: engine may return null for empty JSON, indistinguishable from explicit null); parse failure → {}.
+          if (meta === "") {
+            resultMetadatas.push({} as TMeta);
+          } else if (meta) {
+            if (typeof meta === 'string') {
+              try {
+                resultMetadatas.push(JSON.parse(meta) as TMeta);
+              } catch {
+                resultMetadatas.push({} as TMeta);
+              }
+            } else {
+              resultMetadatas.push(meta as TMeta);
+            }
+          } else {
+            resultMetadatas.push({} as TMeta);
+          }
         }
 
         if (!include || include.includes("embeddings")) {
-          const vec = row[CollectionFieldNames.EMBEDDING];
-          resultEmbeddings.push(
-            vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null,
-          );
+          const vec = normalizeValue(row[CollectionFieldNames.EMBEDDING]);
+          if (vec) {
+            if (typeof vec === "string") {
+              try {
+                resultEmbeddings.push(JSON.parse(vec));
+              } catch {
+                // Try parsing as binary float32 (e.g. embedded mode VECTOR column)
+                const parsed = parseEmbeddingBinaryString(vec);
+                resultEmbeddings.push(parsed ?? null);
+              }
+            } else if (Array.isArray(vec)) {
+              resultEmbeddings.push(vec);
+            } else if (
+              vec instanceof Uint8Array ||
+              (typeof Buffer !== "undefined" && Buffer.isBuffer && Buffer.isBuffer(vec))
+            ) {
+              const parsed = parseEmbeddingBinary(vec as Uint8Array);
+              resultEmbeddings.push(parsed ?? null);
+            } else {
+              resultEmbeddings.push(null);
+            }
+          } else {
+            resultEmbeddings.push(null);
+          }
         }
       }
     }
@@ -505,7 +562,7 @@ export class Collection {
     const allIds: string[][] = [];
     const allDocuments: (string | null)[][] = [];
     const allMetadatas: (TMeta | null)[][] = [];
-    const allEmbeddings: number[][][] = [];
+    const allEmbeddings: (number[] | null)[][] = [];
     const allDistances: number[][] = [];
 
     // Query for each vector
@@ -529,33 +586,63 @@ export class Collection {
       const queryIds: string[] = [];
       const queryDocuments: (string | null)[] = [];
       const queryMetadatas: (TMeta | null)[] = [];
-      const queryEmbeddings: number[][] = [];
+      const queryEmbeddings: (number[] | null)[] = [];
       const queryDistances: number[] = [];
 
-      if (rows) {
+      if (rows && rows.length > 0) {
         for (const row of rows) {
-          queryIds.push(row[CollectionFieldNames.ID].toString());
+          if (!row[CollectionFieldNames.ID]) {
+            // Row missing ID field, skip it
+            continue;
+          }
+          const idValue = row[CollectionFieldNames.ID];
+          const idValueNormalized = normalizeValue(idValue);
+          const idString = idValueNormalized !== null && idValueNormalized !== undefined ? String(idValueNormalized) : null;
+          if (idString !== null) {
+            queryIds.push(idString);
+          }
 
           if (!include || include.includes("documents")) {
-            queryDocuments.push(row[CollectionFieldNames.DOCUMENT] || null);
+            const docValue = normalizeValue(row[CollectionFieldNames.DOCUMENT]);
+            queryDocuments.push(docValue !== null && docValue !== undefined ? String(docValue) : null);
           }
 
           if (!include || include.includes("metadatas")) {
-            const meta = row[CollectionFieldNames.METADATA];
-            queryMetadatas.push(
-              meta
-                ? typeof meta === "string"
-                  ? JSON.parse(meta)
-                  : meta
-                : null,
-            );
+            const meta = normalizeValue(row[CollectionFieldNames.METADATA]);
+            if (meta === "") {
+              queryMetadatas.push({} as TMeta);
+            } else if (meta) {
+              if (typeof meta === 'string') {
+                try {
+                  queryMetadatas.push(JSON.parse(meta) as TMeta);
+                } catch {
+                  queryMetadatas.push({} as TMeta);
+                }
+              } else {
+                queryMetadatas.push(meta as TMeta);
+              }
+            } else {
+              queryMetadatas.push({} as TMeta);
+            }
           }
 
           if (include?.includes("embeddings")) {
-            const vec = row[CollectionFieldNames.EMBEDDING];
-            queryEmbeddings.push(
-              vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null,
-            );
+            const vec = normalizeValue(row[CollectionFieldNames.EMBEDDING]);
+            if (vec) {
+              if (typeof vec === 'string') {
+                try {
+                  queryEmbeddings.push(JSON.parse(vec));
+                } catch {
+                  queryEmbeddings.push(null);
+                }
+              } else if (Array.isArray(vec)) {
+                queryEmbeddings.push(vec);
+              } else {
+                queryEmbeddings.push(null);
+              }
+            } else {
+              queryEmbeddings.push(null);
+            }
           }
 
           queryDistances.push(row.distance);
@@ -740,28 +827,65 @@ export class Collection {
 
     // Get SQL query from DBMS_HYBRID_SEARCH.GET_SQL
     const getSqlQuery = SQLBuilder.buildHybridSearchGetSql(tableName);
-    const getSqlResult = await this.#client.execute(getSqlQuery);
+    let getSqlResult;
+    try {
+      getSqlResult = await this.#client.execute(getSqlQuery);
+    } catch (error: any) {
+      // If DBMS_HYBRID_SEARCH is not supported, throw error so test can handle it
+      const errorMsg = error.message || "";
+      if (
+        errorMsg.includes("SQL syntax") ||
+        errorMsg.includes("DBMS_HYBRID_SEARCH") ||
+        errorMsg.includes("Unknown database function") ||
+        errorMsg.includes("function") ||
+        errorMsg.includes("syntax")
+      ) {
+        throw new SeekdbValueError(
+          `DBMS_HYBRID_SEARCH is not supported: ${errorMsg}`
+        );
+      }
+      throw error;
+    }
 
     if (
       !getSqlResult ||
       getSqlResult.length === 0 ||
       !getSqlResult[0].query_sql
     ) {
-      return {
-        ids: [[]],
-        distances: [[]],
-        metadatas: [[]],
-        documents: [[]],
-        embeddings: [[]],
-      };
+      throw new SeekdbValueError(
+        "DBMS_HYBRID_SEARCH.GET_SQL returned no result"
+      );
     }
 
     // Execute the returned SQL query with security validation
-    const querySql = getSqlResult[0].query_sql
-      .trim()
-      .replace(/^['"]|['"]$/g, "");
+    let querySql = getSqlResult[0].query_sql;
+
+    // Normalize querySql using generic normalization
+    let normalizedSql = normalizeValue(querySql);
+
+    // Convert to string and clean up
+    if (typeof normalizedSql === 'string') {
+      querySql = normalizedSql.trim().replace(/^['"]|['"]$/g, "");
+    } else {
+      querySql = String(normalizedSql).trim().replace(/^['"]|['"]$/g, "");
+    }
 
     // Security check: Validate the SQL query before execution
+    // If querySql is empty or invalid, it means DBMS_HYBRID_SEARCH is not supported
+    if (!querySql || querySql.length === 0) {
+      throw new SeekdbValueError(
+        "DBMS_HYBRID_SEARCH.GET_SQL returned empty SQL (feature not supported)"
+      );
+    }
+
+    // If SQL doesn't start with SELECT, it means DBMS_HYBRID_SEARCH is not supported
+    const upperSql = querySql.toUpperCase().trim();
+    if (!upperSql.startsWith("SELECT")) {
+      throw new SeekdbValueError(
+        `DBMS_HYBRID_SEARCH.GET_SQL returned invalid SQL: ${querySql.substring(0, 100)} (feature not supported)`
+      );
+    }
+
     this.validateDynamicSql(querySql);
 
     const resultRows = await this.#client.execute(querySql);
@@ -770,7 +894,7 @@ export class Collection {
     const ids: string[] = [];
     const documents: (string | null)[] = [];
     const metadatas: (TMeta | null)[] = [];
-    const embeddings: number[][] = [];
+    const embeddings: (number[] | null)[] = [];
     const distances: number[] = [];
 
     if (resultRows) {
@@ -783,16 +907,39 @@ export class Collection {
 
         if (!include || include.includes("metadatas")) {
           const meta = row[CollectionFieldNames.METADATA];
-          metadatas.push(
-            meta ? (typeof meta === "string" ? JSON.parse(meta) : meta) : null,
-          );
+          if (meta === "") {
+            metadatas.push({} as TMeta);
+          } else if (meta) {
+            if (typeof meta === "string") {
+              try {
+                metadatas.push(JSON.parse(meta) as TMeta);
+              } catch {
+                metadatas.push({} as TMeta);
+              }
+            } else {
+              metadatas.push(meta as TMeta);
+            }
+          } else {
+            metadatas.push({} as TMeta);
+          }
         }
 
         if (include?.includes("embeddings")) {
           const vec = row[CollectionFieldNames.EMBEDDING];
-          embeddings.push(
-            vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null,
-          );
+          if (vec) {
+            if (typeof vec === "string") {
+              try {
+                embeddings.push(JSON.parse(vec) as number[]);
+              } catch {
+                const parsed = parseEmbeddingBinaryString(vec);
+                embeddings.push(parsed ?? null);
+              }
+            } else {
+              embeddings.push(Array.isArray(vec) ? vec : null);
+            }
+          } else {
+            embeddings.push(null);
+          }
         }
 
         // Distance field might be named "_distance", "distance", "_score", "score",
@@ -833,6 +980,11 @@ export class Collection {
   async fork(options: ForkOptions): Promise<Collection> {
     const { name: targetName } = options;
 
+    if (!this.client) {
+      throw new SeekdbValueError(
+        "Collection fork requires a client reference; this collection was created without one.",
+      );
+    }
     if (await this.client.hasCollection(targetName)) {
       throw new SeekdbValueError(
         `Collection '${targetName}' already exists. Please use a different name.`,

@@ -29,7 +29,8 @@ For complete usage, please refer to the official documentation.
 
 ## Installation
 
-> Before using the SDK, you need to deploy seekdb. Please refer to the [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/).
+- **Server mode**: Deploy seekdb or OceanBase first; see [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/).
+- **Embedded mode**: No server deployment required; use locally after install (requires native addon `@seekdb/js-bindings`).
 
 ```bash
 npm install seekdb
@@ -69,6 +70,8 @@ const results = await collection.query({
 
 ### Client Connection
 
+**Server mode**:
+
 ```typescript
 import { SeekdbClient } from "seekdb";
 
@@ -80,6 +83,17 @@ const client = new SeekdbClient({
   database: "test",
   // Required for OceanBase mode
   // tenant: "sys",
+});
+```
+
+**Embedded mode**:
+
+```typescript
+import { SeekdbClient } from "seekdb";
+
+const client = new SeekdbClient({
+  path: "./seekdb.db",
+  database: "test",
 });
 ```
 
