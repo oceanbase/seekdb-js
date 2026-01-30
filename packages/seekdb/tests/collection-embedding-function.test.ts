@@ -370,7 +370,7 @@ describe("Collection Embedding Function Tests", () => {
         constructor(config: any = {}) {
           this.config = config;
         }
-        name = "custom_model";
+        name = "my_custom_model";
         async generate(texts: string[]): Promise<number[][]> {
           // Returns 4-dimensional vectors
           return texts.map(() => [0.1, 0.2, 0.3, 0.4]);
@@ -384,10 +384,10 @@ describe("Collection Embedding Function Tests", () => {
       }
 
       // Register the model
-      await registerEmbeddingFunction("my-custom-model", CustomModel);
+      registerEmbeddingFunction("my_custom_model", CustomModel);
 
       // Get an instance of the model
-      const ef = await getEmbeddingFunction("my-custom-model");
+      const ef = new CustomModel({ dimension: 4, model: "test" });
 
       expect(ef).toBeDefined();
       // Check if it is an instance of CustomModel
@@ -410,8 +410,23 @@ describe("Collection Embedding Function Tests", () => {
         embeddingFunction: ef,
       });
 
+      expect(collection.embeddingFunction).toBe(ef);
       expect(collection).toBeDefined();
       expect(collection.dimension).toBe(4);
+
+      const retrievedCollection = await client.getCollection({
+        name: collectionName,
+      });
+
+      expect(retrievedCollection.embeddingFunction).toBeDefined();
+      expect(retrievedCollection.embeddingFunction!.name).toBe("my_custom_model");
+      expect(retrievedCollection.embeddingFunction instanceof CustomModel).toBe(
+        true,
+      );
+      expect(retrievedCollection.embeddingFunction!.getConfig()).toEqual({
+        dimension: 4,
+        model: "test",
+      });
 
       console.log(
         `   Collection created with registered custom model, dimension: ${collection.dimension}`,
