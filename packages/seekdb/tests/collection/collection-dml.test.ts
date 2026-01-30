@@ -341,7 +341,6 @@ describe("Collection DML Operations", () => {
       // Verify document and metadata unchanged, embeddings updated
       const results = await collection.get({ ids: testId });
       expect(results.ids.length).toBe(1);
-      console.log("results", results);
       expect(results?.documents![0]).toBe("Test document");
       expect(results?.metadatas![0]?.tag).toBe("original");
       expect(results?.embeddings![0]).toEqual([30.0, 31.0, 32.0]);

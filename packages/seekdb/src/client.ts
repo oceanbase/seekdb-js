@@ -27,18 +27,16 @@ export class SeekdbClient {
   constructor(args: SeekdbClientArgs) {
     const { path: dbPath, host } = args;
 
-    // Determine mode: embedded if path is provided, server if host is provided
     if (dbPath !== undefined) {
-      // Embedded mode
       this._delegate = new SeekdbEmbeddedClient(args);
     } else if (host !== undefined) {
-      // Remote server mode
       this._delegate = new SeekdbServerClient(args);
     } else {
       throw new Error(
         "SeekdbClient requires either 'path' parameter for embedded mode or 'host' parameter for remote server mode."
       );
     }
+    (this._delegate as { setFacade?(f: unknown): void }).setFacade?.(this);
   }
 
   /**

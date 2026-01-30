@@ -2,8 +2,8 @@
  * Type definitions for seekdb SDK
  */
 
-import type { EmbeddingFunction } from "./embedding-function.js";
 import type { RowDataPacket } from "mysql2/promise";
+import type { SeekdbClient } from "./client.js";
 
 // ==================== Basic Types ====================
 
@@ -100,19 +100,72 @@ export interface IInternalClient {
   close(): Promise<void>;
 }
 
+export interface CollectionContext {
+  name: string;
+  collectionId?: string;
+  dimension?: number;
+  distance?: DistanceMetric;
+}
+
 export interface CollectionConfig {
   name: string;
   dimension: number;
   distance: DistanceMetric;
   embeddingFunction?: EmbeddingFunction;
   metadata?: Metadata;
-  client: IInternalClient;
+  collectionId?: string; // v2 format collection ID
+  client?: SeekdbClient;
+  internalClient: IInternalClient;
 }
 
 export interface HNSWConfiguration {
   dimension: number;
   distance?: DistanceMetric;
 }
+
+export type FulltextAnalyzer = "space" | "ngram" | "ngram2" | "beng" | "ik";
+
+export interface SpaceProperties {
+  min_token_size?: number; // [1, 16]
+  max_token_size?: number; // [10, 84]
+}
+
+export interface NgramProperties {
+  ngram_token_size?: number; // [1, 10]
+}
+
+export interface Ngram2Properties {
+  min_ngram_size?: number; // [1, 16]
+  max_ngram_size?: number; // [1, 16]
+}
+
+export interface BengProperties {
+  min_token_size?: number; // [1, 16]
+  max_token_size?: number; // [10, 84]
+}
+
+export interface IkProperties {
+  ik_mode?: "smart" | "max_word";
+}
+
+export type FulltextProperties =
+  | SpaceProperties
+  | NgramProperties
+  | Ngram2Properties
+  | BengProperties
+  | IkProperties;
+
+export interface FulltextAnalyzerConfig {
+  analyzer?: FulltextAnalyzer;
+  properties?: FulltextProperties;
+}
+
+export interface Configuration {
+  hnsw?: HNSWConfiguration;
+  fulltextConfig?: FulltextAnalyzerConfig;
+}
+
+export type ConfigurationParam = HNSWConfiguration | Configuration;
 
 // ==================== Client Configuration ====================
 
@@ -141,7 +194,7 @@ export interface SeekdbAdminClientArgs {
 
 export interface CreateCollectionOptions {
   name: string;
-  configuration?: HNSWConfiguration | null;
+  configuration?: ConfigurationParam | null;
   embeddingFunction?: EmbeddingFunction | null;
 }
 
@@ -230,13 +283,30 @@ export interface HybridSearchOptions {
   include?: readonly ("documents" | "metadatas" | "embeddings" | "distances")[];
 }
 
+export interface ForkOptions {
+  name: string
+}
+
 // ==================== Database Types ====================
 
 export type { Database } from "./database.js";
 
 // ==================== Embedding Function Types ====================
 
-export type {
-  EmbeddingFunction,
-  EmbeddingConfig,
-} from "./embedding-function.js";
+export interface EmbeddingConfig {
+  [key: string]: any;
+}
+
+export interface EmbeddingFunction {
+  readonly name: string;
+  generate(texts: string[]): Promise<number[][]>;
+  getConfig(): EmbeddingConfig;
+  dispose?(): Promise<void>;
+  dimension?: number;
+}
+
+export interface EmbeddingFunctionConstructor {
+  new(config: EmbeddingConfig): EmbeddingFunction;
+  buildFromConfig(config: EmbeddingConfig): EmbeddingFunction;
+  getModelDimensions?: () => Record<string, number>;
+}

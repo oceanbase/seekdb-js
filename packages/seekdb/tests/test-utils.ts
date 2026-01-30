@@ -3,11 +3,10 @@
  * Provides common configuration and helper functions
  */
 
-import type { EmbeddingFunction } from "../src/types.js";
+import type { EmbeddingFunction, EmbeddingConfig } from "../src/types.js";
 import {
   registerEmbeddingFunction,
   isEmbeddingFunctionRegistered,
-  EmbeddingConfig,
 } from "../src/embedding-function.js";
 
 /**
@@ -20,7 +19,6 @@ function getTestConfig() {
     user: process.env.SERVER_USER || "root",
     password: process.env.SERVER_PASSWORD || "",
     database: process.env.SERVER_DATABASE || "test",
-    tenant: process.env.SERVER_TENANT || "sys",
   };
 
   return baseConfig;
@@ -28,6 +26,7 @@ function getTestConfig() {
 
 // Test configuration from environment variables
 export const TEST_CONFIG = getTestConfig();
+export const TEST_CONFIG_OB = { ...TEST_CONFIG, tenant: process.env.SERVER_TENANT || "sys" };
 
 /**
  * Generate a unique collection name for testing
@@ -67,6 +66,7 @@ export function createTestEmbeddingFunction(dimension: number) {
 export function Simple3DEmbeddingFunction(): EmbeddingFunction {
   return {
     name: "test-embedding",
+    dimension: 3,
     getConfig: () => ({ dimension: 3 }),
     async generate(input: string | string[]): Promise<number[][]> {
       const texts = Array.isArray(input) ? input : [input];
@@ -95,6 +95,7 @@ export function Simple3DEmbeddingFunction(): EmbeddingFunction {
 export function Simple128DEmbeddingFunction(): EmbeddingFunction {
   return {
     name: "test-embedding",
+    dimension: 128,
     getConfig: () => ({ dimension: 128 }),
     async generate(input: string | string[]): Promise<number[][]> {
       const texts = Array.isArray(input) ? input : [input];
@@ -136,7 +137,6 @@ export class TestDefaultEmbeddingFunction implements EmbeddingFunction {
   readonly name = "default-embed";
 
   async generate(texts: string[]): Promise<number[][]> {
-    // Return dummy embeddings with dimension 384 (matching default model)
     return texts.map(() => Array(384).fill(0).map(() => Math.random()));
   }
 
@@ -155,3 +155,39 @@ export function registerTestDefaultEmbeddingFunction(): void {
     registerEmbeddingFunction("default-embed", TestDefaultEmbeddingFunction);
   }
 }
+
+/**
+ * Mock Embedding Function for testing
+ * Supports configurable dimension and custom parameters
+ */
+export class MockEmbeddingFunction implements EmbeddingFunction {
+  readonly name = "mock-embed";
+  private config: EmbeddingConfig;
+
+  constructor(config: EmbeddingConfig) {
+    if (config.shouldThrow) {
+      throw new Error("Config validation failed");
+    }
+    this.config = config;
+  }
+  dispose?(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  get dimension(): number {
+    return this.config.dimension || 3;
+  }
+
+  async generate(texts: string[]): Promise<number[][]> {
+    const dim = this.config.dimension || 3;
+    return texts.map(() => Array(dim).fill(0.1));
+  }
+
+  getConfig(): EmbeddingConfig {
+    return this.config;
+  }
+
+  static buildFromConfig(config: EmbeddingConfig): EmbeddingFunction {
+    return new MockEmbeddingFunction(config);
+  }
+}
+

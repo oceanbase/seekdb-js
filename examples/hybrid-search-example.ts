@@ -10,6 +10,8 @@
 
 import { SeekdbClient } from "seekdb";
 
+const COLLECTION_NAME = "hybrid_search_demo";
+
 async function main() {
   // Option 1: Embedded mode (local seekdb)
   const client = new SeekdbClient({
@@ -17,29 +19,18 @@ async function main() {
     database: "test",
   });
 
-  // Option 2: Remote server mode (seekdb server)
+  // Option 2: Connecting to seekdb server or OceanBase
   // const client = new SeekdbClient({
   //   host: "127.0.0.1",
   //   port: 2881,
-  //   tenant: "sys",
   //   database: "test",
   //   user: "root",
   //   password: "",
+  //   // for OceanBase, set tenant to "sys"
+  //   // tenant: "sys",
   // });
 
-  // Option 3: Remote server mode (OceanBase server)
-  // const client = new SeekdbClient({
-  //   host: "127.0.0.1",
-  //   port: 2881,
-  //   tenant: "sys",  // OceanBase default tenant
-  //   database: "test",
-  //   user: "root",
-  //   password: "",
-  // });
-
-  const collection = await client.getOrCreateCollection({
-    name: "hybrid_search_demo",
-  });
+  const collection = await client.getOrCreateCollection({ name: COLLECTION_NAME, });
 
   const documents = [
     "Machine learning is revolutionizing artificial intelligence and data science",
@@ -221,7 +212,8 @@ hybridSearch() advantages:
   - Handles scenarios requiring both keyword and semantic matching
 `);
 
-  await client.deleteCollection("hybrid_search_demo");
+  await client.deleteCollection(COLLECTION_NAME);
+  console.log(`\nCleaned up collection '${COLLECTION_NAME}'`);
   await client.close();
 }
 

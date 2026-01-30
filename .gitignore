@@ -12,3 +12,5 @@ coverage/
 .pnpm-store
 .cursor
 seekdb.db
+spec/
+.vscode

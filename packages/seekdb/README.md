@@ -7,10 +7,13 @@
 <strong>Vector database SDK for JavaScript/TypeScript with built-in semantic search</strong>
 <br />
 <em>Works seamlessly with seekdb and OceanBase</em>
+
 </div>
 
+For complete usage, please refer to the official documentation.
 
 ## Table of contents
+
 [Why seekdb?](#why-seekdb)<br/>
 [Installation](#installation)<br/>
 [Quick Start](#quick-start)<br/>
@@ -90,8 +93,6 @@ import { SeekdbClient } from "seekdb";
 
 const client = new SeekdbClient({
   path: "./seekdb.db",
-  // target database must already exist
-  // if not, use `AdminClient({ path }).createDatabase(name)` to create
   database: "test",
 });
 ```
@@ -141,6 +142,8 @@ const hybridResults = await collection.hybridSearch({
 
 The SDK supports multiple Embedding Functions for generating vectors locally or in the cloud.
 
+For complete usage, please refer to the official documentation.
+
 #### Default Embedding
 
 Uses a local model (`Xenova/all-MiniLM-L6-v2`) by default. No API Key required. Suitable for quick development and testing.
@@ -175,8 +178,6 @@ const collection = await client.createCollection({
 
 #### Qwen Embedding
 
-> ⚠️ **Experimental API**: The `QwenEmbeddingFunction` is currently experimental and may change in future versions.
-
 Uses DashScope's cloud Embedding service (Qwen/Tongyi Qianwen). Suitable for production environments.
 
 ```bash
@@ -200,8 +201,6 @@ const collection = await client.createCollection({
 ```
 
 #### OpenAI Embedding
-
-> ⚠️ **Experimental API**: The `OpenAIEmbeddingFunction` is currently experimental and may change in future versions.
 
 Uses OpenAI's embedding API. Suitable for production environments with OpenAI integration.
 
@@ -227,8 +226,6 @@ const collection = await client.createCollection({
 
 #### Jina Embedding
 
-> 🚧 **Under Development**: The `JinaEmbeddingFunction` is under active development. The API may undergo significant changes or breaking updates in future releases.
-
 Uses Jina AI's embedding API. Supports multimodal embeddings.
 
 ```bash
@@ -253,43 +250,60 @@ const collection = await client.createCollection({
 
 #### Custom Embedding Function
 
-> ⚠️ **Experimental API**: The `registerEmbeddingFunction` and `getEmbeddingFunction` APIs are currently experimental and may change in future versions.
-
 You can also use your own custom embedding function.
 
 First, implement the `EmbeddingFunction` interface:
 
 ```typescript
-import { EmbeddingFunction, registerEmbeddingFunction } from "seekdb";
+import type { EmbeddingFunction } from "seekdb";
+import { registerEmbeddingFunction } from "seekdb";
 
-class MyCustomEmbedding implements EmbeddingFunction {
-  // Name of the embedding function
-  readonly name = "my-custom-embed";
-
-  // Initialize your model here
-  constructor(private config: any) {}
-
-  // Generate embeddings for the texts
-  async generate(texts: string[]): Promise<number[][]> {}
-
-  getConfig() {
-    return this.config;
+interface MyCustomEmbeddingConfig {
+  apiKeyEnv: string;
+}
+class MyCustomEmbeddingFunction implements EmbeddingFunction {
+  // The name of the `embeddingFunction`, must be unique.
+  readonly name = "my_custom_embedding";
+  private apiKeyEnv: string;
+  dimension: number;
+  constructor(config: MyCustomEmbeddingConfig) {
+    this.apiKeyEnv = config.apiKeyEnv;
+    this.dimension = 384;
+  }
+  // Implement your vector generation code here
+  async generate(texts: string[]): Promise<number[][]> {
+    const embeddings: number[][] = [];
+    return embeddings;
+  }
+  // The configuration of the current `embeddingFunction` instance, used to restore this instance
+  getConfig(): MyCustomEmbeddingConfig {
+    return {
+      apiKeyEnv: this.apiKeyEnv,
+    };
+  }
+  // Create a new instance of the current `embeddingFunction` based on the provided configuration
+  static buildFromConfig(config: MyCustomEmbeddingConfig): EmbeddingFunction {
+    return new MyCustomEmbeddingFunction(config);
   }
 }
+
+// Register the constructor
+registerEmbeddingFunction("my_custom_embedding", MyCustomEmbeddingFunction);
 ```
 
-Then register and use it:
+Then use it:
 
 ```typescript
-// Register the custom embedding function
-registerEmbeddingFunction("my-custom-embed", MyCustomEmbedding);
-
-// Instantiate your custom embedding function
-const myEmbed = new MyCustomEmbedding({ apiKey: "your-api-key" });
-
+const customEmbed = new MyCustomEmbeddingFunction({
+  apiKeyEnv: "MY_CUSTOM_API_KEY_ENV",
+});
 const collection = await client.createCollection({
   name: "custom_embed_collection",
-  embeddingFunction: myEmbed,
+  configuration: {
+    dimension: 384,
+    distance: "cosine",
+  },
+  embeddingFunction: customEmbed,
 });
 ```
 
