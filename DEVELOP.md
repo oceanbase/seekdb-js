@@ -16,15 +16,15 @@
 - **Node.js**: Version >= 20
 - **Package Manager**: pnpm
 - **Database / running mode**:
-  - **Embedded mode**: No seekdb server required; install and build, then run examples and tests (using local `seekdb.db` or a custom `path`). Depends on the native addon (see `packages/bindings`).
+  - **Embedded mode**: No seekdb server required; install and build, then run examples and tests (using local `seekdb.db` or a custom `path`). Depends on the native addon (see `packages/bindings`). All embedded tests live under `packages/seekdb/tests/embedded/` and mirror server-mode scenarios.
   - **Server mode**: A running seekdb or OceanBase instance (local or remote) is required.
     - Default connection: Host `127.0.0.1`, Port `2881`, User `root`, Database `test`
     - OceanBase mode requires Tenant: `sys`
 
 ## Running Modes
 
-- **Embedded mode**: `SeekdbClient({ path: "..." })` or `Client({ path: "..." })`. Data is stored in a local file; no server needed. Examples and tests can run in embedded mode by default.
-- **Server mode**: `SeekdbClient({ host, port, ... })` or `Client({ host, port, ... })` connects to a deployed seekdb/OceanBase. Start the database and verify connection settings before running server-mode examples.
+- **Embedded mode**: `new SeekdbClient({ path: "..." })`. Data is stored under the given path; no server needed. Admin operations use `AdminClient({ path: "..." })`, which returns a `SeekdbClient`. Examples and embedded-only tests run without a database server.
+- **Server mode**: `new SeekdbClient({ host, port, ... })` connects to a deployed seekdb/OceanBase. Start the database and verify connection settings before running server-mode examples.
 
 ## Run Examples
 
@@ -95,12 +95,17 @@ pnpm test
 
 # Run only seekdb package tests
 pnpm --filter seekdb run test
+
+# Run only embedded-mode tests (no server required)
+pnpm --filter seekdb exec vitest run tests/embedded/
 ```
 
 **Tests and running mode**:
 
-- Many tests use **embedded mode** (in-memory or temporary `path`) and pass without an external database.
-- Some tests target **server mode** (connecting to `127.0.0.1:2881`) and require a local seekdb/OceanBase instance. If none is running, you can run only embedded-mode tests (see the `embedded/` directory under `packages/seekdb/tests/`).
+- **Embedded-mode tests** live under `packages/seekdb/tests/embedded/` and use a temporary database path per test file. They do not require a seekdb/OceanBase server. Run them with the command above when no server is available.
+- **Server-mode tests** (under `packages/seekdb/tests/` but outside `embedded/`) connect to `127.0.0.1:2881` and require a local seekdb or OceanBase instance.
+- **Mode consistency** tests (`mode-consistency.test.ts`) run both modes in the same file and require a server for the server part.
+- Embedded test coverage vs server is documented in `packages/seekdb/tests/embedded/COVERAGE_REPORT.md`.
 
 ### Linting & Formatting
 
