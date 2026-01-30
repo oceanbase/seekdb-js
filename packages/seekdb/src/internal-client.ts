@@ -41,7 +41,7 @@ export class InternalClient {
 
   async execute(
     sql: string,
-    params?: unknown[],
+    params?: unknown[]
   ): Promise<RowDataPacket[] | null> {
     return this.connectionManager.execute(sql, params);
   }

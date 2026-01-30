@@ -24,7 +24,9 @@ async function main() {
     // tenant: "sys",
   });
 
-  const collection = await client.getOrCreateCollection({ name: COLLECTION_NAME, });
+  const collection = await client.getOrCreateCollection({
+    name: COLLECTION_NAME,
+  });
 
   const documents = [
     "Machine learning is revolutionizing artificial intelligence and data science",
@@ -71,7 +73,7 @@ async function main() {
   console.log("SCENARIO 1: Keyword + Semantic Search");
   console.log("=".repeat(100));
   console.log(
-    "Goal: Find documents similar to 'AI research' AND containing 'machine learning'\n",
+    "Goal: Find documents similar to 'AI research' AND containing 'machine learning'\n"
   );
 
   // query() approach
@@ -106,20 +108,20 @@ async function main() {
 
     console.log("\nAnalysis:");
     console.log(
-      "  query() ranks 'Deep learning neural networks...' first because it's semantically similar to 'AI research',",
+      "  query() ranks 'Deep learning neural networks...' first because it's semantically similar to 'AI research',"
     );
     console.log(
-      "  but 'machine learning' is not its primary focus. hybridSearch() correctly prioritizes documents that",
+      "  but 'machine learning' is not its primary focus. hybridSearch() correctly prioritizes documents that"
     );
     console.log(
-      "  explicitly contain 'machine learning' (from full-text search) while also being semantically relevant",
+      "  explicitly contain 'machine learning' (from full-text search) while also being semantically relevant"
     );
     console.log(
-      "  to 'AI research' (from vector search). The RRF fusion ensures documents matching both criteria rank higher.",
+      "  to 'AI research' (from vector search). The RRF fusion ensures documents matching both criteria rank higher."
     );
   } catch (error: any) {
     console.log(
-      "Note: hybridSearch() is not supported on this database version",
+      "Note: hybridSearch() is not supported on this database version"
     );
   }
 
@@ -127,7 +129,7 @@ async function main() {
   console.log("SCENARIO 2: Independent Filters for Different Search Types");
   console.log("=".repeat(100));
   console.log(
-    "Goal: Full-text='neural' (year=2024) + Vector='deep learning' (popularity>=90)\n",
+    "Goal: Full-text='neural' (year=2024) + Vector='deep learning' (popularity>=90)\n"
   );
 
   const queryResult2 = await collection.query({
@@ -171,20 +173,20 @@ async function main() {
 
     console.log("\nAnalysis:");
     console.log(
-      "  query() only returns 2 results because it requires documents to satisfy BOTH year=2024 AND popularity>=90",
+      "  query() only returns 2 results because it requires documents to satisfy BOTH year=2024 AND popularity>=90"
     );
     console.log(
-      "  simultaneously. hybridSearch() returns 5 results by applying year=2024 filter to full-text search",
+      "  simultaneously. hybridSearch() returns 5 results by applying year=2024 filter to full-text search"
     );
     console.log(
-      "  and popularity>=90 filter to vector search independently, then fusing the results. This approach",
+      "  and popularity>=90 filter to vector search independently, then fusing the results. This approach"
     );
     console.log(
-      "  captures more relevant documents that might satisfy one criterion strongly while meeting the other",
+      "  captures more relevant documents that might satisfy one criterion strongly while meeting the other"
     );
   } catch (error: any) {
     console.log(
-      "Note: hybridSearch() is not supported on this database version",
+      "Note: hybridSearch() is not supported on this database version"
     );
   }
 

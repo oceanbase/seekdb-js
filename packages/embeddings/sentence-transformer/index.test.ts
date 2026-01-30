@@ -9,8 +9,12 @@ import { SeekdbValueError } from "seekdb";
 vi.mock("@huggingface/transformers", () => {
   const mockPipeline = vi.fn().mockResolvedValue({
     tolist: vi.fn().mockReturnValue([
-      Array(384).fill(0).map((_, i) => i / 1000),
-      Array(384).fill(0).map((_, i) => (i + 100) / 1000),
+      Array(384)
+        .fill(0)
+        .map((_, i) => i / 1000),
+      Array(384)
+        .fill(0)
+        .map((_, i) => (i + 100) / 1000),
     ]),
   });
 
@@ -55,7 +59,7 @@ describe("SentenceTransformerEmbeddingFunction", () => {
   it("should throw SeekdbValueError for non-JSON-serializable kwargs", () => {
     expect(() => {
       new SentenceTransformerEmbeddingFunction({
-        kwargs: { callback: () => { } },
+        kwargs: { callback: () => {} },
       });
     }).toThrow(SeekdbValueError);
 

@@ -1,4 +1,8 @@
-import { EmbeddingFunction, registerEmbeddingFunction, EmbeddingConfig } from "seekdb";
+import {
+  EmbeddingFunction,
+  registerEmbeddingFunction,
+  EmbeddingConfig,
+} from "seekdb";
 import { OpenAIEmbeddingFunction, OpenAIEmbeddingConfig } from "@seekdb/openai";
 
 // Known Qwen embedding model dimensions
@@ -44,7 +48,8 @@ const baseURLs = {
 
 export class QwenEmbeddingFunction
   extends OpenAIEmbeddingFunction
-  implements EmbeddingFunction {
+  implements EmbeddingFunction
+{
   readonly name: string = embeddingFunctionName;
   private readonly region?: "cn" | "intl";
 

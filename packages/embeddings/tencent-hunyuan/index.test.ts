@@ -5,8 +5,16 @@ import { TencentHunyuanEmbeddingFunction } from "./index";
 vi.mock("openai", () => {
   const mockCreate = vi.fn().mockResolvedValue({
     data: [
-      { embedding: Array(1536).fill(0).map((_, i) => i / 1000) },
-      { embedding: Array(1536).fill(0).map((_, i) => (i + 100) / 1000) },
+      {
+        embedding: Array(1536)
+          .fill(0)
+          .map((_, i) => i / 1000),
+      },
+      {
+        embedding: Array(1536)
+          .fill(0)
+          .map((_, i) => (i + 100) / 1000),
+      },
     ],
   });
 
@@ -74,7 +82,8 @@ describe("TencentHunyuanEmbeddingFunction", () => {
       base_url: "https://api.hunyuan.cloud.tencent.com/v1",
     };
 
-    const embedder = TencentHunyuanEmbeddingFunction.buildFromConfig(snakeCaseConfig);
+    const embedder =
+      TencentHunyuanEmbeddingFunction.buildFromConfig(snakeCaseConfig);
 
     expect(embedder).toBeInstanceOf(TencentHunyuanEmbeddingFunction);
     expect(embedder.name).toBe("tencent-hunyuan");

@@ -15,7 +15,9 @@ export class SeekdbAdminClient {
   }
 
   private isSeekdbMode(): boolean {
-    return this.tenant === undefined || this.tenant === null || this.tenant === "";
+    return (
+      this.tenant === undefined || this.tenant === null || this.tenant === ""
+    );
   }
 
   /**
@@ -31,13 +33,13 @@ export class SeekdbAdminClient {
 
   async createDatabase(
     name: string,
-    tenant: string = DEFAULT_TENANT,
+    tenant: string = DEFAULT_TENANT
   ): Promise<void> {
     // Remote server has multi-tenant architecture. Database is scoped to client's tenant.
     // If specified tenant differs from client tenant, use client tenant and warn
     if (tenant !== this.tenant && tenant !== DEFAULT_TENANT) {
       console.warn(
-        `Specified tenant '${tenant}' differs from client tenant '${this.tenant}', using client tenant`,
+        `Specified tenant '${tenant}' differs from client tenant '${this.tenant}', using client tenant`
       );
     }
 
@@ -47,13 +49,13 @@ export class SeekdbAdminClient {
 
   async getDatabase(
     name: string,
-    tenant: string = DEFAULT_TENANT,
+    tenant: string = DEFAULT_TENANT
   ): Promise<Database | OBDatabase> {
     // Remote server has multi-tenant architecture. Database is scoped to client's tenant.
     // If specified tenant differs from client tenant, use client tenant and warn
     if (tenant !== this.tenant && tenant !== DEFAULT_TENANT) {
       console.warn(
-        `Specified tenant '${tenant}' differs from client tenant '${this.tenant}', using client tenant`,
+        `Specified tenant '${tenant}' differs from client tenant '${this.tenant}', using client tenant`
       );
     }
 
@@ -69,26 +71,26 @@ export class SeekdbAdminClient {
       return new Database(
         row.SCHEMA_NAME,
         row.DEFAULT_CHARACTER_SET_NAME,
-        row.DEFAULT_COLLATION_NAME,
+        row.DEFAULT_COLLATION_NAME
       );
     }
     return new OBDatabase(
       row.SCHEMA_NAME,
       this.tenant,
       row.DEFAULT_CHARACTER_SET_NAME,
-      row.DEFAULT_COLLATION_NAME,
+      row.DEFAULT_COLLATION_NAME
     );
   }
 
   async deleteDatabase(
     name: string,
-    tenant: string = DEFAULT_TENANT,
+    tenant: string = DEFAULT_TENANT
   ): Promise<void> {
     // Remote server has multi-tenant architecture. Database is scoped to client's tenant.
     // If specified tenant differs from client tenant, use client tenant and warn
     if (tenant !== this.tenant && tenant !== DEFAULT_TENANT) {
       console.warn(
-        `Specified tenant '${tenant}' differs from client tenant '${this.tenant}', using client tenant`,
+        `Specified tenant '${tenant}' differs from client tenant '${this.tenant}', using client tenant`
       );
     }
 
@@ -99,13 +101,13 @@ export class SeekdbAdminClient {
   async listDatabases(
     limit?: number,
     offset?: number,
-    tenant: string = DEFAULT_TENANT,
+    tenant: string = DEFAULT_TENANT
   ): Promise<(Database | OBDatabase)[]> {
     // Remote server has multi-tenant architecture. Lists databases in client's tenant.
     // If specified tenant differs from client tenant, use client tenant and warn
     if (tenant !== this.tenant && tenant !== DEFAULT_TENANT) {
       console.warn(
-        `Specified tenant '${tenant}' differs from client tenant '${this.tenant}', using client tenant`,
+        `Specified tenant '${tenant}' differs from client tenant '${this.tenant}', using client tenant`
       );
     }
 
@@ -141,8 +143,8 @@ export class SeekdbAdminClient {
             new Database(
               row.SCHEMA_NAME,
               row.DEFAULT_CHARACTER_SET_NAME,
-              row.DEFAULT_COLLATION_NAME,
-            ),
+              row.DEFAULT_COLLATION_NAME
+            )
           );
         } else {
           databases.push(
@@ -150,8 +152,8 @@ export class SeekdbAdminClient {
               row.SCHEMA_NAME,
               this.tenant,
               row.DEFAULT_CHARACTER_SET_NAME,
-              row.DEFAULT_COLLATION_NAME,
-            ),
+              row.DEFAULT_COLLATION_NAME
+            )
           );
         }
       }

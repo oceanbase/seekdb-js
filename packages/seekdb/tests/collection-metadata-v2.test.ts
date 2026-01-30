@@ -66,23 +66,25 @@ describe("Collection Metadata V2", () => {
       expect(collection.collectionId).toHaveLength(32); // UUID without dashes
 
       // Verify metadata table exists
-      const tableExists = await metadataTableExists(
-        (client as any)._internal,
-      );
+      const tableExists = await metadataTableExists((client as any)._internal);
       expect(tableExists).toBe(true);
     });
 
     test("should store collection metadata in metadata table", async () => {
       const metadata = await getCollectionMetadata(
         (client as any)._internal,
-        collectionName,
+        collectionName
       );
 
       expect(metadata).toBeDefined();
       expect(metadata?.collectionName).toBe(collectionName);
       expect(metadata?.collectionId).toBeDefined();
-      expect((metadata?.settings.configuration as Configuration)?.hnsw?.dimension).toBe(3);
-      expect((metadata?.settings.configuration as Configuration)?.hnsw?.distance).toBe("cosine");
+      expect(
+        (metadata?.settings.configuration as Configuration)?.hnsw?.dimension
+      ).toBe(3);
+      expect(
+        (metadata?.settings.configuration as Configuration)?.hnsw?.distance
+      ).toBe("cosine");
     });
 
     test("should retrieve v2 collection with collectionId", async () => {
@@ -152,7 +154,7 @@ describe("Collection Metadata V2", () => {
       // Verify metadata is cleaned up
       const metadata = await getCollectionMetadata(
         (client as any)._internal,
-        collectionName,
+        collectionName
       );
       expect(metadata).toBeNull();
     });
@@ -177,7 +179,7 @@ describe("Collection Metadata V2", () => {
       } catch (error) {
         console.error(
           `Failed to cleanup v1 collection ${v1CollectionName}:`,
-          error,
+          error
         );
       }
 
@@ -190,7 +192,7 @@ describe("Collection Metadata V2", () => {
       } catch (error) {
         console.error(
           `Failed to cleanup v2 collection ${v2CollectionName}:`,
-          error,
+          error
         );
       }
     });
@@ -234,12 +236,8 @@ describe("Collection Metadata V2", () => {
       const collections = await client.listCollections();
 
       // Should have both v1 and v2 collections
-      const v1Collection = collections.find(
-        (c) => c.name === v1CollectionName,
-      );
-      const v2Collection = collections.find(
-        (c) => c.name === v2CollectionName,
-      );
+      const v1Collection = collections.find((c) => c.name === v1CollectionName);
+      const v2Collection = collections.find((c) => c.name === v2CollectionName);
 
       expect(v1Collection).toBeDefined();
       expect(v1Collection?.collectionId).toBeUndefined(); // v1 has no collectionId
@@ -340,7 +338,7 @@ describe("Collection Metadata V2", () => {
       // Verify no metadata entry for v1 collection
       const v1Metadata = await getCollectionMetadata(
         (client as any)._internal,
-        v1CollectionName,
+        v1CollectionName
       );
       expect(v1Metadata).toBeNull();
     });
@@ -355,7 +353,7 @@ describe("Collection Metadata V2", () => {
       // Verify metadata is cleaned up
       const v2Metadata = await getCollectionMetadata(
         (client as any)._internal,
-        v2CollectionName,
+        v2CollectionName
       );
       expect(v2Metadata).toBeNull();
     });
@@ -412,7 +410,7 @@ describe("Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._internal,
-        name,
+        name
       );
 
       expect(metadata).toBeDefined();
@@ -436,7 +434,7 @@ describe("Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._internal,
-        name,
+        name
       );
 
       expect(metadata).toBeDefined();
@@ -522,7 +520,7 @@ describe("Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._internal,
-        name,
+        name
       );
 
       expect(metadata).toBeDefined();

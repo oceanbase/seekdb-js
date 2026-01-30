@@ -10,7 +10,7 @@ export class Database {
     name: string,
     charset: string = "",
     collation: string = "",
-    metadata: Record<string, any> = {},
+    metadata: Record<string, any> = {}
   ) {
     this.name = name;
     this.charset = charset;
@@ -32,10 +32,10 @@ export class OBDatabase extends Database {
 
   constructor(
     name: string,
-    tenant: string = '',
+    tenant: string = "",
     charset: string = "",
     collation: string = "",
-    metadata: Record<string, any> = {},
+    metadata: Record<string, any> = {}
   ) {
     super(name, charset, collation, metadata);
     this.tenant = tenant;

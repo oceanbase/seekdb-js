@@ -1,4 +1,8 @@
-import { EmbeddingFunction, registerEmbeddingFunction, EmbeddingConfig } from "seekdb";
+import {
+  EmbeddingFunction,
+  registerEmbeddingFunction,
+  EmbeddingConfig,
+} from "seekdb";
 import { OpenAIEmbeddingFunction, OpenAIEmbeddingConfig } from "@seekdb/openai";
 
 // Known SiliconFlow embedding model dimensions
@@ -42,7 +46,8 @@ const baseURL = "https://api.siliconflow.com/v1";
 
 export class SiliconFlowEmbeddingFunction
   extends OpenAIEmbeddingFunction
-  implements EmbeddingFunction {
+  implements EmbeddingFunction
+{
   readonly name: string = embeddingFunctionName;
 
   constructor(config: SiliconFlowEmbeddingConfig = {}) {
@@ -92,7 +97,9 @@ export class SiliconFlowEmbeddingFunction
     return restConfig;
   }
 
-  static buildFromConfig(config: EmbeddingConfig): SiliconFlowEmbeddingFunction {
+  static buildFromConfig(
+    config: EmbeddingConfig
+  ): SiliconFlowEmbeddingFunction {
     return new SiliconFlowEmbeddingFunction({
       modelName: config.model_name,
       apiKey: config.api_key,

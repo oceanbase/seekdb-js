@@ -51,7 +51,7 @@ export class Connection {
       } catch (error) {
         throw new SeekdbConnectionError(
           `Failed to connect to ${this.config.host}:${this.config.port}`,
-          error,
+          error
         );
       }
     }
@@ -73,7 +73,7 @@ export class Connection {
    */
   async execute(
     sql: string,
-    params?: unknown[],
+    params?: unknown[]
   ): Promise<RowDataPacket[] | null> {
     const conn = await this.ensureConnection();
     const sqlUpper = sql.trim().toUpperCase();

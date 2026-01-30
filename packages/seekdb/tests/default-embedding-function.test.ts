@@ -26,7 +26,7 @@ describe("Default Embedding Function Tests", () => {
     const collectionName = generateCollectionName("test_default_ef");
 
     console.log(
-      `\nCreating collection '${collectionName}' with default embedding function`,
+      `\nCreating collection '${collectionName}' with default embedding function`
     );
 
     // Instantiate DefaultEmbeddingFunction
@@ -53,7 +53,7 @@ describe("Default Embedding Function Tests", () => {
     try {
       // Test 1: Add documents without providing embeddings
       console.log(
-        `\nTesting collection.add() with documents only (auto-generate vectors)`,
+        `\nTesting collection.add() with documents only (auto-generate vectors)`
       );
 
       const testDocuments = [
@@ -81,7 +81,7 @@ describe("Default Embedding Function Tests", () => {
       });
 
       console.log(
-        `   Added ${testDocuments.length} documents (vectors auto-generated)`,
+        `   Added ${testDocuments.length} documents (vectors auto-generated)`
       );
 
       // Verify data was inserted
@@ -96,11 +96,11 @@ describe("Default Embedding Function Tests", () => {
       if (results.embeddings && results.embeddings[0]) {
         expect(results.embeddings[0].length).toBe(collection.dimension);
         console.log(
-          `   Verified: document and embedding (dim=${results.embeddings[0].length}) stored correctly`,
+          `   Verified: document and embedding (dim=${results.embeddings[0].length}) stored correctly`
         );
       } else {
         console.log(
-          `   Verified: document stored correctly (embedding not included in get results)`,
+          `   Verified: document stored correctly (embedding not included in get results)`
         );
       }
 
@@ -112,7 +112,7 @@ describe("Default Embedding Function Tests", () => {
       )[0];
       expect(queryEmbedding.length).toBe(collection.dimension);
       console.log(
-        `   Generated query embedding with dimension: ${queryEmbedding.length}`,
+        `   Generated query embedding with dimension: ${queryEmbedding.length}`
       );
 
       // Wait a bit for indexes to be ready
@@ -171,7 +171,7 @@ describe("Default Embedding Function Tests", () => {
         expect(fulltextResults.ids).toBeDefined();
         expect(fulltextResults.ids.length).toBeGreaterThan(0);
         console.log(
-          `   Found ${fulltextResults.ids.length} results from full-text search`,
+          `   Found ${fulltextResults.ids.length} results from full-text search`
         );
       } catch (e) {
         console.log(`   Warning: Hybrid search with full-text failed: ${e}`);
@@ -179,7 +179,7 @@ describe("Default Embedding Function Tests", () => {
 
       // Test 6: Hybrid search combining both vector and full-text
       console.log(
-        `\nTesting hybrid_search with both vector and full-text search`,
+        `\nTesting hybrid_search with both vector and full-text search`
       );
       try {
         const combinedResults = await collection.hybridSearch({
@@ -199,7 +199,7 @@ describe("Default Embedding Function Tests", () => {
         expect(combinedResults.ids).toBeDefined();
         expect(combinedResults.ids.length).toBeGreaterThan(0);
         console.log(
-          `   Found ${combinedResults.ids.length} results from hybrid search`,
+          `   Found ${combinedResults.ids.length} results from hybrid search`
         );
       } catch (e) {
         console.log(`   Warning: Hybrid search combining both failed: ${e}`);

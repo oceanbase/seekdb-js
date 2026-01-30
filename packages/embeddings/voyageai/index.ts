@@ -68,7 +68,7 @@ export class VoyageAIEmbeddingFunction implements EmbeddingFunction {
 
     if (!apiKey) {
       throw new Error(
-        `Voyage API key is required. Please provide it in the constructor or set the environment variable ${this.apiKeyEnvVar}.`,
+        `Voyage API key is required. Please provide it in the constructor or set the environment variable ${this.apiKeyEnvVar}.`
       );
     }
 

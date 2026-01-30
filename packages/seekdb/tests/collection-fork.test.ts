@@ -35,14 +35,14 @@ describe("Collection Fork Operations", () => {
         embeddings: [
           [1.0, 2.0, 3.0],
           [4.0, 5.0, 6.0],
-          [7.0, 8.0, 9.0]
+          [7.0, 8.0, 9.0],
         ],
         metadatas: [
           { type: "A", value: 10 },
           { type: "B", value: 20 },
-          { type: "A", value: 30 }
+          { type: "A", value: 30 },
         ],
-        documents: ["doc1", "doc2", "doc3"]
+        documents: ["doc1", "doc2", "doc3"],
       });
     });
 
@@ -63,12 +63,12 @@ describe("Collection Fork Operations", () => {
 
       // Execute fork
       const targetCollection = await sourceCollection.fork({
-        name: targetCollectionName
+        name: targetCollectionName,
       });
 
       expect(targetCollection).toBeDefined();
       // targetCollection.name might be the raw table name (with v2_ prefix) or just the name provided
-      // The implementation usually returns the full table name or the logical name. 
+      // The implementation usually returns the full table name or the logical name.
       // Based on collection.ts: targetCollectionName is now the logical name
       expect(targetCollection.name).toBe(targetCollectionName);
 
@@ -94,7 +94,7 @@ describe("Collection Fork Operations", () => {
         ids: "id_new_source",
         embeddings: [10.0, 11.0, 12.0],
         metadatas: { type: "new" },
-        documents: "new source doc"
+        documents: "new source doc",
       });
 
       // Verify source has 4 items
@@ -127,7 +127,7 @@ describe("Collection Fork Operations", () => {
         ids: "id_new_target",
         embeddings: [20.0, 21.0, 22.0],
         metadatas: { type: "new_target" },
-        documents: "new target doc"
+        documents: "new target doc",
       });
 
       // Verify target has initial + 1 items
@@ -159,7 +159,7 @@ describe("Collection Fork Operations", () => {
       await client.createCollection({
         name: existingName,
         configuration: { dimension: 3 },
-        embeddingFunction: null
+        embeddingFunction: null,
       });
 
       await expect(async () => {

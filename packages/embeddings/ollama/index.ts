@@ -19,7 +19,6 @@ const isBrowser = (): boolean =>
   typeof globalThis !== "undefined" &&
   typeof (globalThis as any).window !== "undefined";
 
-
 export interface OllamaConfig extends EmbeddingConfig {
   /**
    * Defaults to 'http://localhost:11434/v1', you can use other url if you want to use a remote ollama server.
@@ -60,7 +59,7 @@ export class OllamaEmbeddingFunction implements EmbeddingFunction {
       } else {
         const { Ollama } = await import("ollama");
         const apiKey = process.env[this.apiKeyEnv];
-        const clientProps: Config = { host: this.url, };
+        const clientProps: Config = { host: this.url };
         if (apiKey) {
           clientProps.headers = {
             Authorization: "Bearer " + apiKey,
@@ -70,7 +69,7 @@ export class OllamaEmbeddingFunction implements EmbeddingFunction {
       }
     } catch (error) {
       throw new Error(
-        `Failed to import Ollama client: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to import Ollama client: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

@@ -5,8 +5,16 @@ import { OpenAIEmbeddingFunction, OpenAIEmbeddingConfig } from "./index";
 vi.mock("openai", () => {
   const mockCreate = vi.fn().mockResolvedValue({
     data: [
-      { embedding: Array(1536).fill(0).map((_, i) => i / 1000) },
-      { embedding: Array(1536).fill(0).map((_, i) => (i + 100) / 1000) },
+      {
+        embedding: Array(1536)
+          .fill(0)
+          .map((_, i) => i / 1000),
+      },
+      {
+        embedding: Array(1536)
+          .fill(0)
+          .map((_, i) => (i + 100) / 1000),
+      },
     ],
   });
 
@@ -26,7 +34,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should initialize with default parameters", () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const embedder = new OpenAIEmbeddingFunction();
     expect(embedder.name).toBe("openai");
 
@@ -39,7 +47,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should initialize with custom parameters", () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const embedder = new OpenAIEmbeddingFunction({
       modelName: "text-embedding-3-large",
       dimensions: 3072,
@@ -56,7 +64,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should initialize with all optional parameters", () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const embedder = new OpenAIEmbeddingFunction({
       modelName: "custom-model",
       apiKey: "custom-key",
@@ -106,7 +114,9 @@ describe("OpenAIEmbeddingFunction", () => {
         apiKeyEnvVar: "CUSTOM_OPENAI_API_KEY",
       });
 
-      expect(embedder.getConfig().api_key_env_var).toBe("CUSTOM_OPENAI_API_KEY");
+      expect(embedder.getConfig().api_key_env_var).toBe(
+        "CUSTOM_OPENAI_API_KEY"
+      );
     } finally {
       delete process.env.CUSTOM_OPENAI_API_KEY;
     }
@@ -114,7 +124,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should generate embeddings with correct dimensions", async () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const embedder = new OpenAIEmbeddingFunction();
     const texts = ["Hello world", "Test text"];
     const embeddings = await embedder.generate(texts);
@@ -128,7 +138,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should return correct config", () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const embedder = new OpenAIEmbeddingFunction({
       modelName: "test-model",
       dimensions: 1536,
@@ -147,7 +157,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should return config in snake_case format", () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const embedder = new OpenAIEmbeddingFunction({
       modelName: "test-model",
       apiKeyEnvVar: "OPENAI_API_KEY",
@@ -170,7 +180,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should build instance from snake_case config", () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const snakeCaseConfig = {
       model_name: "custom-model",
       api_key: "custom-key",
@@ -195,7 +205,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should maintain consistency in round-trip conversion", () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const originalConfig: OpenAIEmbeddingConfig = {
       modelName: "round-trip-model",
       apiKey: "round-trip-key",
@@ -220,7 +230,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should build instance with default values from empty config", () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const embedder = OpenAIEmbeddingFunction.buildFromConfig({});
 
     expect(embedder).toBeInstanceOf(OpenAIEmbeddingFunction);
@@ -233,7 +243,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should support custom baseURL", () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const embedder = new OpenAIEmbeddingFunction({
       baseURL: "https://custom-endpoint.com/v1",
     });
@@ -243,7 +253,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
   it("should call OpenAI client with correct parameters", async () => {
     process.env.OPENAI_API_KEY = "test-api-key";
-    
+
     const embedder = new OpenAIEmbeddingFunction({
       modelName: "test-model",
       dimensions: 1536,

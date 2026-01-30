@@ -51,4 +51,5 @@ const collection = await client.createCollection({
 - **No API Key Required**: Runs completely locally without external dependencies
 - **Zero Configuration**: Works out of the box with seekdb SDK
 - **China-Optimized**: Built-in support for faster model downloads in China
-  The default model is suitable for most general-purpose semantic search and RAG applications.
+
+The default model is suitable for most general-purpose semantic search and RAG applications.
