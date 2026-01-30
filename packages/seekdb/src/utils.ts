@@ -695,6 +695,8 @@ export const DEFAULT_VECTOR_DIMENSION = 384;
 export const DEFAULT_DISTANCE_METRIC = "cosine";
 export const DEFAULT_TENANT = "sys"; // seekdb Server default tenant
 export const DEFAULT_DATABASE = "test";
+/** Built-in database for admin operations (createDatabase, listDatabases, getDatabase, deleteDatabase). Used internally by embedded client. */
+export const ADMIN_DATABASE = "information_schema";
 export const DEFAULT_PORT = 2881;
 export const DEFAULT_USER = "root";
 export const DEFAULT_CHARSET = "utf8mb4";

@@ -4,11 +4,11 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { AdminClient, Client } from "../../../src/factory.js";
-import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
+import { SeekdbClient } from "../../../src/client.js";
+import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
 import { SeekdbValueError } from "../../../src/errors.js";
 
-const TEST_DB_DIR = getTestDbDir("admin-database.test.ts");
+const TEST_CONFIG = getEmbeddedTestConfig("admin-database.test.ts");
 
 describe("Embedded Mode - Admin Database Management", () => {
   beforeAll(async () => {
@@ -17,7 +17,7 @@ describe("Embedded Mode - Admin Database Management", () => {
 
   afterAll(async () => {
     try {
-      const admin = AdminClient({ path: TEST_DB_DIR });
+      const admin = new SeekdbClient(TEST_CONFIG);
       await admin.close();
       await new Promise((r) => setTimeout(r, 100));
     } catch {
@@ -26,7 +26,7 @@ describe("Embedded Mode - Admin Database Management", () => {
   });
 
   test("AdminClient createDatabase creates a new database", async () => {
-    const admin = AdminClient({ path: TEST_DB_DIR });
+    const admin = new SeekdbClient(TEST_CONFIG);
     await admin.createDatabase("admin_created_db_1");
     const db = await admin.getDatabase("admin_created_db_1");
     expect(db.name).toBe("admin_created_db_1");
@@ -34,7 +34,7 @@ describe("Embedded Mode - Admin Database Management", () => {
   });
 
   test("AdminClient listDatabases includes created database and information_schema", async () => {
-    const admin = AdminClient({ path: TEST_DB_DIR });
+    const admin = new SeekdbClient(TEST_CONFIG);
     const list = await admin.listDatabases();
     const names = list.map((d) => d.name);
     expect(names).toContain("admin_created_db_1");
@@ -43,7 +43,7 @@ describe("Embedded Mode - Admin Database Management", () => {
   });
 
   test("AdminClient getDatabase throws for non-existent database", async () => {
-    const admin = AdminClient({ path: TEST_DB_DIR });
+    const admin = new SeekdbClient(TEST_CONFIG);
     await expect(admin.getDatabase("nonexistent_db_xyz")).rejects.toThrow(
       SeekdbValueError,
     );
@@ -51,7 +51,7 @@ describe("Embedded Mode - Admin Database Management", () => {
   });
 
   test("AdminClient deleteDatabase removes database", async () => {
-    const admin = AdminClient({ path: TEST_DB_DIR });
+    const admin = new SeekdbClient(TEST_CONFIG);
     await admin.createDatabase("admin_to_delete_db");
     expect((await admin.listDatabases()).map((d) => d.name)).toContain(
       "admin_to_delete_db",
@@ -67,24 +67,24 @@ describe("Embedded Mode - Admin Database Management", () => {
   });
 
   test("Client with non-existent database fails on first operation (no auto-create)", async () => {
-    const admin = AdminClient({ path: TEST_DB_DIR });
+    const admin = new SeekdbClient(TEST_CONFIG);
     try {
       await admin.deleteDatabase("test_new_db");
     } catch {
       // ignore
     }
     await admin.close();
-    const client = Client({ path: TEST_DB_DIR, database: "test_new_db" });
+    const client = new SeekdbClient({ path: TEST_CONFIG.path, database: "test_new_db" });
     await expect(client.listCollections()).rejects.toThrow();
     await client.close();
   });
 
   test("After createDatabase, Client can use the new database", async () => {
-    const admin = AdminClient({ path: TEST_DB_DIR });
+    const admin = new SeekdbClient(TEST_CONFIG);
     await admin.createDatabase("test_use_after_create");
     await admin.close();
-    const client = Client({
-      path: TEST_DB_DIR,
+    const client = new SeekdbClient({
+      path: TEST_CONFIG.path,
       database: "test_use_after_create",
     });
     await client.listCollections();

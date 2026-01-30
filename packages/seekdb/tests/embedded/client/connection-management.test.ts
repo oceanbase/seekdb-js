@@ -4,22 +4,18 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { Client } from "../../../src/factory.js";
 import { SeekdbClient } from "../../../src/client.js";
-import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
+import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
+
+const TEST_CONFIG = getEmbeddedTestConfig("connection-management.test.ts");
 
 describe("Embedded Mode - Connection Management", () => {
-  const TEST_DB_DIR = getTestDbDir("connection-management.test.ts");
-
   beforeAll(async () => {
     await cleanupTestDb("connection-management.test.ts");
   });
 
   test("isConnected returns false before any operation", async () => {
-    const client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    const client = new SeekdbClient(TEST_CONFIG);
 
     // Connection is lazy, so should be false initially
     expect(client.isConnected()).toBe(false);
@@ -27,10 +23,7 @@ describe("Embedded Mode - Connection Management", () => {
   });
 
   test("isConnected returns true after operation", async () => {
-    const client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    const client = new SeekdbClient(TEST_CONFIG);
 
     // Perform an operation to establish connection
     await client.listCollections();
@@ -41,10 +34,7 @@ describe("Embedded Mode - Connection Management", () => {
   });
 
   test("close() is a no-op in embedded mode (no need to manually close)", async () => {
-    const client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    const client = new SeekdbClient(TEST_CONFIG);
 
     await client.listCollections();
     expect(client.isConnected()).toBe(true);
@@ -55,10 +45,7 @@ describe("Embedded Mode - Connection Management", () => {
   });
 
   test("operations work after close and reconnect", async () => {
-    const client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    const client = new SeekdbClient(TEST_CONFIG);
 
     // First operation
     await client.listCollections();
@@ -72,10 +59,7 @@ describe("Embedded Mode - Connection Management", () => {
   });
 
   test("multiple close() calls are safe", async () => {
-    const client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    const client = new SeekdbClient(TEST_CONFIG);
 
     await client.listCollections();
     await client.close();

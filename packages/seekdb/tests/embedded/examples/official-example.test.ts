@@ -8,14 +8,15 @@
  * 4. Querying with queryTexts + metadata filter + document filter
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { Client } from "../../../src/factory.js";
+import { SeekdbClient } from "../../../src/client.js";
 import { Collection } from "../../../src/collection.js";
 import { generateCollectionName, registerTestDefaultEmbeddingFunction } from "../../test-utils.js";
-import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
-import type { SeekdbClient } from "../../../src/client.js";
+import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
 
 // Register test default embedding function before any tests run
 registerTestDefaultEmbeddingFunction();
+
+const TEST_CONFIG = getEmbeddedTestConfig("official-example.test.ts");
 
 const PRODUCT_DOCUMENTS = [
   "Laptop Pro with 16GB RAM, 512GB SSD, and high-speed processor",
@@ -47,15 +48,10 @@ describe("Embedded Mode - Official Example", () => {
   let client: SeekdbClient;
   let collection: Collection;
   let collectionName: string;
-  const TEST_DB_DIR = getTestDbDir("official-example.test.ts");
 
   beforeAll(async () => {
     await cleanupTestDb("official-example.test.ts");
-    // Use Client() factory function - it will return SeekdbClient (embedded mode when path is provided)
-    client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    client = new SeekdbClient(TEST_CONFIG);
     collectionName = generateCollectionName("official_example");
   }, 60000);
 

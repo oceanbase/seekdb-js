@@ -2,16 +2,14 @@
  * Client creation and connection tests - testing connection and collection management for Embedded mode
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import * as path from "node:path";
 import { SeekdbClient } from "../../../src/client.js";
-import { Client, AdminClient } from "../../../src/factory.js";
 import { HNSWConfiguration } from "../../../src/types.js";
 import { generateCollectionName } from "../../test-utils.js";
-import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
+import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
+
+const TEST_CONFIG = getEmbeddedTestConfig("client-creation.test.ts");
 
 describe("Embedded Mode - Client Creation and Collection Management", () => {
-  const TEST_DB_DIR = getTestDbDir("client-creation.test.ts");
-
   beforeAll(async () => {
     await cleanupTestDb("client-creation.test.ts");
   });
@@ -21,21 +19,16 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
   });
 
   describe("Client Creation", () => {
-    test("create embedded client using factory function with path", async () => {
-      const client = Client({
-        path: TEST_DB_DIR,
-        database: "test",
-      });
+    test("create embedded client with path", async () => {
+      const client = new SeekdbClient(TEST_CONFIG);
       expect(client).toBeDefined();
       expect(client instanceof SeekdbClient).toBe(true);
       expect(client.isConnected()).toBe(false);
       await client.close();
     });
 
-    test("create embedded admin client using factory function", async () => {
-      const admin = AdminClient({
-        path: TEST_DB_DIR,
-      });
+    test("create embedded admin client (SeekdbClient uses built-in admin for admin ops)", async () => {
+      const admin = new SeekdbClient(TEST_CONFIG);
       expect(admin).toBeDefined();
       expect(admin instanceof SeekdbClient).toBe(true);
       await admin.close();
@@ -46,11 +39,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
     let client: SeekdbClient;
 
     beforeAll(async () => {
-      // Use Client() factory function - it will return SeekdbClient (embedded mode when path is provided)
-      client = Client({
-        path: TEST_DB_DIR,
-        database: "test",
-      });
+      client = new SeekdbClient(TEST_CONFIG);
     }, 60000);
 
     afterAll(async () => {

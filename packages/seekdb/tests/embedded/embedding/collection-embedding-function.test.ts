@@ -3,24 +3,20 @@
  * get_or_create_collection, and get_collection interfaces with embedding function handling for Embedded mode
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { Client } from "../../../src/factory.js";
+import { SeekdbClient } from "../../../src/client.js";
 import type { HNSWConfiguration } from "../../../src/types.js";
 import { generateCollectionName, Simple3DEmbeddingFunction } from "../../test-utils.js";
 import { SeekdbValueError } from "../../../src/errors.js";
-import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
-import type { SeekdbClient } from "../../../src/client.js";
+import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
+
+const TEST_CONFIG = getEmbeddedTestConfig("collection-embedding-function.test.ts");
 
 describe("Embedded Mode - Collection Embedding Function Tests", () => {
   let client: SeekdbClient;
-  const TEST_DB_DIR = getTestDbDir("collection-embedding-function.test.ts");
 
   beforeAll(async () => {
     await cleanupTestDb("collection-embedding-function.test.ts");
-    // Use Client() factory function - it will return SeekdbClient (embedded mode when path is provided)
-    client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    client = new SeekdbClient(TEST_CONFIG);
   }, 60000);
 
   afterAll(async () => {

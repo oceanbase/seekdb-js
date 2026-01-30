@@ -20,6 +20,18 @@ export function getTestDbDir(testFileName: string): string {
 }
 
 /**
+ * Get embedded test config for use with new SeekdbClient(TEST_CONFIG).
+ * Aligns with server tests which use new SeekdbClient(TEST_CONFIG).
+ * For admin ops (createDatabase, listDatabases, etc.), embedded client uses built-in admin database internally.
+ */
+export function getEmbeddedTestConfig(testFileName: string): {
+  path: string;
+  database: string;
+} {
+  return { path: getTestDbDir(testFileName), database: "test" };
+}
+
+/**
  * Wait for a short period to ensure database operations complete
  */
 async function waitForDbCleanup(): Promise<void> {

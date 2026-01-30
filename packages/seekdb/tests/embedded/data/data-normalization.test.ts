@@ -4,21 +4,18 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { Client } from "../../../src/factory.js";
+import { SeekdbClient } from "../../../src/client.js";
 import { generateCollectionName } from "../../test-utils.js";
-import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
-import type { SeekdbClient } from "../../../src/client.js";
+import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
+
+const TEST_CONFIG = getEmbeddedTestConfig("data-normalization.test.ts");
 
 describe("Embedded Mode - Data Normalization Scenarios", () => {
   let client: SeekdbClient;
-  const TEST_DB_DIR = getTestDbDir("data-normalization.test.ts");
 
   beforeAll(async () => {
     await cleanupTestDb("data-normalization.test.ts");
-    client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    client = new SeekdbClient(TEST_CONFIG);
   }, 60000);
 
   afterAll(async () => {

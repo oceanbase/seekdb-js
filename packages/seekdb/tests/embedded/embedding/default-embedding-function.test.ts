@@ -3,25 +3,21 @@
  * automatic vector generation from documents, and hybrid search for Embedded mode
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { Client } from "../../../src/factory.js";
+import { SeekdbClient } from "../../../src/client.js";
 import { generateCollectionName, registerTestDefaultEmbeddingFunction } from "../../test-utils.js";
-import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
-import type { SeekdbClient } from "../../../src/client.js";
+import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
 
 // Register test default embedding function before any tests run
 registerTestDefaultEmbeddingFunction();
 
+const TEST_CONFIG = getEmbeddedTestConfig("default-embedding-function.test.ts");
+
 describe("Embedded Mode - Default Embedding Function Tests", () => {
   let client: SeekdbClient;
-  const TEST_DB_DIR = getTestDbDir("default-embedding-function.test.ts");
 
   beforeAll(async () => {
     await cleanupTestDb("default-embedding-function.test.ts");
-    // Use Client() factory function - it will return SeekdbClient (embedded mode when path is provided)
-    client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    client = new SeekdbClient(TEST_CONFIG);
   }, 60000);
 
   afterAll(async () => {

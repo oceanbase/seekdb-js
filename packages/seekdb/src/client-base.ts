@@ -46,6 +46,8 @@ import type {
  */
 export abstract class BaseSeekdbClient {
   protected abstract readonly _internal: IInternalClient;
+  /** Optional internal client for admin ops (e.g. embedded uses information_schema). When set, admin methods use this. */
+  protected _adminInternal?: IInternalClient;
   /** Set by SeekdbClient facade so Collection can reference it (e.g. for fork). */
   protected _facade?: unknown;
 
@@ -430,7 +432,7 @@ export abstract class BaseSeekdbClient {
 
   /**
    * Create database (explicit; connect does not auto-create).
-   * For embedded, use AdminClient({ path }) which connects to information_schema first.
+   * Embedded client uses built-in admin connection (information_schema); user does not specify it.
    */
   async createDatabase(
     name: string,
@@ -439,8 +441,9 @@ export abstract class BaseSeekdbClient {
     if (!name || typeof name !== "string") {
       throw new SeekdbValueError("Database name must be a non-empty string");
     }
+    const internal = this._adminInternal ?? this._internal;
     const sql = `CREATE DATABASE IF NOT EXISTS \`${name}\``;
-    await this._internal.execute(sql);
+    await internal.execute(sql);
   }
 
   /**
@@ -483,8 +486,9 @@ export abstract class BaseSeekdbClient {
     if (!name || typeof name !== "string") {
       throw new SeekdbValueError("Database name must be a non-empty string");
     }
+    const internal = this._adminInternal ?? this._internal;
     const sql = `DROP DATABASE IF EXISTS \`${name}\``;
-    await this._internal.execute(sql);
+    await internal.execute(sql);
   }
 
   /**
@@ -501,6 +505,7 @@ export abstract class BaseSeekdbClient {
     if (offset !== undefined && (!Number.isInteger(offset) || offset < 0)) {
       throw new SeekdbValueError("offset must be a non-negative integer");
     }
+    const internal = this._adminInternal ?? this._internal;
     let sql =
       "SELECT SCHEMA_NAME, DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA";
     const params: unknown[] = [];
@@ -513,7 +518,7 @@ export abstract class BaseSeekdbClient {
         params.push(limit);
       }
     }
-    const rows = await this._internal.execute(sql, params.length > 0 ? params : undefined);
+    const rows = await internal.execute(sql, params.length > 0 ? params : undefined);
     const databases: Database[] = [];
     if (rows) {
       for (const row of rows) {

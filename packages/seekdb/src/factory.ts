@@ -98,11 +98,14 @@ function _createServerClient(
  * 
  * @example
  * ```typescript
+ * // Embedded mode with no args (default path: cwd/seekdb.db, default database)
+ * const client = SeekdbClient();
+ *
  * // Embedded mode with explicit path
- * const client = Client({ path: "/path/to/seekdb", database: "db1" });
- * 
- * // Embedded mode (default, uses current working directory)
- * const client = Client({ database: "db1" });
+ * const client = SeekdbClient({ path: "/path/to/seekdb", database: "db1" });
+ *
+ * // Embedded mode (default path: current working directory)
+ * const client = SeekdbClient({ database: "db1" });
  * 
  * // Remote server mode
  * const client = Client({
@@ -121,19 +124,21 @@ export function Client(args: SeekdbClientArgs = {}): SeekdbClient {
 
 /**
  * Smart admin client factory function
- * 
- * Automatically selects embedded or remote server mode based on parameters:
+ *
+ * Always returns SeekdbClient (same entry type as Client()). Uses database "information_schema"
+ * for admin operations (createDatabase, listDatabases, getDatabase, deleteDatabase).
+ *
  * - If path is provided, uses embedded mode
  * - If host/port is provided, uses remote server mode
- * 
+ *
  * @param args - Admin client configuration arguments
- * @returns SeekdbAdminClient instance (for remote mode) or SeekdbClient (for embedded mode)
- * 
+ * @returns SeekdbClient instance (connected to information_schema for admin use)
+ *
  * @example
  * ```typescript
  * // Embedded mode
  * const admin = AdminClient({ path: "/path/to/seekdb" });
- * 
+ *
  * // Remote server mode
  * const admin = AdminClient({
  *   host: "localhost",
@@ -146,28 +151,12 @@ export function Client(args: SeekdbClientArgs = {}): SeekdbClient {
  */
 export function AdminClient(
   args: SeekdbAdminClientArgs = {},
-): SeekdbAdminClient | SeekdbClient {
-  // For admin client, we use information_schema database
-  const clientArgs: SeekdbClientArgs = {
-    ...args,
-    database: "information_schema",
-  };
-
-  const server = _createServerClient(clientArgs, true);
-
-  // If it's a remote server client (has host), wrap it in SeekdbAdminClient
-  if (args.host !== undefined) {
-    return new SeekdbAdminClient({
-      host: args.host,
-      port: args.port,
-      tenant: args.tenant,
-      user: args.user,
-      password: args.password,
-      charset: args.charset,
-    });
-  }
-
-  // For embedded mode, return the client directly
-  // Note: Admin operations for embedded mode may need to be implemented
-  return server;
+): SeekdbClient {
+  // Embedded: admin database is built-in in SeekdbEmbeddedClient; no need to specify.
+  // Server: connect to information_schema for admin operations.
+  const clientArgs: SeekdbClientArgs =
+    args.host !== undefined
+      ? { ...args, database: "information_schema" }
+      : { ...args };
+  return _createServerClient(clientArgs, true);
 }

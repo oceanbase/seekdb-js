@@ -17,6 +17,9 @@ try {
   // Native addon not available
 }
 
+/** Cache Database handle by path so multiple connections (e.g. default db + information_schema + user-created db) share the same instance. */
+const _dbCache = new Map<string, Database>();
+
 export class InternalEmbeddedClient implements IInternalClient {
   private readonly path: string;
   private readonly database: string;
@@ -37,7 +40,8 @@ export class InternalEmbeddedClient implements IInternalClient {
   }
 
   /**
-   * Ensure connection is established
+   * Ensure connection is established.
+   * Reuses the same Database handle for the same path so createDatabase/listDatabases and per-database connections see the same instance.
    */
   private async _ensureConnection(): Promise<Connection> {
     if (!_nativeAddon) {
@@ -45,14 +49,19 @@ export class InternalEmbeddedClient implements IInternalClient {
     }
 
     if (!this._initialized) {
-      try {
-        this._db = _nativeAddon.open(this.path);
-      } catch (error: any) {
-        // If already initialized, ignore the error
-        if (!error.message || !error.message.includes("initialized twice")) {
-          throw error;
+      let db = _dbCache.get(this.path);
+      if (db === undefined) {
+        try {
+          db = _nativeAddon.open(this.path);
+          _dbCache.set(this.path, db);
+        } catch (error: any) {
+          if (!error.message || !error.message.includes("initialized twice")) {
+            throw error;
+          }
+          db = _dbCache.get(this.path) ?? null;
         }
       }
+      this._db = db ?? null;
       this._initialized = true;
     }
 

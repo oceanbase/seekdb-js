@@ -2,23 +2,19 @@
  * Collection hybrid search tests - testing collection.hybridSearch() interface for Embedded mode
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { Client } from "../../../src/factory.js";
+import { SeekdbClient } from "../../../src/client.js";
 import { Collection } from "../../../src/collection.js";
 import { generateCollectionName } from "../../test-utils.js";
-import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
-import type { SeekdbClient } from "../../../src/client.js";
+import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
+
+const TEST_CONFIG = getEmbeddedTestConfig("collection-hybrid-search.test.ts");
 
 describe("Embedded Mode - Collection Hybrid Search Operations", () => {
   let client: SeekdbClient;
-  const TEST_DB_DIR = getTestDbDir("collection-hybrid-search.test.ts");
 
   beforeAll(async () => {
     await cleanupTestDb("collection-hybrid-search.test.ts");
-    // Use Client() factory function - it will return SeekdbClient (embedded mode when path is provided)
-    client = Client({
-      path: TEST_DB_DIR,
-      database: "test",
-    });
+    client = new SeekdbClient(TEST_CONFIG);
   }, 60000);
 
   afterAll(async () => {

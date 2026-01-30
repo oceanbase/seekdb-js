@@ -5,12 +5,14 @@
 
 import { InternalEmbeddedClient } from "./internal-client-embedded.js";
 import { BaseSeekdbClient } from "./client-base.js";
-import { DEFAULT_DATABASE } from "./utils.js";
+import { DEFAULT_DATABASE, ADMIN_DATABASE } from "./utils.js";
 import type { SeekdbClientArgs } from "./types.js";
 import * as path from "node:path";
 
 /**
  * seekdb Client for embedded mode (local native addon)
+ * Admin operations (createDatabase, listDatabases, getDatabase, deleteDatabase) use built-in
+ * admin connection (information_schema); user does not specify it.
  */
 export class SeekdbEmbeddedClient extends BaseSeekdbClient {
     protected readonly _internal: InternalEmbeddedClient;
@@ -29,6 +31,10 @@ export class SeekdbEmbeddedClient extends BaseSeekdbClient {
         this._internal = new InternalEmbeddedClient({
             path: this._path,
             database: this._database,
+        });
+        this._adminInternal = new InternalEmbeddedClient({
+            path: this._path,
+            database: ADMIN_DATABASE,
         });
     }
 
