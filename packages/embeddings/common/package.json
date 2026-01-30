@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "test": "vitest"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

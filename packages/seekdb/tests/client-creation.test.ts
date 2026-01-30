@@ -6,6 +6,7 @@ import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekdbClient } from "../src/client.js";
 import { HNSWConfiguration } from "../src/types.js";
 import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
+import { SQLBuilder } from "../src/sql-builder.js";
 
 describe("Client Creation and Collection Management", () => {
   let client: SeekdbClient;
@@ -224,7 +225,7 @@ describe("Client Creation and Collection Management", () => {
         try {
           await client.deleteCollection(testCollectionName1);
           await client.deleteCollection(testCollectionName2);
-        } catch (e) {}
+        } catch (e) { }
       }
     });
 
@@ -364,4 +365,243 @@ describe("Client Creation and Collection Management", () => {
       await client.deleteCollection(testCollectionName);
     });
   });
+
+  describe("Configuration Parameter Tests", () => {
+    test("create_collection - with HNSWConfiguration (simplified form)", async () => {
+      const testCollectionName = generateCollectionName("test_config_hnsw");
+      const testDimension = 128;
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          dimension: testDimension,
+          distance: "cosine",
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(testDimension);
+      expect(collection.distance).toBe("cosine");
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration (full form with hnsw)", async () => {
+      const testCollectionName = generateCollectionName("test_config_full");
+      const testDimension = 256;
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          hnsw: {
+            dimension: testDimension,
+            distance: "l2",
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(testDimension);
+      expect(collection.distance).toBe("l2");
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration including fulltextConfig", async () => {
+      const testCollectionName = generateCollectionName("test_config_fulltext");
+      const testDimension = 128;
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          hnsw: {
+            dimension: testDimension,
+            distance: "cosine",
+          },
+          fulltextConfig: {
+            analyzer: "ik",
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(testDimension);
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration fulltextConfig with properties (IK mode)", async () => {
+      const testCollectionName = generateCollectionName(
+        "test_config_fulltext_ik_props",
+      );
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          hnsw: {
+            dimension: 256,
+            distance: "l2",
+          },
+          fulltextConfig: {
+            analyzer: "ik",
+            properties: {
+              ik_mode: "smart",
+            },
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(256);
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration fulltextConfig with properties (NGRAM size)", async () => {
+      const testCollectionName = generateCollectionName(
+        "test_config_fulltext_ngram_props",
+      );
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          hnsw: {
+            dimension: 128,
+            distance: "cosine",
+          },
+          fulltextConfig: {
+            analyzer: "ngram",
+            properties: {
+              ngram_token_size: 2,
+            },
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      expect(collection.dimension).toBe(128);
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+
+    test("create_collection - with Configuration only fulltextConfig (no hnsw)", async () => {
+      const testCollectionName = generateCollectionName(
+        "test_config_fulltext_only",
+      );
+
+      const collection = await client.createCollection({
+        name: testCollectionName,
+        configuration: {
+          fulltextConfig: {
+            analyzer: "space",
+          },
+        },
+        embeddingFunction: null,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.name).toBe(testCollectionName);
+      // Should use default dimension when hnsw is not provided
+      expect(collection.dimension).toBe(384);
+
+      // Cleanup
+      await client.deleteCollection(testCollectionName);
+    });
+  });
+
+
+  describe("fulltextConfig", () => {
+    test("buildFulltextClause - default when config is undefined", () => {
+      expect(SQLBuilder.buildFulltextClause(undefined)).toBe("WITH PARSER ik");
+    });
+
+    test("buildFulltextClause - analyzer only (space)", () => {
+      expect(SQLBuilder.buildFulltextClause({ analyzer: "space" })).toBe(
+        "WITH PARSER space",
+      );
+    });
+
+    test("buildFulltextClause - analyzer with string property (ik_mode)", () => {
+      expect(
+        SQLBuilder.buildFulltextClause({
+          analyzer: "ik",
+          properties: { ik_mode: "max_word" },
+        }),
+      ).toBe("WITH PARSER ik PARSER_PROPERTIES=(ik_mode='max_word')");
+    });
+
+    test("buildFulltextClause - analyzer with numeric properties (beng)", () => {
+      const clause = SQLBuilder.buildFulltextClause({
+        analyzer: "beng",
+        properties: { min_token_size: 1, max_token_size: 10 },
+      });
+      expect(clause).toContain("min_token_size=1");
+      expect(clause).toContain("max_token_size=10");
+      expect(clause).toContain("WITH PARSER beng");
+    });
+
+    test("buildCreateTable - fulltext clause is included", () => {
+      const fulltextConfig = { analyzer: "space" as const };
+      const sql = SQLBuilder.buildCreateTable(
+        "test_coll",
+        3,
+        "cosine",
+        undefined,
+        undefined,
+        fulltextConfig,
+      );
+      expect(sql).toContain("FULLTEXT INDEX");
+      expect(sql).toContain("WITH PARSER space");
+    });
+
+    test("createCollection with fulltextConfig - add and get by whereDocument $contains", async () => {
+      const collName = generateCollectionName("test_fulltext");
+      const coll = await client.createCollection({
+        name: collName,
+        configuration: {
+          hnsw: { dimension: 3, distance: "cosine" },
+          fulltextConfig: { analyzer: "ik", properties: { ik_mode: "smart" } },
+        },
+        embeddingFunction: null,
+      });
+      try {
+        await coll.add({
+          ids: ["ft1", "ft2", "ft3"],
+          embeddings: [
+            [1, 2, 3],
+            [2, 3, 4],
+            [3, 4, 5],
+          ],
+          documents: [
+            "Machine learning is a subset of AI",
+            "Python for data science",
+            "Deep learning and neural networks",
+          ],
+        });
+        const results = await coll.get({
+          whereDocument: { $contains: "machine learning" },
+          limit: 10,
+        });
+        expect(results.ids.length).toBeGreaterThanOrEqual(1);
+      } finally {
+        await client.deleteCollection(collName);
+      }
+    });
+  });
+
 });

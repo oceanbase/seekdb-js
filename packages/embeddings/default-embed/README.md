@@ -1,4 +1,4 @@
-# Default Embedding Function for seekdb
+# @seekdb/amazon-bedrock
 
 This package provides a default embedding function using Hugging Face Transformers.js. It runs locally in Node.js without requiring external API calls or API keys.
 

@@ -21,10 +21,12 @@
     "test": "vitest"
   },
   "peerDependencies": {
-    "seekdb": "workspace:*"
+    "seekdb": "workspace:*",
+    "@seekdb/common": "workspace:*"
   },
   "devDependencies": {
-    "seekdb": "workspace:*"
+    "seekdb": "workspace:*",
+    "@seekdb/common": "workspace:*"
   },
   "dependencies": {
     "openai": "^6.9.1"

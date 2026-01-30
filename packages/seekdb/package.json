@@ -44,9 +44,7 @@
   "dependencies": {
     "mysql2": "^3.11.5",
     "node-addon-api": "^8.0.0",
-    "node-gyp": "^10.1.0"
-  },
-  "devDependencies": {
+    "node-gyp": "^10.1.0",
     "@seekdb/default-embed": "workspace:*"
   },
   "publishConfig": {

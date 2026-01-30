@@ -22,11 +22,13 @@
   },
   "peerDependencies": {
     "seekdb": "workspace:*",
-    "@seekdb/openai": "workspace:*"
+    "@seekdb/openai": "workspace:*",
+    "@seekdb/common": "workspace:*"
   },
   "devDependencies": {
     "seekdb": "workspace:*",
-    "@seekdb/openai": "workspace:*"
+    "@seekdb/openai": "workspace:*",
+    "@seekdb/common": "workspace:*"
   },
   "dependencies": {
     "openai": "^6.9.1"
