@@ -1,17 +1,21 @@
 import { SeekdbValueError } from "./errors.js";
 import { DEFAULT_TENANT } from "./utils.js";
 import type { SeekdbAdminClientArgs } from "./types.js";
-import { Database } from "./database.js";
+import { Database, OBDatabase } from "./database.js";
 import { InternalClient } from "./internal-client.js";
 
 export class SeekdbAdminClient {
   private _internal: InternalClient;
-  private readonly tenant: string;
+  private readonly tenant?: string;
 
   constructor(args: SeekdbAdminClientArgs) {
-    this.tenant = args.tenant ?? DEFAULT_TENANT;
+    this.tenant = args.tenant;
     // Initialize connection manager (no database specified for admin client)
     this._internal = new InternalClient(args);
+  }
+
+  private isSeekdbMode(): boolean {
+    return this.tenant === undefined || this.tenant === null || this.tenant === "";
   }
 
   /**
@@ -44,7 +48,7 @@ export class SeekdbAdminClient {
   async getDatabase(
     name: string,
     tenant: string = DEFAULT_TENANT,
-  ): Promise<Database> {
+  ): Promise<Database | OBDatabase> {
     // Remote server has multi-tenant architecture. Database is scoped to client's tenant.
     // If specified tenant differs from client tenant, use client tenant and warn
     if (tenant !== this.tenant && tenant !== DEFAULT_TENANT) {
@@ -61,9 +65,16 @@ export class SeekdbAdminClient {
     }
 
     const row = rows[0];
-    return new Database(
+    if (this.isSeekdbMode()) {
+      return new Database(
+        row.SCHEMA_NAME,
+        row.DEFAULT_CHARACTER_SET_NAME,
+        row.DEFAULT_COLLATION_NAME,
+      );
+    }
+    return new OBDatabase(
       row.SCHEMA_NAME,
-      this.tenant, // Remote server has tenant concept
+      this.tenant,
       row.DEFAULT_CHARACTER_SET_NAME,
       row.DEFAULT_COLLATION_NAME,
     );
@@ -89,7 +100,7 @@ export class SeekdbAdminClient {
     limit?: number,
     offset?: number,
     tenant: string = DEFAULT_TENANT,
-  ): Promise<Database[]> {
+  ): Promise<(Database | OBDatabase)[]> {
     // Remote server has multi-tenant architecture. Lists databases in client's tenant.
     // If specified tenant differs from client tenant, use client tenant and warn
     if (tenant !== this.tenant && tenant !== DEFAULT_TENANT) {
@@ -122,17 +133,27 @@ export class SeekdbAdminClient {
 
     const rows = await this._internal.execute(sql, params);
 
-    const databases: Database[] = [];
+    const databases: (Database | OBDatabase)[] = [];
     if (rows) {
       for (const row of rows) {
-        databases.push(
-          new Database(
-            row.SCHEMA_NAME,
-            this.tenant, // Remote server has tenant concept
-            row.DEFAULT_CHARACTER_SET_NAME,
-            row.DEFAULT_COLLATION_NAME,
-          ),
-        );
+        if (this.isSeekdbMode()) {
+          databases.push(
+            new Database(
+              row.SCHEMA_NAME,
+              row.DEFAULT_CHARACTER_SET_NAME,
+              row.DEFAULT_COLLATION_NAME,
+            ),
+          );
+        } else {
+          databases.push(
+            new OBDatabase(
+              row.SCHEMA_NAME,
+              this.tenant,
+              row.DEFAULT_CHARACTER_SET_NAME,
+              row.DEFAULT_COLLATION_NAME,
+            ),
+          );
+        }
       }
     }
 

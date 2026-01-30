@@ -15,26 +15,27 @@ import { SeekdbClient } from "seekdb";
 
 async function main() {
   // ==================== Step 1: Create Client Connection ====================
-  // Server mode (connecting to seekdb server or OceanBase)
+  // Connecting to seekdb server or OceanBase)
   const client = new SeekdbClient({
     host: "127.0.0.1",
     port: 2881,
-    tenant: "sys",
     database: "test",
     user: "root",
     password: "",
+    // for OceanBase, set tenant to "sys"
+    // tenant: "sys",
   });
 
   // ==================== Step 2: Create a Collection with Embedding Function ====================
   // A collection is like a table that stores documents with vector embeddings
-  const collectionName = "my_simple_collection";
+  const COLLECTION_NAME = "my_simple_collection";
 
   // Create collection with default embedding function
   // The embedding function will automatically convert documents to embeddings
 
   // Default embedding function is used if no embedding function is provided
   const collection = await client.createCollection({
-    name: collectionName,
+    name: COLLECTION_NAME,
   });
 
   console.log(
@@ -87,25 +88,25 @@ async function main() {
     include: ["documents", "metadatas", "distances"],
   });
 
+  const hitCount = results.ids?.[0]?.length ?? 0;
   console.log(`\nQuery: '${queryText}'`);
-  console.log(`Query results: ${results.ids[0].length} items found`);
+  console.log(`Query results: ${hitCount} items found`);
 
   // ==================== Step 5: Print Query Results ====================
-  for (let i = 0; i < results.ids[0].length; i++) {
+  for (let i = 0; i < hitCount; i++) {
     console.log(`\nResult ${i + 1}:`);
-    console.log(`  ID: ${results.ids[0][i]}`);
-    console.log(`  Distance: ${results.distances?.[0][i]?.toFixed(4)}`);
-    if (results.documents) {
-      console.log(`  Document: ${results.documents[0][i]}`);
-    }
+    console.log(`  ID: ${results.ids?.[0]?.[i]}`);
+    console.log(`  Distance: ${results.distances?.[0]?.[i]?.toFixed(4)}`);
+    console.log(`  Document: ${results.documents?.[0]?.[i]}`);
+    console.log(`  Metadata: ${JSON.stringify(results.metadatas?.[0]?.[i])}`);
     if (results.metadatas) {
       console.log(`  Metadata: ${JSON.stringify(results.metadatas[0][i])}`);
     }
   }
 
   // ==================== Step 6: Cleanup ====================
-  await client.deleteCollection(collectionName);
-  console.log(`\nDeleted collection '${collectionName}'`);
+  await client.deleteCollection(COLLECTION_NAME);
+  console.log(`\nCleaned up collection '${COLLECTION_NAME}'`);
 
   await client.close();
 }

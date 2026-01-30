@@ -11,14 +11,7 @@ describe("Default Embedding Function Tests", () => {
   let client: SeekdbClient;
 
   beforeAll(async () => {
-    client = new SeekdbClient({
-      host: TEST_CONFIG.host,
-      port: TEST_CONFIG.port,
-      user: TEST_CONFIG.user,
-      password: TEST_CONFIG.password,
-      tenant: TEST_CONFIG.tenant,
-      database: TEST_CONFIG.database,
-    });
+    client = new SeekdbClient(TEST_CONFIG);
   });
 
   afterAll(async () => {

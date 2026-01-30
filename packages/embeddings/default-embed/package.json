@@ -21,10 +21,12 @@
     "dist"
   ],
   "peerDependencies": {
-    "seekdb": "workspace:*"
+    "seekdb": "workspace:*",
+    "@seekdb/common": "workspace:*"
   },
   "devDependencies": {
-    "seekdb": "workspace:*"
+    "seekdb": "workspace:*",
+    "@seekdb/common": "workspace:*"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.5.1"

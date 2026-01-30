@@ -15,6 +15,8 @@ import type {
   Where,
   WhereDocument,
   DistanceMetric,
+  CollectionContext,
+  FulltextAnalyzerConfig,
 } from "./types.js";
 
 export interface SQLResult {
@@ -27,67 +29,96 @@ export interface SQLResult {
  * Provides static methods to build SQL statements
  */
 export class SQLBuilder {
-  /**
-   * Build CREATE TABLE SQL for creating a collection
-   */
   static buildCreateTable(
     name: string,
     dimension: number,
     distance: DistanceMetric,
     comment?: string,
+    collectionId?: string,
+    fulltextConfig?: FulltextAnalyzerConfig,
   ): string {
-    const tableName = CollectionNames.tableName(name);
+    const tableName = CollectionNames.tableName(name, collectionId);
     const commentClause = comment
       ? ` COMMENT = '${comment.replace(/'/g, "''")}'`
       : "";
+
+    const fulltextClause = this.buildFulltextClause(fulltextConfig);
 
     return `CREATE TABLE \`${tableName}\` (
       ${CollectionFieldNames.ID} VARBINARY(512) PRIMARY KEY NOT NULL,
       ${CollectionFieldNames.DOCUMENT} STRING,
       ${CollectionFieldNames.EMBEDDING} VECTOR(${dimension}),
       ${CollectionFieldNames.METADATA} JSON,
-      FULLTEXT INDEX idx_fts (${CollectionFieldNames.DOCUMENT}) WITH PARSER ik,
+      FULLTEXT INDEX idx_fts (${CollectionFieldNames.DOCUMENT}) ${fulltextClause},
       VECTOR INDEX idx_vec (${CollectionFieldNames.EMBEDDING}) WITH(distance=${distance}, type=hnsw, lib=vsag)
     ) ORGANIZATION = HEAP${commentClause}`;
   }
 
   /**
+   * Build fulltext clause for CREATE TABLE
+   */
+  static buildFulltextClause(config?: FulltextAnalyzerConfig): string {
+    if (!config) {
+      return "WITH PARSER ik";
+    }
+
+    const { analyzer, properties } = config;
+    if (!properties || Object.keys(properties).length === 0) {
+      return `WITH PARSER ${analyzer}`;
+    }
+
+    const props = Object.entries(properties)
+      .map(([key, value]) => {
+        let valStr: string;
+        if (typeof value === "string") {
+          valStr = `'${value.replace(/'/g, "''")}'`;
+        } else {
+          valStr = String(value);
+        }
+        return `${key}=${valStr}`;
+      })
+      .join(", ");
+
+    return `WITH PARSER ${analyzer} PARSER_PROPERTIES=(${props})`;
+  }
+
+  /**
    * Build SHOW TABLES LIKE SQL
    */
-  static buildShowTable(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildShowTable(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `SHOW TABLES LIKE '${tableName}'`;
   }
 
   /**
    * Build DESCRIBE TABLE SQL
    */
-  static buildDescribeTable(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildDescribeTable(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `DESCRIBE \`${tableName}\``;
   }
 
   /**
    * Build SHOW INDEX SQL
    */
-  static buildShowIndex(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildShowIndex(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `SHOW INDEX FROM \`${tableName}\` WHERE Key_name LIKE 'vec_%'`;
   }
 
   /**
    * Build SHOW CREATE TABLE SQL
    */
-  static buildShowCreateTable(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildShowCreateTable(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `SHOW CREATE TABLE \`${tableName}\``;
   }
 
   /**
    * Build DROP TABLE SQL
    */
-  static buildDropTable(name: string): string {
-    const tableName = CollectionNames.tableName(name);
+  static buildDropTable(name: string, collectionId?: string): string {
+    const tableName = CollectionNames.tableName(name, collectionId);
     return `DROP TABLE IF EXISTS \`${tableName}\``;
   }
 
@@ -95,15 +126,10 @@ export class SQLBuilder {
    * Build INSERT SQL for adding data
    */
   static buildInsert(
-    collectionName: string,
-    data: {
-      ids: string[];
-      documents?: (string | null)[];
-      embeddings: number[][];
-      metadatas?: (Metadata | null)[];
-    },
+    context: CollectionContext,
+    data: { ids: string[]; documents?: (string | null)[]; embeddings: number[][]; metadatas?: (Metadata | null)[] },
   ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     const valuesList: string[] = [];
     const params: unknown[] = [];
     const numItems = data.ids.length;
@@ -131,7 +157,7 @@ export class SQLBuilder {
    * Build SELECT SQL for getting data
    */
   static buildSelect(
-    collectionName: string,
+    context: CollectionContext,
     options: {
       ids?: string[];
       where?: Where;
@@ -141,7 +167,7 @@ export class SQLBuilder {
       include?: string[];
     },
   ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     const { ids, where, whereDocument, limit, offset, include } = options;
     const params: unknown[] = [];
 
@@ -216,8 +242,8 @@ export class SQLBuilder {
   /**
    * Build COUNT SQL
    */
-  static buildCount(collectionName: string): string {
-    const tableName = CollectionNames.tableName(collectionName);
+  static buildCount(context: CollectionContext): string {
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     return `SELECT COUNT(*) as cnt FROM \`${tableName}\``;
   }
 
@@ -225,15 +251,18 @@ export class SQLBuilder {
    * Build UPDATE SQL
    */
   static buildUpdate(
-    collectionName: string,
-    id: string,
-    updates: {
-      document?: string;
-      embedding?: number[];
-      metadata?: Metadata;
+    context: CollectionContext,
+    data: {
+      id: string;
+      updates: {
+        document?: string;
+        embedding?: number[];
+        metadata?: Metadata;
+      };
     },
   ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
+    const { id, updates } = data;
     const setClauses: string[] = [];
     const params: unknown[] = [];
 
@@ -262,14 +291,14 @@ export class SQLBuilder {
    * Build DELETE SQL
    */
   static buildDelete(
-    collectionName: string,
+    context: CollectionContext,
     options: {
       ids?: string[];
       where?: Where;
       whereDocument?: WhereDocument;
     },
   ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     const { ids, where, whereDocument } = options;
     const whereClauses: string[] = [];
     const params: unknown[] = [];
@@ -314,7 +343,7 @@ export class SQLBuilder {
    * Build vector query SQL
    */
   static buildVectorQuery(
-    collectionName: string,
+    context: CollectionContext,
     queryVector: number[],
     nResults: number,
     options: {
@@ -325,7 +354,7 @@ export class SQLBuilder {
       approximate?: boolean;
     },
   ): SQLResult {
-    const tableName = CollectionNames.tableName(collectionName);
+    const tableName = CollectionNames.tableName(context.name, context.collectionId);
     const {
       where,
       whereDocument,
@@ -417,5 +446,9 @@ export class SQLBuilder {
   static buildHybridSearchGetSql(tableName: string): string {
     // use user variable @search_parm
     return `SELECT DBMS_HYBRID_SEARCH.GET_SQL('${tableName}', @search_parm) as query_sql FROM dual`;
+  }
+
+  static buildFork(sourceName: string, targetName: string): string {
+    return `FORK TABLE \`${sourceName}\` TO \`${targetName}\`;`;
   }
 }

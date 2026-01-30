@@ -5,6 +5,14 @@ import {
   EmbeddingConfig,
 } from "seekdb";
 
+// Known OpenAI embedding model dimensions
+// Source: https://platform.openai.com/docs/guides/embeddings
+const OPENAI_MODEL_DIMENSIONS: Record<string, number> = {
+  "text-embedding-ada-002": 1536,
+  "text-embedding-3-small": 1536,
+  "text-embedding-3-large": 3072,
+};
+
 export interface OpenAIEmbeddingConfig extends EmbeddingConfig {
   /**
    * Defaults to 'text-embedding-3-small'.
@@ -68,14 +76,46 @@ export class OpenAIEmbeddingFunction implements EmbeddingFunction {
     return resp.data.map((d) => d.embedding);
   }
 
+  /**
+   * Get the dimension of embeddings produced by this function.
+   */
+  get dimension(): number {
+    // For unknown models, return a default dimension
+    // In a real fallback scenario, we would call the API, but since this is a sync property
+    // we return the default and the actual determination happens during generate() call
+    if (this.dimensions) {
+      return this.dimensions;
+    }
+    return OPENAI_MODEL_DIMENSIONS[this.modelName] || 1536;
+  }
+
+  /**
+   * Get model dimensions dictionary.
+   */
+  static getModelDimensions(): Record<string, number> {
+    return { ...OPENAI_MODEL_DIMENSIONS };
+  }
+
   getConfig(): OpenAIEmbeddingConfig {
     return {
-      apiKey: this.apiKey,
-      modelName: this.modelName,
+      api_key: this.apiKey,
+      model_name: this.modelName,
       dimensions: this.dimensions,
-      organizationId: this.organizationId,
-      apiKeyEnvVar: this.apiKeyEnvVar,
+      organization_id: this.organizationId,
+      api_key_env_var: this.apiKeyEnvVar,
+      base_url: this.baseURL,
     };
+  }
+
+  static buildFromConfig(config: EmbeddingConfig): OpenAIEmbeddingFunction {
+    return new OpenAIEmbeddingFunction({
+      apiKey: config.api_key,
+      modelName: config.model_name,
+      dimensions: config.dimensions,
+      organizationId: config.organization_id,
+      apiKeyEnvVar: config.api_key_env_var,
+      baseURL: config.base_url,
+    });
   }
 }
 

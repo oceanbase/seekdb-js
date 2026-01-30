@@ -17,6 +17,13 @@ export type DType =
   | "q4f16";
 
 const embeddingFunctionName = "default-embed";
+
+// Known default embedding model dimensions
+// Source: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+const DEFAULT_EMBEDDING_MODEL_DIMENSIONS: Record<string, number> = {
+  "Xenova/all-MiniLM-L6-v2": 384,
+};
+
 export interface DefaultEmbeddingFunctionConfig extends EmbeddingConfig {
   /**
    * Defaults to 'Xenova/all-MiniLM-L6-v2'.
@@ -86,15 +93,37 @@ export class DefaultEmbeddingFunction implements EmbeddingFunction {
     return output.tolist();
   }
 
+  // For unknown models, return a default dimension
+  // In a real fallback scenario, we would call the API, but since this is a sync property
+  // we return the default and the actual determination happens during generate() call
+  get dimension(): number {
+    return DEFAULT_EMBEDDING_MODEL_DIMENSIONS[this.modelName] || 384;
+  }
+
+  static getModelDimensions(): Record<string, number> {
+    return { ...DEFAULT_EMBEDDING_MODEL_DIMENSIONS };
+  }
+
   getConfig(): DefaultEmbeddingFunctionConfig {
     return {
-      modelName: this.modelName,
+      model_name: this.modelName,
       revision: this.revision,
       dtype: this.dtype,
-      cacheDir: this.cacheDir,
-      localFilesOnly: this.localFilesOnly,
-      progressCallback: this.progressCallback,
+      cache_dir: this.cacheDir,
+      local_files_only: this.localFilesOnly,
+      progress_callback: this.progressCallback,
     };
+  }
+
+  static buildFromConfig(config: EmbeddingConfig): DefaultEmbeddingFunction {
+    return new DefaultEmbeddingFunction({
+      modelName: config.model_name,
+      revision: config.revision,
+      dtype: config.dtype,
+      cacheDir: config.cache_dir,
+      localFilesOnly: config.local_files_only,
+      progressCallback: config.progress_callback,
+    });
   }
 
   async dispose(): Promise<void> {

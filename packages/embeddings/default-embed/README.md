@@ -1,4 +1,4 @@
-# Default Embedding Function for seekdb
+# @seekdb/amazon-bedrock
 
 This package provides a default embedding function using Hugging Face Transformers.js. It runs locally in Node.js without requiring external API calls or API keys.
 
@@ -51,5 +51,4 @@ const collection = await client.createCollection({
 - **No API Key Required**: Runs completely locally without external dependencies
 - **Zero Configuration**: Works out of the box with seekdb SDK
 - **China-Optimized**: Built-in support for faster model downloads in China
-
-The default model is suitable for most general-purpose semantic search and RAG applications.
+  The default model is suitable for most general-purpose semantic search and RAG applications.

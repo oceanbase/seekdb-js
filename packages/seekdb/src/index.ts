@@ -4,9 +4,8 @@
 
 export { SeekdbClient } from "./client.js";
 export { SeekdbAdminClient } from "./admin-client.js";
-export { InternalClient } from "./internal-client.js";
 export { Collection } from "./collection.js";
-export { Database } from "./database.js";
+export { Database, OBDatabase } from "./database.js";
 export {
   registerEmbeddingFunction,
   getEmbeddingFunction,

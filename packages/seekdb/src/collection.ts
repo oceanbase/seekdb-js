@@ -5,8 +5,9 @@
 import type { InternalClient } from "./internal-client.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError } from "./errors.js";
-import { CollectionFieldNames } from "./utils.js";
+import { CollectionFieldNames, CollectionNames } from "./utils.js";
 import { FilterBuilder, SearchFilterCondition } from "./filters.js";
+import { CollectionMetadata, deleteCollectionMetadata, getCollectionMetadata, insertCollectionMetadata } from "./metadata-manager.js";
 import type {
   EmbeddingFunction,
   Metadata,
@@ -21,7 +22,10 @@ import type {
   QueryResult,
   DistanceMetric,
   CollectionConfig,
+  CollectionContext,
+  ForkOptions,
 } from "./types.js";
+import { SeekdbClient } from "./client.js";
 
 /**
  * Collection - manages a collection of documents with embeddings
@@ -32,6 +36,8 @@ export class Collection {
   readonly distance: DistanceMetric;
   readonly embeddingFunction?: EmbeddingFunction;
   readonly metadata?: Metadata;
+  readonly collectionId?: string; // v2 format collection ID
+  readonly client: SeekdbClient;
   #client: InternalClient;
 
   constructor(config: CollectionConfig) {
@@ -40,7 +46,30 @@ export class Collection {
     this.distance = config.distance;
     this.embeddingFunction = config.embeddingFunction;
     this.metadata = config.metadata;
-    this.#client = config.client;
+    this.collectionId = config.collectionId;
+    this.client = config.client;
+    this.#client = config.internalClient;
+  }
+
+  /**
+   * Get collection version (v1 or v2)
+   * @private
+   */
+  private get version(): "v1" | "v2" {
+    return this.collectionId ? "v2" : "v1";
+  }
+
+  /**
+   * Get collection context for SQL building
+   * @private
+   */
+  private get context(): CollectionContext {
+    return {
+      name: this.name,
+      collectionId: this.collectionId,
+      dimension: this.dimension,
+      distance: this.distance,
+    };
   }
 
   /**
@@ -162,7 +191,7 @@ export class Collection {
       }
     }
 
-    const { sql, params } = SQLBuilder.buildInsert(this.name, {
+    const { sql, params } = SQLBuilder.buildInsert(this.context, {
       ids: idsArray,
       documents: documentsArray ?? undefined,
       embeddings: embeddingsArray,
@@ -243,7 +272,7 @@ export class Collection {
         continue;
       }
 
-      const { sql, params } = SQLBuilder.buildUpdate(this.name, id, updates);
+      const { sql, params } = SQLBuilder.buildUpdate(this.context, { id, updates });
       await this.#client.execute(sql, params);
     }
   }
@@ -317,11 +346,7 @@ export class Collection {
         }
 
         if (Object.keys(updates).length > 0) {
-          const { sql, params } = SQLBuilder.buildUpdate(
-            this.name,
-            id,
-            updates,
-          );
+          const { sql, params } = SQLBuilder.buildUpdate(this.context, { id, updates });
           await this.#client.execute(sql, params);
         }
       } else {
@@ -350,7 +375,7 @@ export class Collection {
     }
 
     // Build DELETE SQL using SQLBuilder
-    const { sql, params } = SQLBuilder.buildDelete(this.name, {
+    const { sql, params } = SQLBuilder.buildDelete(this.context, {
       ids: ids ? (Array.isArray(ids) ? ids : [ids]) : undefined,
       where,
       whereDocument,
@@ -375,7 +400,7 @@ export class Collection {
     } = options;
 
     // Build SELECT SQL using SQLBuilder
-    const { sql, params } = SQLBuilder.buildSelect(this.name, {
+    const { sql, params } = SQLBuilder.buildSelect(this.context, {
       ids: filterIds
         ? Array.isArray(filterIds)
           ? filterIds
@@ -487,7 +512,7 @@ export class Collection {
     for (const queryVector of embeddingsArray) {
       // Build vector query SQL using SQLBuilder
       const { sql, params } = SQLBuilder.buildVectorQuery(
-        this.name,
+        this.context,
         queryVector,
         nResults,
         {
@@ -623,18 +648,18 @@ export class Collection {
       } else {
         throw new SeekdbValueError(
           "knn.queryTexts provided but no knn.queryEmbeddings and no embedding function. " +
-            "Either:\n" +
-            "  1. Provide knn.queryEmbeddings directly, or\n" +
-            "  2. Provide embedding function to auto-generate embeddings from knn.queryTexts.",
+          "Either:\n" +
+          "  1. Provide knn.queryEmbeddings directly, or\n" +
+          "  2. Provide embedding function to auto-generate embeddings from knn.queryTexts.",
         );
       }
     } else {
       // Neither queryEmbeddings nor queryTexts provided, raise an error
       throw new SeekdbValueError(
         "knn requires either queryEmbeddings or queryTexts. " +
-          "Please provide either:\n" +
-          "  1. knn.queryEmbeddings directly, or\n" +
-          "  2. knn.queryTexts with embedding function to generate embeddings.",
+        "Please provide either:\n" +
+        "  1. knn.queryEmbeddings directly, or\n" +
+        "  2. knn.queryTexts with embedding function to generate embeddings.",
       );
     }
 
@@ -706,7 +731,7 @@ export class Collection {
 
     // Execute hybrid search using DBMS_HYBRID_SEARCH
     const searchParmJson = JSON.stringify(searchParm);
-    const tableName = `c$v1$${this.name}`;
+    const tableName = CollectionNames.tableName(this.name, this.collectionId);
 
     // Set search_parm variable
     const { sql: setVarSql, params: setVarParams } =
@@ -803,6 +828,64 @@ export class Collection {
     };
 
     return result;
+  }
+
+  async fork(options: ForkOptions): Promise<Collection> {
+    const { name: targetName } = options;
+
+    if (await this.client.hasCollection(targetName)) {
+      throw new SeekdbValueError(
+        `Collection '${targetName}' already exists. Please use a different name.`,
+      );
+    }
+
+    let targetCollectionId: string
+    let sourceSettings: CollectionMetadata['settings']
+    let targetCollectionName = ''
+
+    const sourceMetadata = await getCollectionMetadata(this.#client, this.name);
+    if (sourceMetadata) sourceSettings = sourceMetadata.settings
+    else {
+      // if source collection has no metadata, it's a v1 collection
+      sourceSettings = {
+        configuration: {
+          dimension: this.dimension,
+          distance: this.distance,
+        },
+        embeddingFunction: this.embeddingFunction ? {
+          name: this.embeddingFunction.name,
+          properties: this.embeddingFunction.getConfig()
+        } : undefined
+      }
+    }
+
+    try {
+      // coyp metadata and get collection_id
+      targetCollectionId = await insertCollectionMetadata(this.#client, targetName, sourceSettings);
+      targetCollectionName = CollectionNames.tableName(targetName, targetCollectionId);
+      const sourceTableName = CollectionNames.tableName(this.name, this.collectionId);
+
+      const sql = SQLBuilder.buildFork(sourceTableName, targetCollectionName);
+      await this.#client.execute(sql);
+    } catch (error) {
+      // If table creation fails, try to clean up metadata
+      try {
+        await deleteCollectionMetadata(this.#client, targetName);
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
+      throw error;
+    }
+
+    return new Collection({
+      name: targetName,
+      dimension: this.dimension,
+      distance: this.distance,
+      embeddingFunction: this.embeddingFunction,
+      client: this.client,
+      internalClient: this.#client,
+      collectionId: targetCollectionId,
+    });
   }
 
   /**
@@ -961,7 +1044,7 @@ export class Collection {
    * Count items in collection
    */
   async count(): Promise<number> {
-    const sql = SQLBuilder.buildCount(this.name);
+    const sql = SQLBuilder.buildCount(this.context);
     const rows = await this.#client.execute(sql);
     if (!rows || rows.length === 0) return 0;
     return rows[0].cnt;

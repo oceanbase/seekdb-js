@@ -11,3 +11,5 @@ coverage/
 .npmrc
 .pnpm-store
 .cursor
+spec/
+.vscode

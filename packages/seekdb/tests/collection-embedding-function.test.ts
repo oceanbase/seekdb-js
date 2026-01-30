@@ -10,6 +10,7 @@ import { Simple3DEmbeddingFunction } from "./test-utils.js";
 import {
   registerEmbeddingFunction,
   getEmbeddingFunction,
+  supportsPersistence,
 } from "../src/embedding-function.js";
 import type { EmbeddingFunction } from "../src/types.js";
 
@@ -17,14 +18,7 @@ describe("Collection Embedding Function Tests", () => {
   let client: SeekdbClient;
 
   beforeAll(async () => {
-    client = new SeekdbClient({
-      host: TEST_CONFIG.host,
-      port: TEST_CONFIG.port,
-      user: TEST_CONFIG.user,
-      password: TEST_CONFIG.password,
-      tenant: TEST_CONFIG.tenant,
-      database: TEST_CONFIG.database,
-    });
+    client = new SeekdbClient(TEST_CONFIG);
 
     //  preload default embedding function
     try {
@@ -175,6 +169,56 @@ describe("Collection Embedding Function Tests", () => {
 
       await client.deleteCollection(collectionName);
     }, 120000); // 2 minutes timeout for creating the collection
+
+    test("createCollection with configuration=null and embeddingFunction=null should throw error", async () => {
+      const collectionName = generateCollectionName("test_both_null");
+      console.log(
+        `\nTesting createCollection with configuration=null and embeddingFunction=null (should fail)`,
+      );
+
+      // When both are explicitly null, should raise error
+      await expect(
+        client.createCollection({
+          name: collectionName,
+          configuration: null,
+          embeddingFunction: null,
+        }),
+      ).rejects.toThrow(/Cannot create collection.*configuration.*null.*embedding_function.*null/i);
+
+      console.log(`   Correctly raised error for both null`);
+    });
+
+    test("createCollection should prioritize dimension property over generate call", async () => {
+      const collectionName = generateCollectionName("test_dimension_priority");
+      console.log(
+        `\nTesting createCollection prioritizes dimension property (avoid generate call)`,
+      );
+
+      let generateCalled = false;
+      const efWithDimension: any = {
+        name: "test-dimension-priority",
+        dimension: 5,
+        getConfig: () => ({ dimension: 5 }),
+        async generate(input: string | string[]): Promise<number[][]> {
+          generateCalled = true;
+          const texts = Array.isArray(input) ? input : [input];
+          return texts.map(() => [1, 2, 3, 4, 5]);
+        },
+      };
+
+      const collection = await client.createCollection({
+        name: collectionName,
+        embeddingFunction: efWithDimension,
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.dimension).toBe(5);
+      expect(generateCalled).toBe(false); // Should NOT call generate
+
+      console.log(`   Dimension read from property, generate NOT called`);
+
+      await client.deleteCollection(collectionName);
+    });
   });
 
   describe("getCollection tests", () => {
@@ -322,13 +366,20 @@ describe("Collection Embedding Function Tests", () => {
 
       // Define a custom embedding function class
       class CustomModel implements EmbeddingFunction {
+        private config: any;
+        constructor(config: any = {}) {
+          this.config = config;
+        }
         name = "custom_model";
         async generate(texts: string[]): Promise<number[][]> {
           // Returns 4-dimensional vectors
           return texts.map(() => [0.1, 0.2, 0.3, 0.4]);
         }
         getConfig() {
-          return {};
+          return this.config;
+        }
+        static buildFromConfig(config: any): EmbeddingFunction {
+          return new CustomModel(config);
         }
       }
 
@@ -369,4 +420,133 @@ describe("Collection Embedding Function Tests", () => {
       await client.deleteCollection(collectionName);
     });
   });
+
+  describe("supportsPersistence", () => {
+    test("should return false for null", () => {
+      expect(supportsPersistence(null)).toBe(false);
+    });
+
+    test("should return false for undefined", () => {
+      expect(supportsPersistence(undefined)).toBe(false);
+    });
+
+    test("should return false for EF without getConfig", () => {
+      const ef = {
+        name: "test",
+        async generate() {
+          return [[1, 2, 3]];
+        },
+      } as any;
+
+      expect(supportsPersistence(ef)).toBe(false);
+    });
+
+    test("should return false for EF without constructor.buildFromConfig", () => {
+      const ef = {
+        name: "test",
+        async generate() {
+          return [[1, 2, 3]];
+        },
+        getConfig() {
+          return {};
+        },
+      } as any;
+
+      expect(supportsPersistence(ef)).toBe(false);
+    });
+
+    test("should return false when getConfig throws", () => {
+      class ThrowingEF implements EmbeddingFunction {
+        name = "throwing";
+        async generate() {
+          return [[1, 2, 3]];
+        }
+        getConfig() {
+          throw new Error("Config error");
+        }
+        static buildFromConfig() {
+          return new ThrowingEF();
+        }
+      }
+
+      const ef = new ThrowingEF();
+      expect(supportsPersistence(ef)).toBe(false);
+    });
+
+    test("should return true for valid persistable EF", () => {
+      class ValidEF implements EmbeddingFunction {
+        name = "valid";
+        async generate() {
+          return [[1, 2, 3]];
+        }
+        get dimension(): number {
+          return 3;
+        }
+        getConfig() {
+          return { dimension: 3 };
+        }
+        static buildFromConfig() {
+          return new ValidEF();
+        }
+      }
+
+      const ef = new ValidEF();
+      expect(supportsPersistence(ef)).toBe(true);
+    });
+
+    test("should return true for EF with constructor that has buildFromConfig", () => {
+      class PersistableEF implements EmbeddingFunction {
+        name = "persistable";
+        private config: any;
+
+        constructor(config: any = {}) {
+          this.config = config;
+        }
+
+        async generate() {
+          return [[1, 2, 3]];
+        }
+
+        getConfig() {
+          return this.config;
+        }
+
+        static buildFromConfig(config: any) {
+          return new PersistableEF(config);
+        }
+      }
+
+      const ef = new PersistableEF({ model: "test" });
+      expect(supportsPersistence(ef)).toBe(true);
+    });
+
+    test("should narrow type when returns true", () => {
+      class TestEF implements EmbeddingFunction {
+        dispose?(): Promise<void> {
+          throw new Error("Method not implemented.");
+        }
+        name = "test";
+        async generate() {
+          return [[1, 2, 3]];
+        }
+        getConfig() {
+          return {};
+        }
+        static buildFromConfig() {
+          return new TestEF();
+        }
+      }
+
+      const ef: EmbeddingFunction | null = new TestEF();
+
+      if (supportsPersistence(ef)) {
+        // TypeScript should know ef is EmbeddingFunction here
+        const name: string = ef.name;
+        const config = ef.getConfig();
+        expect(name).toBe("test");
+        expect(config).toEqual({});
+      }
+    });
+  });
+
 });
