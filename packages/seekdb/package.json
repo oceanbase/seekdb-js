@@ -1,6 +1,6 @@
 {
   "name": "seekdb",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A unified JavaScript/TypeScript SDK for seekdb that supports Server mode and OceanBase mode",
   "type": "module",
   "main": "./dist/index.cjs",
