@@ -3,9 +3,9 @@
  * Supports configuring connection parameters via environment variables
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekdbClient } from "../src/client.js";
-import { HNSWConfiguration } from "../src/types.js";
-import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
+import { SeekdbClient } from "../../src/client.js";
+import { HNSWConfiguration } from "../../src/types.js";
+import { TEST_CONFIG, generateCollectionName } from "../test-utils.js";
 
 describe("Client Creation and Collection Management", () => {
   let client: SeekdbClient;

@@ -1,4 +1,5 @@
 packages:
   - "packages/*"
   - "packages/embeddings/*"
+  - "packages/bindings/pkgs/*"
   - "examples"

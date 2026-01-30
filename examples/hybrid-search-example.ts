@@ -11,14 +11,31 @@
 import { SeekdbClient } from "seekdb";
 
 async function main() {
+  // Option 1: Embedded mode (local seekdb)
   const client = new SeekdbClient({
-    host: "127.0.0.1",
-    port: 2881,
-    tenant: "sys",
+    path: "./seekdb.db",
     database: "test",
-    user: "root",
-    password: "",
   });
+
+  // Option 2: Remote server mode (seekdb server)
+  // const client = new SeekdbClient({
+  //   host: "127.0.0.1",
+  //   port: 2881,
+  //   tenant: "sys",
+  //   database: "test",
+  //   user: "root",
+  //   password: "",
+  // });
+
+  // Option 3: Remote server mode (OceanBase server)
+  // const client = new SeekdbClient({
+  //   host: "127.0.0.1",
+  //   port: 2881,
+  //   tenant: "sys",  // OceanBase default tenant
+  //   database: "test",
+  //   user: "root",
+  //   password: "",
+  // });
 
   const collection = await client.getOrCreateCollection({
     name: "hybrid_search_demo",

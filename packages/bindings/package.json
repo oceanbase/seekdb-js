@@ -1,0 +1,23 @@
+{
+  "name": "@seekdb/js-bindings-build",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "pnpm run build:package",
+    "build:package": "node-gyp configure && node-gyp build",
+    "check:signatures": "node scripts/checkFunctionSignatures.mjs",
+    "check:signatures:write": "node scripts/checkFunctionSignatures.mjs writeFiles",
+    "clean": "pnpm run clean:gyp && pnpm run clean:libseekdb && pnpm run clean:package",
+    "clean:gyp": "node-gyp clean",
+    "clean:libseekdb": "rimraf libseekdb",
+    "clean:package": "rimraf pkgs/js-bindings*/**/*.node pkgs/js-bindings*/**/*.so pkgs/js-bindings*/**/*.dylib pkgs/js-bindings*/**/*.dll",
+    "test": "echo \"Tests not yet implemented\""
+  },
+  "dependencies": {
+    "node-addon-api": "^8.3.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^10.3.1",
+    "rimraf": "^5.0.10"
+  }
+}

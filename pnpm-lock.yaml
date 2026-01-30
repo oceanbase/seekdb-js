@@ -46,6 +46,42 @@ importers:
         specifier: ^4.20.6
         version: 4.21.0
 
+  packages/bindings:
+    dependencies:
+      node-addon-api:
+        specifier: ^8.3.0
+        version: 8.5.0
+    devDependencies:
+      node-gyp:
+        specifier: ^10.3.1
+        version: 10.3.1
+      rimraf:
+        specifier: ^5.0.10
+        version: 5.0.10
+
+  packages/bindings/pkgs/js-bindings:
+    optionalDependencies:
+      '@seekdb/js-bindings-darwin-arm64':
+        specifier: workspace:*
+        version: link:../js-bindings-darwin-arm64
+      '@seekdb/js-bindings-darwin-x64':
+        specifier: workspace:*
+        version: link:../js-bindings-darwin-x64
+      '@seekdb/js-bindings-linux-arm64':
+        specifier: workspace:*
+        version: link:../js-bindings-linux-arm64
+      '@seekdb/js-bindings-linux-x64':
+        specifier: workspace:*
+        version: link:../js-bindings-linux-x64
+
+  packages/bindings/pkgs/js-bindings-darwin-arm64: {}
+
+  packages/bindings/pkgs/js-bindings-darwin-x64: {}
+
+  packages/bindings/pkgs/js-bindings-linux-arm64: {}
+
+  packages/bindings/pkgs/js-bindings-linux-x64: {}
+
   packages/embeddings/common: {}
 
   packages/embeddings/default-embed:
@@ -92,15 +128,12 @@ importers:
 
   packages/seekdb:
     dependencies:
+      '@seekdb/js-bindings':
+        specifier: workspace:*
+        version: link:../bindings/pkgs/js-bindings
       mysql2:
         specifier: ^3.11.5
         version: 3.15.3
-      node-addon-api:
-        specifier: ^8.0.0
-        version: 8.5.0
-      node-gyp:
-        specifier: ^10.1.0
-        version: 10.3.1
     devDependencies:
       '@seekdb/default-embed':
         specifier: workspace:*
@@ -1630,6 +1663,10 @@ packages:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
 
+  rimraf@5.0.10:
+    resolution: {integrity: sha512-l0OE8wL34P4nJH/H2ffoaniAokM2qSmrtXHmlpvYr5AVVX8msAyW0l8NVJFDxlSK4u3Uh/f41cQheDVdnYijwQ==}
+    hasBin: true
+
   roarr@2.15.4:
     resolution: {integrity: sha512-CHhPh+UNHD2GTXNYhPWLnU8ONHdI+5DI+4EYIAOaiD63rHeYlZvyh8P+in5999TTSFgUYuKUAjzRI4mdh/p+2A==}
     engines: {node: '>=8.0'}
@@ -1754,6 +1791,7 @@ packages:
   tar@6.2.1:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
 
   tar@7.5.2:
     resolution: {integrity: sha512-7NyxrTE4Anh8km8iEy7o0QYPs+0JKBTj5ZaqHg6B39erLg0qYXN3BijtShwbsNSvQ+LN75+KV+C4QR/f6Gwnpg==}
@@ -3324,6 +3362,10 @@ snapshots:
   retry@0.12.0: {}
 
   reusify@1.1.0: {}
+
+  rimraf@5.0.10:
+    dependencies:
+      glob: 10.5.0
 
   roarr@2.15.4:
     dependencies:

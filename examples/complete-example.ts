@@ -20,14 +20,30 @@ async function main() {
   // PART 1: CLIENT CONNECTION
   // ============================================================================
 
+  // Option 1: Embedded mode (local seekdb)
   const client = new SeekdbClient({
-    host: "127.0.0.1",
-    port: 2881,
-    tenant: "sys",
+    path: "./seekdb.db",
     database: "test",
-    user: "root",
-    password: "",
   });
+
+  // Option 2: Remote server mode (seekdb server)
+  // const client = new SeekdbClient({
+  //   host: "127.0.0.1",
+  //   port: 2881,
+  //   database: "test",
+  //   user: "root",
+  //   password: "",
+  // });
+
+  // Option 3: Remote server mode (OceanBase server)
+  // const client = new SeekdbClient({
+  //   host: "127.0.0.1",
+  //   port: 2881,
+  //   tenant: "sys",  // OceanBase default tenant
+  //   database: "test",
+  //   user: "root",
+  //   password: "",
+  // });
 
   // ============================================================================
   // PART 2: COLLECTION MANAGEMENT

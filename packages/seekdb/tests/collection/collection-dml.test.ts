@@ -3,10 +3,10 @@
  * Supports configuring connection parameters via environment variables
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekdbClient } from "../src/client.js";
-import { Collection } from "../src/collection.js";
-import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
-import { SeekdbValueError } from "../src/errors.js";
+import { SeekdbClient } from "../../src/client.js";
+import { Collection } from "../../src/collection.js";
+import { TEST_CONFIG, generateCollectionName } from "../test-utils.js";
+import { SeekdbValueError } from "../../src/errors.js";
 
 describe("Collection DML Operations", () => {
   let client: SeekdbClient;

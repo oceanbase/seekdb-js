@@ -3,8 +3,8 @@
  * automatic vector generation from documents, and hybrid search
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekdbClient } from "../src/client.js";
-import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
+import { SeekdbClient } from "../../src/client.js";
+import { TEST_CONFIG, generateCollectionName } from "../test-utils.js";
 import { DefaultEmbeddingFunction } from "@seekdb/default-embed";
 
 describe("Default Embedding Function Tests", () => {

@@ -11,7 +11,17 @@ export class SeekdbAdminClient {
   constructor(args: SeekdbAdminClientArgs) {
     this.tenant = args.tenant ?? DEFAULT_TENANT;
     // Initialize connection manager (no database specified for admin client)
-    this._internal = new InternalClient(args);
+    // Admin client requires host for remote server mode
+    if (!args.host) {
+      throw new Error(
+        "SeekdbAdminClient requires host parameter for remote server mode. " +
+        "For embedded mode, use AdminClient() factory function."
+      );
+    }
+    this._internal = new InternalClient({
+      ...args,
+      database: "information_schema",
+    });
   }
 
   /**

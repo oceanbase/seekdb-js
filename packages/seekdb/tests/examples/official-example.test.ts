@@ -8,9 +8,9 @@
  * 4. Querying with queryTexts + metadata filter + document filter
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekdbClient } from "../src/client.js";
-import { Collection } from "../src/collection.js";
-import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
+import { SeekdbClient } from "../../src/client.js";
+import { Collection } from "../../src/collection.js";
+import { TEST_CONFIG, generateCollectionName } from "../test-utils.js";
 
 const PRODUCT_DOCUMENTS = [
   "Laptop Pro with 16GB RAM, 512GB SSD, and high-speed processor",

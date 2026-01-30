@@ -3,7 +3,7 @@
  */
 
 import type { EmbeddingFunction } from "./embedding-function.js";
-import type { InternalClient } from "./internal-client.js";
+import type { RowDataPacket } from "mysql2/promise";
 
 // ==================== Basic Types ====================
 
@@ -91,13 +91,22 @@ export interface QueryResult<TMeta extends Metadata = Metadata> {
 
 export type DistanceMetric = "l2" | "cosine" | "inner_product";
 
+/**
+ * Internal client interface - implemented by both InternalClient and InternalEmbeddedClient
+ */
+export interface IInternalClient {
+  isConnected(): boolean;
+  execute(sql: string, params?: unknown[]): Promise<RowDataPacket[] | null>;
+  close(): Promise<void>;
+}
+
 export interface CollectionConfig {
   name: string;
   dimension: number;
   distance: DistanceMetric;
   embeddingFunction?: EmbeddingFunction;
   metadata?: Metadata;
-  client: InternalClient;
+  client: IInternalClient;
 }
 
 export interface HNSWConfiguration {
@@ -108,7 +117,8 @@ export interface HNSWConfiguration {
 // ==================== Client Configuration ====================
 
 export interface SeekdbClientArgs {
-  host: string;
+  path?: string; // For embedded mode
+  host?: string; // For remote server mode
   port?: number;
   tenant?: string;
   database?: string;
@@ -118,7 +128,8 @@ export interface SeekdbClientArgs {
 }
 
 export interface SeekdbAdminClientArgs {
-  host: string;
+  path?: string; // For embedded mode
+  host?: string; // For remote server mode
   port?: number;
   tenant?: string;
   user?: string;

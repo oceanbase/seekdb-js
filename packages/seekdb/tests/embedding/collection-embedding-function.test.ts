@@ -3,15 +3,22 @@
  * get_or_create_collection, and get_collection interfaces with embedding function handling
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekdbClient } from "../src/client.js";
-import type { HNSWConfiguration } from "../src/types.js";
-import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
-import { Simple3DEmbeddingFunction } from "./test-utils.js";
+import { SeekdbClient } from "../../src/client.js";
+import type { HNSWConfiguration } from "../../src/types.js";
+import {
+  TEST_CONFIG,
+  generateCollectionName,
+  Simple3DEmbeddingFunction,
+  registerTestDefaultEmbeddingFunction,
+} from "../test-utils.js";
 import {
   registerEmbeddingFunction,
   getEmbeddingFunction,
-} from "../src/embedding-function.js";
-import type { EmbeddingFunction } from "../src/types.js";
+} from "../../src/embedding-function.js";
+import type { EmbeddingFunction } from "../../src/types.js";
+
+// Register test default embedding function before any tests run
+registerTestDefaultEmbeddingFunction();
 
 describe("Collection Embedding Function Tests", () => {
   let client: SeekdbClient;
@@ -28,7 +35,7 @@ describe("Collection Embedding Function Tests", () => {
 
     //  preload default embedding function
     try {
-      const defaultEf = await getEmbeddingFunction("default");
+      const defaultEf = await getEmbeddingFunction("default-embed");
       console.log("Default embedding function preloaded successfully");
       //  test if the model is loaded
       await defaultEf.generate(["test"]);
@@ -328,7 +335,7 @@ describe("Collection Embedding Function Tests", () => {
           return texts.map(() => [0.1, 0.2, 0.3, 0.4]);
         }
         getConfig() {
-          return {};
+          return { dimension: 4 };
         }
       }
 

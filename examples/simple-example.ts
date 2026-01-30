@@ -15,15 +15,33 @@ import { SeekdbClient } from "seekdb";
 
 async function main() {
   // ==================== Step 1: Create Client Connection ====================
-  // Server mode (connecting to seekdb server or OceanBase)
+  // You can use embedded mode, server mode, or OceanBase mode
+  // For this example, we'll use embedded mode (you can change to server or OceanBase)
+
+  // Option 1: Embedded mode (local seekdb)
   const client = new SeekdbClient({
-    host: "127.0.0.1",
-    port: 2881,
-    tenant: "sys",
+    path: "./seekdb.db",
     database: "test",
-    user: "root",
-    password: "",
   });
+
+  // Option 2: Remote server mode (seekdb server)
+  // const client = new SeekdbClient({
+  //   host: "127.0.0.1",
+  //   port: 2881,
+  //   database: "test",
+  //   user: "root",
+  //   password: "",
+  // });
+
+  // Option 3: Remote server mode (OceanBase server)
+  // const client = new SeekdbClient({
+  //   host: "127.0.0.1",
+  //   port: 2881,
+  //   tenant: "sys",  // OceanBase default tenant
+  //   database: "test",
+  //   user: "root",
+  //   password: "",
+  // });
 
   // ==================== Step 2: Create a Collection with Embedding Function ====================
   // A collection is like a table that stores documents with vector embeddings

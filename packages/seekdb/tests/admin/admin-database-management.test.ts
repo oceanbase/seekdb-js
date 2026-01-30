@@ -4,9 +4,9 @@
  * Supports configuring connection parameters via environment variables
  */
 import { describe, test, expect, beforeAll, afterAll, vi } from "vitest";
-import { SeekdbAdminClient } from "../src/admin-client.js";
-import { DEFAULT_TENANT } from "../src/utils.js";
-import { TEST_CONFIG, generateDatabaseName } from "./test-utils.js";
+import { SeekdbAdminClient } from "../../src/client-admin.js";
+import { DEFAULT_TENANT } from "../../src/utils.js";
+import { TEST_CONFIG, generateDatabaseName } from "../test-utils.js";
 
 describe("AdminClient Database Management", () => {
   let adminClient: SeekdbAdminClient;
@@ -154,7 +154,7 @@ describe("AdminClient Database Management", () => {
       const differentTenant = "different_tenant";
 
       // Mock console.warn to capture warnings
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 
       try {
         // Create database with different tenant (should use client tenant)
@@ -186,7 +186,7 @@ describe("AdminClient Database Management", () => {
       const testDbName = generateDatabaseName("test_server_db");
 
       // Mock console.warn to verify no warning is issued for DEFAULT_TENANT
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 
       try {
         // Create database with DEFAULT_TENANT (should not warn if it matches client tenant)

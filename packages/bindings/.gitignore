@@ -1,0 +1,10 @@
+build
+libseekdb
+pkgs/**/*.node
+pkgs/**/*.so
+pkgs/**/*.so.*
+pkgs/**/*.dylib
+pkgs/**/*.dll
+test/tsconfig.tsbuildinfo
+*Sigs.json
+__pycache__

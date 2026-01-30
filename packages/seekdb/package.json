@@ -20,6 +20,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "build:bindings": "cd ../bindings && node-gyp configure && node-gyp build",
     "dev": "tsup --watch",
     "test": "vitest",
     "type-check": "tsc --noEmit",
@@ -43,8 +44,7 @@
   },
   "dependencies": {
     "mysql2": "^3.11.5",
-    "node-addon-api": "^8.0.0",
-    "node-gyp": "^10.1.0"
+    "@seekdb/js-bindings": "workspace:*"
   },
   "devDependencies": {
     "@seekdb/default-embed": "workspace:*"
