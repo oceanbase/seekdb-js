@@ -5,8 +5,16 @@ import { SiliconFlowEmbeddingFunction } from "./index";
 vi.mock("openai", () => {
   const mockCreate = vi.fn().mockResolvedValue({
     data: [
-      { embedding: Array(1536).fill(0).map((_, i) => i / 1000) },
-      { embedding: Array(1536).fill(0).map((_, i) => (i + 100) / 1000) },
+      {
+        embedding: Array(1536)
+          .fill(0)
+          .map((_, i) => i / 1000),
+      },
+      {
+        embedding: Array(1536)
+          .fill(0)
+          .map((_, i) => (i + 100) / 1000),
+      },
     ],
   });
 
@@ -74,7 +82,8 @@ describe("SiliconFlowEmbeddingFunction", () => {
       base_url: "https://api.siliconflow.com/v1",
     };
 
-    const embedder = SiliconFlowEmbeddingFunction.buildFromConfig(snakeCaseConfig);
+    const embedder =
+      SiliconFlowEmbeddingFunction.buildFromConfig(snakeCaseConfig);
 
     expect(embedder).toBeInstanceOf(SiliconFlowEmbeddingFunction);
     expect(embedder.name).toBe("siliconflow");

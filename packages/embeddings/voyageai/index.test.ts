@@ -6,8 +6,16 @@ import { SeekdbValueError } from "seekdb";
 vi.mock("voyageai", () => {
   const mockEmbed = vi.fn().mockResolvedValue({
     data: [
-      { embedding: Array(1024).fill(0).map((_, i) => i / 1000) },
-      { embedding: Array(1024).fill(0).map((_, i) => (i + 100) / 1000) },
+      {
+        embedding: Array(1024)
+          .fill(0)
+          .map((_, i) => i / 1000),
+      },
+      {
+        embedding: Array(1024)
+          .fill(0)
+          .map((_, i) => (i + 100) / 1000),
+      },
     ],
   });
 

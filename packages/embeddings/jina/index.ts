@@ -1,4 +1,8 @@
-import { EmbeddingFunction, registerEmbeddingFunction, EmbeddingConfig } from "seekdb";
+import {
+  EmbeddingFunction,
+  registerEmbeddingFunction,
+  EmbeddingConfig,
+} from "seekdb";
 import { toSnake } from "@seekdb/common";
 
 const name = "jina";
@@ -92,7 +96,7 @@ export class JinaEmbeddingFunction implements EmbeddingFunction {
 
     if (!apiKey) {
       throw new Error(
-        `Jina AI API key is required. Please provide it in the constructor or set the environment variable ${this.apiKeyEnvVar}.`,
+        `Jina AI API key is required. Please provide it in the constructor or set the environment variable ${this.apiKeyEnvVar}.`
       );
     }
 
@@ -101,7 +105,6 @@ export class JinaEmbeddingFunction implements EmbeddingFunction {
       "Accept-Encoding": "identity",
       "Content-Type": "application/json",
     };
-
   }
 
   /**
@@ -115,8 +118,8 @@ export class JinaEmbeddingFunction implements EmbeddingFunction {
   }
 
   /**
-  * Get model dimensions dictionary.
-  */
+   * Get model dimensions dictionary.
+   */
   static getModelDimensions(): Record<string, number> {
     return { ...JINA_MODEL_DIMENSIONS };
   }
@@ -147,7 +150,7 @@ export class JinaEmbeddingFunction implements EmbeddingFunction {
       return data.data.map((result) => result.embedding);
     } catch (error) {
       throw new Error(
-        `Error calling Jina AI API: ${error instanceof Error ? error.message : String(error)}`,
+        `Error calling Jina AI API: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

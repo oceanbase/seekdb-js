@@ -113,7 +113,7 @@ describe("Official Example Test", () => {
       } catch (error) {
         console.warn(
           `Failed to cleanup collection '${collectionName}':`,
-          error,
+          error
         );
       }
     }

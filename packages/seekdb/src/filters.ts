@@ -65,7 +65,7 @@ export class FilterBuilder {
    */
   static buildMetadataFilter(
     where?: Where,
-    metadataColumn: string = "metadata",
+    metadataColumn: string = "metadata"
   ): FilterResult {
     if (!where) {
       return { clause: "", params: [] };
@@ -90,7 +90,7 @@ export class FilterBuilder {
    */
   static buildDocumentFilter(
     whereDocument?: WhereDocument,
-    documentColumn: string = "document",
+    documentColumn: string = "document"
   ): FilterResult {
     if (!whereDocument) {
       return { clause: "", params: [] };
@@ -105,7 +105,7 @@ export class FilterBuilder {
   private static _buildCondition(
     condition: Where,
     metadataColumn: string,
-    params: unknown[],
+    params: unknown[]
   ): FilterResult {
     const clauses: string[] = [];
 
@@ -118,7 +118,7 @@ export class FilterBuilder {
             const result = this._buildCondition(
               subCondition,
               metadataColumn,
-              params,
+              params
             );
             subClauses.push(result.clause);
           }
@@ -129,7 +129,7 @@ export class FilterBuilder {
             const result = this._buildCondition(
               subCondition,
               metadataColumn,
-              params,
+              params
             );
             subClauses.push(result.clause);
           }
@@ -138,7 +138,7 @@ export class FilterBuilder {
           const result = this._buildCondition(
             value as Where,
             metadataColumn,
-            params,
+            params
           );
           clauses.push(`NOT (${result.clause})`);
         }
@@ -152,13 +152,13 @@ export class FilterBuilder {
           if (op in this.COMPARISON_OPS) {
             const sqlOp = this.COMPARISON_OPS[op];
             clauses.push(
-              `JSON_EXTRACT(${metadataColumn}, '$.${key}') ${sqlOp} ?`,
+              `JSON_EXTRACT(${metadataColumn}, '$.${key}') ${sqlOp} ?`
             );
           } else if (op === "$in" && Array.isArray(opValue)) {
             clauses.push(`JSON_EXTRACT(${metadataColumn}, '$.${key}') IN (?)`);
           } else if (op === "$nin" && Array.isArray(opValue)) {
             clauses.push(
-              `JSON_EXTRACT(${metadataColumn}, '$.${key}') NOT IN (?)`,
+              `JSON_EXTRACT(${metadataColumn}, '$.${key}') NOT IN (?)`
             );
           }
           params.push(opValue);
@@ -180,7 +180,7 @@ export class FilterBuilder {
   private static _buildDocumentCondition(
     condition: WhereDocument,
     documentColumn: string,
-    params: unknown[],
+    params: unknown[]
   ): FilterResult {
     const clauses: string[] = [];
 
@@ -188,7 +188,7 @@ export class FilterBuilder {
       if (key === "$contains") {
         // Full-text search using MATCH AGAINST
         clauses.push(
-          `MATCH(${documentColumn}) AGAINST (? IN NATURAL LANGUAGE MODE)`,
+          `MATCH(${documentColumn}) AGAINST (? IN NATURAL LANGUAGE MODE)`
         );
         params.push(value);
       } else if (key === "$regex") {
@@ -201,7 +201,7 @@ export class FilterBuilder {
           const result = this._buildDocumentCondition(
             subCondition,
             documentColumn,
-            params,
+            params
           );
           subClauses.push(result.clause);
         }
@@ -212,7 +212,7 @@ export class FilterBuilder {
           const result = this._buildDocumentCondition(
             subCondition,
             documentColumn,
-            params,
+            params
           );
           subClauses.push(result.clause);
         }
@@ -233,7 +233,7 @@ export class FilterBuilder {
    */
   static combineFilters(
     metadataFilter: FilterResult,
-    documentFilter: FilterResult,
+    documentFilter: FilterResult
   ): FilterResult {
     const clauses: string[] = [];
     const allParams: unknown[] = [];
@@ -291,7 +291,7 @@ export class FilterBuilder {
    * @returns List of filter conditions with JSON_EXTRACT format
    */
   static buildHybridSearchFilter(
-    where?: Where,
+    where?: Where
   ): SearchFilterCondition[] | null {
     if (!where) {
       return null;
@@ -309,7 +309,7 @@ export class FilterBuilder {
    */
   private static _buildSearchFilterCondition(
     condition: Where,
-    useJsonExtract = false,
+    useJsonExtract = false
   ): SearchFilterCondition | null {
     if (!condition) {
       return null;
@@ -321,7 +321,7 @@ export class FilterBuilder {
       for (const subCondition of condition.$and) {
         const subFilter = this._buildSearchFilterCondition(
           subCondition as Where,
-          useJsonExtract,
+          useJsonExtract
         );
         if (subFilter) {
           mustConditions.push(subFilter);
@@ -338,7 +338,7 @@ export class FilterBuilder {
       for (const subCondition of condition.$or) {
         const subFilter = this._buildSearchFilterCondition(
           subCondition as Where,
-          useJsonExtract,
+          useJsonExtract
         );
         if (subFilter) {
           shouldConditions.push(subFilter);
@@ -353,7 +353,7 @@ export class FilterBuilder {
     if ("$not" in condition) {
       const notFilter = this._buildSearchFilterCondition(
         condition.$not as Where,
-        useJsonExtract,
+        useJsonExtract
       );
       if (notFilter) {
         return { bool: { must_not: [notFilter] } };

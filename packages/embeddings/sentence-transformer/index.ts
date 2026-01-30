@@ -37,7 +37,7 @@ export class SentenceTransformerEmbeddingFunction implements EmbeddingFunction {
     for (const [key, value] of Object.entries(this.kwargs)) {
       if (typeof value === "function" || typeof value === "symbol") {
         throw new SeekdbValueError(
-          `Keyword argument '${key}' has a value of type '${typeof value}', which is not supported. Only JSON-serializable values are allowed.`,
+          `Keyword argument '${key}' has a value of type '${typeof value}', which is not supported. Only JSON-serializable values are allowed.`
         );
       }
     }
@@ -95,7 +95,7 @@ export class SentenceTransformerEmbeddingFunction implements EmbeddingFunction {
     };
   }
 
-  static buildFromConfig(config: any,): SentenceTransformerEmbeddingFunction {
+  static buildFromConfig(config: any): SentenceTransformerEmbeddingFunction {
     if (!config) throw new SeekdbValueError("config is required");
     return new SentenceTransformerEmbeddingFunction({
       modelName: config.model_name,
@@ -124,4 +124,7 @@ export class SentenceTransformerEmbeddingFunction implements EmbeddingFunction {
   }
 }
 
-registerEmbeddingFunction(embeddingFunctionName, SentenceTransformerEmbeddingFunction,);
+registerEmbeddingFunction(
+  embeddingFunctionName,
+  SentenceTransformerEmbeddingFunction
+);

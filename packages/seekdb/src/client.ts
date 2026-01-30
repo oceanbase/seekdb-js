@@ -8,7 +8,10 @@ import { Collection } from "./collection.js";
 import { InternalClient } from "./internal-client.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError, InvalidCollectionError } from "./errors.js";
-import { getEmbeddingFunction, supportsPersistence } from "./embedding-function.js";
+import {
+  getEmbeddingFunction,
+  supportsPersistence,
+} from "./embedding-function.js";
 import {
   CollectionFieldNames,
   DEFAULT_DISTANCE_METRIC,
@@ -66,7 +69,7 @@ export class SeekdbClient {
    * Create a new collection
    */
   async createCollection(
-    options: CreateCollectionOptions,
+    options: CreateCollectionOptions
   ): Promise<Collection> {
     const { name, configuration, embeddingFunction } = options;
 
@@ -110,7 +113,7 @@ export class SeekdbClient {
         actualDimension = testEmbeddings[0]?.length;
         if (!actualDimension) {
           throw new SeekdbValueError(
-            "Embedding function returned empty result when called with 'seekdb'",
+            "Embedding function returned empty result when called with 'seekdb'"
           );
         }
       }
@@ -122,11 +125,11 @@ export class SeekdbClient {
       if (ef === null || actualDimension === undefined) {
         throw new SeekdbValueError(
           "Cannot create collection: configuration is explicitly set to null and " +
-          "embedding_function is also null. Cannot determine dimension without either a configuration " +
-          "or an embedding function. Please either:\n" +
-          "  1. Provide a configuration with dimension specified (e.g., { dimension: 128, distance: 'cosine' }), or\n" +
-          "  2. Provide an embeddingFunction to calculate dimension automatically, or\n" +
-          "  3. Do not set configuration=null (use default configuration).",
+            "embedding_function is also null. Cannot determine dimension without either a configuration " +
+            "or an embedding function. Please either:\n" +
+            "  1. Provide a configuration with dimension specified (e.g., { dimension: 128, distance: 'cosine' }), or\n" +
+            "  2. Provide an embeddingFunction to calculate dimension automatically, or\n" +
+            "  3. Do not set configuration=null (use default configuration)."
         );
       }
       dimension = actualDimension;
@@ -134,7 +137,7 @@ export class SeekdbClient {
       // configuration has explicit dimension
       if (actualDimension !== undefined && hnsw.dimension !== actualDimension) {
         throw new SeekdbValueError(
-          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`,
+          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`
         );
       }
       dimension = hnsw.dimension;
@@ -144,7 +147,9 @@ export class SeekdbClient {
     }
 
     // Prepare embedding function metadata (only if ef supports persistence)
-    let embeddingFunctionMetadata: { name: string; properties: any } | undefined;
+    let embeddingFunctionMetadata:
+      | { name: string; properties: any }
+      | undefined;
     if (supportsPersistence(ef)) {
       embeddingFunctionMetadata = { name: ef.name, properties: ef.getConfig() };
     }
@@ -162,7 +167,7 @@ export class SeekdbClient {
       distance,
       undefined,
       collectionId,
-      fulltextConfig,
+      fulltextConfig
     );
 
     try {
@@ -199,14 +204,22 @@ export class SeekdbClient {
     let distance: DistanceMetric;
     let collectionId: string | undefined;
 
-    let embeddingFunctionConfig: CollectionMetadata['settings']['embeddingFunction'] | undefined;
+    let embeddingFunctionConfig:
+      | CollectionMetadata["settings"]["embeddingFunction"]
+      | undefined;
 
     // Try v2 format first (check metadata table)
     const metadata = await getCollectionMetadata(this._internal, name);
 
     if (metadata) {
       // v2 collection found - extract from metadata
-      const { collectionId: cId, settings: { embeddingFunction: embeddingFunctionMeta, configuration } = {} } = metadata;
+      const {
+        collectionId: cId,
+        settings: {
+          embeddingFunction: embeddingFunctionMeta,
+          configuration,
+        } = {},
+      } = metadata;
 
       // Verify table exists
       const sql = SQLBuilder.buildShowTable(name, cId);
@@ -214,7 +227,7 @@ export class SeekdbClient {
 
       if (!result || result.length === 0) {
         throw new InvalidCollectionError(
-          `Collection metadata exists but table not found: ${name}`,
+          `Collection metadata exists but table not found: ${name}`
         );
       }
 
@@ -246,17 +259,17 @@ export class SeekdbClient {
 
       if (!schema) {
         throw new InvalidCollectionError(
-          `Unable to retrieve schema for collection: ${name}`,
+          `Unable to retrieve schema for collection: ${name}`
         );
       }
 
       // Parse embedding field to get dimension
       const embeddingField = schema.find(
-        (row: any) => row.Field === CollectionFieldNames.EMBEDDING,
+        (row: any) => row.Field === CollectionFieldNames.EMBEDDING
       );
       if (!embeddingField) {
         throw new InvalidCollectionError(
-          `Collection ${name} does not have embedding field`,
+          `Collection ${name} does not have embedding field`
         );
       }
 
@@ -264,7 +277,7 @@ export class SeekdbClient {
       const match = embeddingField.Type.match(/VECTOR\((\d+)\)/i);
       if (!match) {
         throw new InvalidCollectionError(
-          `Invalid embedding type: ${embeddingField.Type}`,
+          `Invalid embedding type: ${embeddingField.Type}`
         );
       }
 
@@ -281,7 +294,7 @@ export class SeekdbClient {
             (createTableResult[0] as any)["Create Table"] || "";
           // Match: with(distance=value, ...) where value can be l2, cosine, inner_product, or ip
           const distanceMatch = createStmt.match(
-            /with\s*\([^)]*distance\s*=\s*['"]?(\w+)['"]?/i,
+            /with\s*\([^)]*distance\s*=\s*['"]?(\w+)['"]?/i
           );
           if (distanceMatch) {
             const parsedDistance = distanceMatch[1].toLowerCase();
@@ -303,7 +316,7 @@ export class SeekdbClient {
     // Unified embedding function resolution
     const ef = await resolveEmbeddingFunction(
       embeddingFunctionConfig,
-      embeddingFunction,
+      embeddingFunction
     );
 
     return new Collection({
@@ -356,7 +369,7 @@ export class SeekdbClient {
             (dbResult[0] as any)["DATABASE()"] || Object.values(dbResult[0])[0];
           if (dbName) {
             result = await this._internal.execute(
-              `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${COLLECTION_V1_PREFIX}%'`,
+              `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${COLLECTION_V1_PREFIX}%'`
             );
           }
         }
@@ -378,7 +391,8 @@ export class SeekdbClient {
         }
 
         // Double check prefix although SQL filter should handle it
-        const collectionName = CollectionNames.extractCollectionName(tableName) || '';
+        const collectionName =
+          CollectionNames.extractCollectionName(tableName) || "";
 
         // Skip if already added as v2 collection
         if (collectionName && collectionNames.has(collectionName)) {
@@ -451,7 +465,7 @@ export class SeekdbClient {
    * Get or create collection
    */
   async getOrCreateCollection(
-    options: CreateCollectionOptions,
+    options: CreateCollectionOptions
   ): Promise<Collection> {
     if (await this.hasCollection(options.name)) {
       return this.getCollection(options);
@@ -485,7 +499,7 @@ export class SeekdbClient {
             (dbResult[0] as any)["DATABASE()"] || Object.values(dbResult[0])[0];
           if (dbName) {
             result = await this._internal.execute(
-              `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${COLLECTION_V1_PREFIX}%'`,
+              `SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${dbName}' AND TABLE_NAME LIKE '${COLLECTION_V1_PREFIX}%'`
             );
           }
         }
