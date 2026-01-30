@@ -9,7 +9,8 @@ import { SeekdbClient } from "../../../src/client.js";
 import { AdminClient } from "../../../src/factory.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
 import { SeekdbValueError } from "../../../src/errors.js";
-import { generateCollectionName } from "../../test-utils.js";
+import { Database } from "../../../src/database.js";
+import { generateCollectionName, generateDatabaseName } from "../../test-utils.js";
 
 const TEST_CONFIG = getEmbeddedTestConfig("admin-database.test.ts");
 
@@ -101,6 +102,135 @@ describe("Embedded Mode - Admin Database Management", () => {
     expect(list.length).toBe(1);
     expect(list[0].name).toBe("coll_in_new_db");
     await client.close();
+  });
+
+  describe("Admin database API (align with server)", () => {
+    test("list databases with limit", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const limitedDbs = await admin.listDatabases(5);
+      expect(limitedDbs.length).toBeLessThanOrEqual(5);
+      expect(Array.isArray(limitedDbs)).toBe(true);
+      await admin.close();
+    });
+
+    test("list databases with limit and offset", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const offsetDbs = await admin.listDatabases(2, 1);
+      expect(offsetDbs.length).toBeLessThanOrEqual(2);
+      expect(Array.isArray(offsetDbs)).toBe(true);
+      await admin.close();
+    });
+
+    test("database object equals method works correctly", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const testDbName = generateDatabaseName("test_embed_db");
+      await admin.createDatabase(testDbName);
+      const db1 = await admin.getDatabase(testDbName);
+      const db2 = await admin.getDatabase(testDbName);
+      expect(db1.equals(db2)).toBe(true);
+      await admin.deleteDatabase(testDbName);
+      await admin.close();
+    });
+
+    test("database object toString method returns name", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const testDbName = generateDatabaseName("test_embed_db");
+      await admin.createDatabase(testDbName);
+      const db = await admin.getDatabase(testDbName);
+      expect(db.toString()).toBe(testDbName);
+      await admin.deleteDatabase(testDbName);
+      await admin.close();
+    });
+
+    test("list databases with zero limit returns empty array", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const emptyDbs = await admin.listDatabases(0);
+      expect(emptyDbs).toBeDefined();
+      expect(Array.isArray(emptyDbs)).toBe(true);
+      expect(emptyDbs.length).toBe(0);
+      await admin.close();
+    });
+
+    test("list databases with offset beyond available returns empty array", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const allDbs = await admin.listDatabases();
+      const offsetDbs = await admin.listDatabases(10, allDbs.length + 100);
+      expect(offsetDbs).toBeDefined();
+      expect(Array.isArray(offsetDbs)).toBe(true);
+      expect(offsetDbs.length).toBe(0);
+      await admin.close();
+    });
+
+    test("database object properties are correctly set", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const testDbName = generateDatabaseName("test_embed_props");
+      await admin.createDatabase(testDbName);
+      const db = await admin.getDatabase(testDbName);
+      expect(db.name).toBe(testDbName);
+      expect(db).toBeInstanceOf(Database);
+      expect(typeof db.charset).toBe("string");
+      expect(typeof db.collation).toBe("string");
+      await admin.deleteDatabase(testDbName);
+      await admin.close();
+    });
+
+    test("create and delete multiple databases in sequence", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const dbNames = [
+        generateDatabaseName("test_seq_1"),
+        generateDatabaseName("test_seq_2"),
+        generateDatabaseName("test_seq_3"),
+      ];
+      for (const dbName of dbNames) {
+        await admin.createDatabase(dbName);
+        const db = await admin.getDatabase(dbName);
+        expect(db.name).toBe(dbName);
+      }
+      const databases = await admin.listDatabases();
+      const names = databases.map((d) => d.name);
+      for (const dbName of dbNames) {
+        expect(names).toContain(dbName);
+      }
+      for (const dbName of dbNames) {
+        await admin.deleteDatabase(dbName);
+      }
+      const after = await admin.listDatabases();
+      const afterNames = after.map((d) => d.name);
+      for (const dbName of dbNames) {
+        expect(afterNames).not.toContain(dbName);
+      }
+      await admin.close();
+    });
+
+    test("database equals method returns false for different databases", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const name1 = generateDatabaseName("test_embed_a");
+      const name2 = generateDatabaseName("test_embed_b");
+      await admin.createDatabase(name1);
+      await admin.createDatabase(name2);
+      const db1 = await admin.getDatabase(name1);
+      const db2 = await admin.getDatabase(name2);
+      expect(db1.equals(db2)).toBe(false);
+      await admin.deleteDatabase(name1);
+      await admin.deleteDatabase(name2);
+      await admin.close();
+    });
+
+    test("delete database for non-existent is idempotent (no throw)", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const nonExistent = generateDatabaseName("non_existent");
+      await expect(admin.deleteDatabase(nonExistent)).resolves.toBeUndefined();
+      await admin.close();
+    });
+
+    test("create database twice is idempotent (no throw)", async () => {
+      const admin = AdminClient({ path: TEST_CONFIG.path });
+      const testDbName = generateDatabaseName("test_dup");
+      await admin.createDatabase(testDbName);
+      await expect(admin.createDatabase(testDbName)).resolves.toBeUndefined();
+      await admin.deleteDatabase(testDbName);
+      await admin.close();
+    });
   });
 
   describe("Same path, multiple databases", () => {

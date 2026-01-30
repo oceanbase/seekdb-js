@@ -29,12 +29,12 @@ For complete usage, please refer to the official documentation.
 
 ## Installation
 
-- **Server mode**: Deploy seekdb or OceanBase first; see [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/).
-- **Embedded mode**: No server deployment required; use locally after install (requires native addon `@seekdb/js-bindings`).
-
 ```bash
 npm install seekdb
 ```
+
+- **Embedded mode**: No server deployment required; use locally after install. Depends on native addon `@seekdb/js-bindings` (included in the package). Data is stored under the `path` you provide (e.g. `./seekdb.db`).
+- **Server mode**: Deploy seekdb or OceanBase first; see [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/).
 
 ## Quick Start
 
@@ -309,12 +309,14 @@ const collection = await client.createCollection({
 
 ### Database Management
 
-The `SeekdbAdminClient` allows you to manage databases (create, list, delete).
+Use `AdminClient()` for database management. It returns a `SeekdbClient` instance. In **embedded mode** you only pass `path`; no database name is required.
+
+**Server mode**:
 
 ```typescript
-import { SeekdbAdminClient } from "seekdb";
+import { AdminClient } from "seekdb";
 
-const adminClient = new SeekdbAdminClient({
+const admin = AdminClient({
   host: "127.0.0.1",
   port: 2881,
   user: "root",
@@ -323,15 +325,22 @@ const adminClient = new SeekdbAdminClient({
   // tenant: "sys"
 });
 
-// Create a new database
-await adminClient.createDatabase("new_database");
+await admin.createDatabase("new_database");
+const databases = await admin.listDatabases();
+const db = await admin.getDatabase("new_database");
+await admin.deleteDatabase("new_database");
+await admin.close();
+```
 
-// List all databases
-const databases = await adminClient.listDatabases();
+**Embedded mode** (no server):
 
-// Get database info
-const db = await adminClient.getDatabase("new_database");
+```typescript
+import { AdminClient } from "seekdb";
 
-// Delete a database
-await adminClient.deleteDatabase("new_database");
+const admin = AdminClient({ path: "./seekdb.db" });
+await admin.createDatabase("new_database");
+const databases = await admin.listDatabases();
+const db = await admin.getDatabase("new_database");
+await admin.deleteDatabase("new_database");
+await admin.close();
 ```

@@ -50,14 +50,15 @@ npm install seekdb
 
 ## Running Modes
 
-The SDK supports two modes; the constructor arguments to `SeekdbClient` determine which is used:
+The SDK supports two modes; the constructor arguments to `SeekdbClient` determine which is used. For database management (create/list/get/delete database), use `AdminClient()` which returns a `SeekdbClient` instance.
 
 | Mode | Parameter | Description |
 | ---- | --------- | ----------- |
-| **Embedded** | `path` (database file path) | Runs locally with no separate seekdb server; data is stored in a local file. |
+| **Embedded** | `path` (database directory path) | Runs locally with no separate seekdb server; data is stored under the given path (e.g. `./seekdb.db`). Requires native addon `@seekdb/js-bindings`. |
 | **Server** | `host` (and `port`, `user`, `password`, etc.) | Connects to a remote seekdb or OceanBase instance. |
 
-You can also use the factory `Client()`: pass `path` for embedded mode, or `host` for server mode; if neither is provided, embedded mode is tried by default (requires the native addon).
+- **SeekdbClient**: Pass `path` for embedded mode, or `host` (and port, user, password, etc.) for server mode.
+- **AdminClient()**: For admin operations only; pass `path` for embedded or `host` for server. In embedded mode you do not specify a database name.
 
 ## Quick Start
 
@@ -130,27 +131,6 @@ import { SeekdbClient } from "seekdb";
 const client = new SeekdbClient({
   path: "./seekdb.db",  // database file path
   database: "test",
-});
-```
-
-**Using the factory** (mode chosen by parameters):
-
-```typescript
-import { Client } from "seekdb";
-
-// Embedded mode (explicit path)
-const embeddedClient = Client({ path: "/path/to/seekdb.db", database: "test" });
-
-// Embedded mode (default path: seekdb.db in current directory)
-const defaultClient = Client({ database: "test" });
-
-// Server mode
-const serverClient = Client({
-  host: "127.0.0.1",
-  port: 2881,
-  database: "test",
-  user: "root",
-  password: "",
 });
 ```
 
@@ -363,14 +343,14 @@ const collection = await client.createCollection({
 
 ### Database Management
 
-Use `SeekdbAdminClient` or the factory `AdminClient()` for database management. In **server mode** you can create, list, and delete databases; in **embedded mode** the same client manages the local database.
+Use `AdminClient()` for database management. It returns a `SeekdbClient` instance. In **embedded mode** you only pass `path`; no database name is required.
 
 **Server mode**:
 
 ```typescript
-import { SeekdbAdminClient } from "seekdb";
+import { AdminClient } from "seekdb";
 
-const adminClient = new SeekdbAdminClient({
+const admin = AdminClient({
   host: "127.0.0.1",
   port: 2881,
   user: "root",
@@ -378,27 +358,24 @@ const adminClient = new SeekdbAdminClient({
   // OceanBase mode requires tenant: "sys"
 });
 
-await adminClient.createDatabase("new_database");
-const databases = await adminClient.listDatabases();
-const db = await adminClient.getDatabase("new_database");
-await adminClient.deleteDatabase("new_database");
+await admin.createDatabase("new_database");
+const databases = await admin.listDatabases();
+const db = await admin.getDatabase("new_database");
+await admin.deleteDatabase("new_database");
+await admin.close();
 ```
 
-**Using the factory** (embedded vs server chosen by parameters):
+**Embedded mode** (no server):
 
 ```typescript
 import { AdminClient } from "seekdb";
 
-// Server mode
-const admin = AdminClient({
-  host: "127.0.0.1",
-  port: 2881,
-  user: "root",
-  password: "",
-});
-
-// Embedded mode (pass path; returns SeekdbClient for local DB management)
-const localAdmin = AdminClient({ path: "./seekdb.db" });
+const admin = AdminClient({ path: "./seekdb.db" });
+await admin.createDatabase("new_database");
+const databases = await admin.listDatabases();
+const db = await admin.getDatabase("new_database");
+await admin.deleteDatabase("new_database");
+await admin.close();
 ```
 
 ## Examples

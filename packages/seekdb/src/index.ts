@@ -11,8 +11,8 @@ export {
   getEmbeddingFunction,
 } from "./embedding-function.js";
 
-// Factory functions for smart client creation
-export { Client, AdminClient } from "./factory.js";
+// Admin client factory (returns SeekdbClient for admin operations)
+export { AdminClient } from "./factory.js";
 
 export * from "./errors.js";
 export * from "./types.js";
