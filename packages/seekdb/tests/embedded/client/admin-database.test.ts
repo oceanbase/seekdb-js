@@ -84,23 +84,25 @@ describe("Embedded Mode - Admin Database Management", () => {
   });
 
   test("After createDatabase, Client can use the new database", async () => {
+    const dbName = generateDatabaseName("test_use_after_create");
+    const collName = generateCollectionName("coll_in_new_db");
     const admin = AdminClient({ path: TEST_CONFIG.path });
-    await admin.createDatabase("test_use_after_create");
+    await admin.createDatabase(dbName);
     await admin.close();
     const client = new SeekdbClient({
       path: TEST_CONFIG.path,
-      database: "test_use_after_create",
+      database: dbName,
     });
     await client.listCollections();
     expect(client.isConnected()).toBe(true);
     await client.createCollection({
-      name: "coll_in_new_db",
+      name: collName,
       configuration: { dimension: 3, distance: "l2" },
       embeddingFunction: null,
     });
     const list = await client.listCollections();
     expect(list.length).toBe(1);
-    expect(list[0].name).toBe("coll_in_new_db");
+    expect(list[0].name).toBe(collName);
     await client.close();
   });
 
@@ -287,7 +289,6 @@ describe("Embedded Mode - Admin Database Management", () => {
         embeddingFunction: null,
       });
 
-      await new Promise((r) => setTimeout(r, 50));
       const listA = await clientA.listCollections();
       const listB = await clientB.listCollections();
 

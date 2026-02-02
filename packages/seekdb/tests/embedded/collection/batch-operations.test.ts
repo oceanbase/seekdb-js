@@ -36,6 +36,7 @@ describe("Embedded Mode - Batch Operations", () => {
     });
 
     const batchSize = 50;
+    // Embedded mode can be slower under load; use 90s timeout to avoid flakiness
     const ids = Array.from({ length: batchSize }, (_, i) => `id_${i}`);
     const embeddings = Array.from({ length: batchSize }, (_, i) => [
       i * 0.1,
