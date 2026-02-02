@@ -87,8 +87,7 @@ jobs:
 
       - name: Build bindings (Linux)
         working-directory: packages/bindings
-        run: |
-          node-gyp configure && node-gyp build
+        run: pnpm run build
 
       - name: Pack artifact (Linux)
         working-directory: packages/bindings/pkgs/${{ matrix.pkg_dir }}
@@ -133,8 +132,7 @@ jobs:
 
       - name: Build bindings (macOS)
         working-directory: packages/bindings
-        run: |
-          node-gyp configure && node-gyp build
+        run: pnpm run build
 
       - name: Pack artifact (macOS)
         working-directory: packages/bindings/pkgs/${{ matrix.pkg_dir }}
