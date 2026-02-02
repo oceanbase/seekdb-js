@@ -5,6 +5,7 @@ pkgs/**/*.so
 pkgs/**/*.so.*
 pkgs/**/*.dylib
 pkgs/**/*.dll
+pkgs/**/libs
 test/tsconfig.tsbuildinfo
 *Sigs.json
 __pycache__

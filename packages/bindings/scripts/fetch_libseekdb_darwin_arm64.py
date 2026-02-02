@@ -1,11 +1,10 @@
 import os
+
 from fetch_libseekdb import fetch_libseekdb
+from libseekdb_url_config import get_zip_url
 
-zip_url = "https://github.com/oceanbase/seekdb/releases/download/v1.1.0/libseekdb-darwin-arm64.zip"
+ZIP_NAME = "libseekdb-darwin-arm64.zip"
+zip_url = get_zip_url(ZIP_NAME)
 output_dir = os.path.join(os.path.dirname(__file__), "..", "libseekdb")
-files = [
-  "seekdb.h",
-  "libseekdb.dylib",
-]
 
-fetch_libseekdb(zip_url, output_dir, files)
+fetch_libseekdb(zip_url, output_dir)
