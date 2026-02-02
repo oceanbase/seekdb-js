@@ -150,6 +150,10 @@ export class TestDefaultEmbeddingFunction implements EmbeddingFunction {
   getConfig(): EmbeddingConfig {
     return { dimension: 384 };
   }
+
+  static buildFromConfig(): EmbeddingFunction {
+    return new TestDefaultEmbeddingFunction();
+  }
 }
 
 /**
