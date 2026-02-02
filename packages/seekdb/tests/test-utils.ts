@@ -22,7 +22,10 @@ function getTestConfig() {
 
 // Test configuration from environment variables
 export const TEST_CONFIG = getTestConfig();
-export const TEST_CONFIG_OB = { ...TEST_CONFIG, tenant: process.env.SERVER_TENANT || "sys" };
+export const TEST_CONFIG_OB = {
+  ...TEST_CONFIG,
+  tenant: process.env.SERVER_TENANT || "sys",
+};
 
 /**
  * Generate a unique collection name for testing
@@ -45,7 +48,7 @@ export function createTestEmbeddingFunction(dimension: number) {
   const fn = async (input: string | string[]): Promise<number[][]> => {
     const texts = Array.isArray(input) ? input : [input];
     return texts.map(() =>
-      Array.from({ length: dimension }, () => Math.random()),
+      Array.from({ length: dimension }, () => Math.random())
     );
   };
   Object.defineProperty(fn, "name", {
@@ -160,4 +163,3 @@ export class MockEmbeddingFunction implements EmbeddingFunction {
     return new MockEmbeddingFunction(config);
   }
 }
-

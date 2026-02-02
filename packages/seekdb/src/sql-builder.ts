@@ -35,7 +35,7 @@ export class SQLBuilder {
     distance: DistanceMetric,
     comment?: string,
     collectionId?: string,
-    fulltextConfig?: FulltextAnalyzerConfig,
+    fulltextConfig?: FulltextAnalyzerConfig
   ): string {
     const tableName = CollectionNames.tableName(name, collectionId);
     const commentClause = comment
@@ -127,9 +127,17 @@ export class SQLBuilder {
    */
   static buildInsert(
     context: CollectionContext,
-    data: { ids: string[]; documents?: (string | null)[]; embeddings: number[][]; metadatas?: (Metadata | null)[] },
+    data: {
+      ids: string[];
+      documents?: (string | null)[];
+      embeddings: number[][];
+      metadatas?: (Metadata | null)[];
+    }
   ): SQLResult {
-    const tableName = CollectionNames.tableName(context.name, context.collectionId);
+    const tableName = CollectionNames.tableName(
+      context.name,
+      context.collectionId
+    );
     const valuesList: string[] = [];
     const params: unknown[] = [];
     const numItems = data.ids.length;
@@ -145,7 +153,7 @@ export class SQLBuilder {
         id,
         doc,
         meta ? serializeMetadata(meta) : null,
-        vectorToSqlString(vec),
+        vectorToSqlString(vec)
       );
     }
 
@@ -165,9 +173,12 @@ export class SQLBuilder {
       limit?: number;
       offset?: number;
       include?: string[];
-    },
+    }
   ): SQLResult {
-    const tableName = CollectionNames.tableName(context.name, context.collectionId);
+    const tableName = CollectionNames.tableName(
+      context.name,
+      context.collectionId
+    );
     const { ids, where, whereDocument, limit, offset, include } = options;
     const params: unknown[] = [];
 
@@ -194,7 +205,7 @@ export class SQLBuilder {
       // Skip empty ids array to avoid invalid SQL (WHERE ())
       if (idsArray.length > 0) {
         const idConditions = idsArray.map(
-          () => `${CollectionFieldNames.ID} = CAST(? AS BINARY)`,
+          () => `${CollectionFieldNames.ID} = CAST(? AS BINARY)`
         );
         whereClauses.push(`(${idConditions.join(" OR ")})`);
         params.push(...idsArray);
@@ -204,7 +215,7 @@ export class SQLBuilder {
     if (where) {
       const metaFilter = FilterBuilder.buildMetadataFilter(
         where,
-        CollectionFieldNames.METADATA,
+        CollectionFieldNames.METADATA
       );
       if (metaFilter.clause && metaFilter.clause !== "1=1") {
         whereClauses.push(`(${metaFilter.clause})`);
@@ -215,7 +226,7 @@ export class SQLBuilder {
     if (whereDocument) {
       const docFilter = FilterBuilder.buildDocumentFilter(
         whereDocument,
-        CollectionFieldNames.DOCUMENT,
+        CollectionFieldNames.DOCUMENT
       );
       if (docFilter.clause && docFilter.clause !== "1=1") {
         whereClauses.push(`(${docFilter.clause})`);
@@ -243,7 +254,10 @@ export class SQLBuilder {
    * Build COUNT SQL
    */
   static buildCount(context: CollectionContext): string {
-    const tableName = CollectionNames.tableName(context.name, context.collectionId);
+    const tableName = CollectionNames.tableName(
+      context.name,
+      context.collectionId
+    );
     return `SELECT COUNT(*) as cnt FROM \`${tableName}\``;
   }
 
@@ -259,9 +273,12 @@ export class SQLBuilder {
         embedding?: number[];
         metadata?: Metadata;
       };
-    },
+    }
   ): SQLResult {
-    const tableName = CollectionNames.tableName(context.name, context.collectionId);
+    const tableName = CollectionNames.tableName(
+      context.name,
+      context.collectionId
+    );
     const { id, updates } = data;
     const setClauses: string[] = [];
     const params: unknown[] = [];
@@ -296,9 +313,12 @@ export class SQLBuilder {
       ids?: string[];
       where?: Where;
       whereDocument?: WhereDocument;
-    },
+    }
   ): SQLResult {
-    const tableName = CollectionNames.tableName(context.name, context.collectionId);
+    const tableName = CollectionNames.tableName(
+      context.name,
+      context.collectionId
+    );
     const { ids, where, whereDocument } = options;
     const whereClauses: string[] = [];
     const params: unknown[] = [];
@@ -306,7 +326,7 @@ export class SQLBuilder {
     if (ids) {
       const idsArray = Array.isArray(ids) ? ids : [ids];
       const idConditions = idsArray.map(
-        () => `${CollectionFieldNames.ID} = CAST(? AS BINARY)`,
+        () => `${CollectionFieldNames.ID} = CAST(? AS BINARY)`
       );
       whereClauses.push(`(${idConditions.join(" OR ")})`);
       params.push(...idsArray);
@@ -315,7 +335,7 @@ export class SQLBuilder {
     if (where) {
       const metaFilter = FilterBuilder.buildMetadataFilter(
         where,
-        CollectionFieldNames.METADATA,
+        CollectionFieldNames.METADATA
       );
       if (metaFilter.clause && metaFilter.clause !== "1=1") {
         whereClauses.push(`(${metaFilter.clause})`);
@@ -326,7 +346,7 @@ export class SQLBuilder {
     if (whereDocument) {
       const docFilter = FilterBuilder.buildDocumentFilter(
         whereDocument,
-        CollectionFieldNames.DOCUMENT,
+        CollectionFieldNames.DOCUMENT
       );
       if (docFilter.clause && docFilter.clause !== "1=1") {
         whereClauses.push(`(${docFilter.clause})`);
@@ -352,9 +372,12 @@ export class SQLBuilder {
       include?: string[];
       distance?: DistanceMetric;
       approximate?: boolean;
-    },
+    }
   ): SQLResult {
-    const tableName = CollectionNames.tableName(context.name, context.collectionId);
+    const tableName = CollectionNames.tableName(
+      context.name,
+      context.collectionId
+    );
     const {
       where,
       whereDocument,
@@ -392,7 +415,7 @@ export class SQLBuilder {
     if (where) {
       const metaFilter = FilterBuilder.buildMetadataFilter(
         where,
-        CollectionFieldNames.METADATA,
+        CollectionFieldNames.METADATA
       );
       if (metaFilter.clause && metaFilter.clause !== "1=1") {
         whereClauses.push(`(${metaFilter.clause})`);
@@ -403,7 +426,7 @@ export class SQLBuilder {
     if (whereDocument) {
       const docFilter = FilterBuilder.buildDocumentFilter(
         whereDocument,
-        CollectionFieldNames.DOCUMENT,
+        CollectionFieldNames.DOCUMENT
       );
       if (docFilter.clause && docFilter.clause !== "1=1") {
         whereClauses.push(`(${docFilter.clause})`);

@@ -17,7 +17,7 @@ export function toArray<T>(input: T | T[]): T[] {
  * Normalize embeddings to 2D array
  */
 export function normalizeEmbeddings(
-  embeddings: number[] | number[][],
+  embeddings: number[] | number[][]
 ): number[][] {
   if (embeddings.length === 0) {
     return [];
@@ -52,7 +52,7 @@ export function validateRecordSetLengthConsistency(recordSet: {
         embeddings: recordSet.embeddings?.length,
         metadatas: recordSet.metadatas?.length,
         documents: recordSet.documents?.length,
-      })}`,
+      })}`
     );
   }
 }
@@ -83,19 +83,21 @@ const COLLECTION_NAME_PATTERN = /^[A-Za-z0-9_]+$/;
 
 /**
  * Validate collection name against allowed charset and length constraints.
- * 
+ *
  * Rules:
  * - Type must be string
  * - Length between 1 and MAX_COLLECTION_NAME_LENGTH (512)
  * - Only [a-zA-Z0-9_]
- * 
+ *
  * @param name - Collection name to validate
  * @throws TypeError if name is not a string
  * @throws SeekdbValueError if name is empty, too long, or contains invalid characters
  */
 export function validateCollectionName(name: unknown): asserts name is string {
   if (typeof name !== "string") {
-    throw new SeekdbValueError(`Collection name must be a string, got ${typeof name}`,);
+    throw new SeekdbValueError(
+      `Collection name must be a string, got ${typeof name}`
+    );
   }
 
   if (name.length === 0) {
@@ -104,14 +106,14 @@ export function validateCollectionName(name: unknown): asserts name is string {
 
   if (name.length > MAX_COLLECTION_NAME_LENGTH) {
     throw new SeekdbValueError(
-      `Collection name too long: ${name.length} characters; maximum allowed is ${MAX_COLLECTION_NAME_LENGTH}`,
+      `Collection name too long: ${name.length} characters; maximum allowed is ${MAX_COLLECTION_NAME_LENGTH}`
     );
   }
 
   if (!COLLECTION_NAME_PATTERN.test(name)) {
     throw new SeekdbValueError(
       "Collection name contains invalid characters. " +
-      "Only letters, digits, and underscore are allowed: [a-zA-Z0-9_]",
+        "Only letters, digits, and underscore are allowed: [a-zA-Z0-9_]"
     );
   }
 }
@@ -251,12 +253,12 @@ export const COLLECTION_V2_PREFIX = "c$v2$";
  * 2. If customEmbeddingFunction is provided (not undefined), use it
  * 3. If embeddingFunctionMetadata exists, use buildFromConfig to instantiate from snake_case config
  * 4. If both are undefined, use default embedding function
- * 
+ *
  * Also validates dimension compatibility between metadata and props embedding functions
  */
 export async function resolveEmbeddingFunction(
   embeddingFunctionMetadata?: { name: string; properties: EmbeddingConfig },
-  customEmbeddingFunction?: EmbeddingFunction | null,
+  customEmbeddingFunction?: EmbeddingFunction | null
 ): Promise<EmbeddingFunction | undefined> {
   // If customEmbeddingFunction is explicitly null, return undefined
   if (customEmbeddingFunction === null) {
@@ -270,7 +272,7 @@ export async function resolveEmbeddingFunction(
   if (embeddingFunctionMetadata) {
     return await getEmbeddingFunction(
       embeddingFunctionMetadata.name,
-      embeddingFunctionMetadata.properties,
+      embeddingFunctionMetadata.properties
     );
   }
 

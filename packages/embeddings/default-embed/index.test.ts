@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { DefaultEmbeddingFunction, DefaultEmbeddingFunctionConfig, DType } from "./index";
+import {
+  DefaultEmbeddingFunction,
+  DefaultEmbeddingFunctionConfig,
+  DType,
+} from "./index";
 
 // Mock the transformers pipeline
 vi.mock("@huggingface/transformers", () => {

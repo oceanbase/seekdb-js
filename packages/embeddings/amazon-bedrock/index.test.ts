@@ -62,7 +62,8 @@ describe("AmazonBedrockEmbeddingFunction", () => {
       model_id: "amazon.titan-embed-text-v2:0",
     };
 
-    const embedder = AmazonBedrockEmbeddingFunction.buildFromConfig(snakeCaseConfig);
+    const embedder =
+      AmazonBedrockEmbeddingFunction.buildFromConfig(snakeCaseConfig);
 
     expect(embedder).toBeInstanceOf(AmazonBedrockEmbeddingFunction);
     expect(embedder.name).toBe("bedrock");

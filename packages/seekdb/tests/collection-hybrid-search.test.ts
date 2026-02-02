@@ -28,7 +28,7 @@ async function runHybridSearchTest(testFn: () => Promise<void>): Promise<void> {
   } catch (error: any) {
     if (isHybridSearchNotSupported(error)) {
       console.warn(
-        "Skipping test: DBMS_HYBRID_SEARCH not supported on this database version",
+        "Skipping test: DBMS_HYBRID_SEARCH not supported on this database version"
       );
       return;
     }

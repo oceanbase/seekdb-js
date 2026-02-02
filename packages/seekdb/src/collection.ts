@@ -7,7 +7,12 @@ import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError } from "./errors.js";
 import { CollectionFieldNames, CollectionNames } from "./utils.js";
 import { FilterBuilder, SearchFilterCondition } from "./filters.js";
-import { CollectionMetadata, deleteCollectionMetadata, getCollectionMetadata, insertCollectionMetadata } from "./metadata-manager.js";
+import {
+  CollectionMetadata,
+  deleteCollectionMetadata,
+  getCollectionMetadata,
+  insertCollectionMetadata,
+} from "./metadata-manager.js";
 import type {
   EmbeddingFunction,
   Metadata,
@@ -80,7 +85,7 @@ export class Collection {
   private validateDynamicSql(sql: string): void {
     if (!sql || typeof sql !== "string") {
       throw new SeekdbValueError(
-        "Invalid SQL query: must be a non-empty string",
+        "Invalid SQL query: must be a non-empty string"
       );
     }
 
@@ -118,7 +123,7 @@ export class Collection {
       "INTO OUTFILE",
       "INTO DUMPFILE",
       "CALL",
-      "LOAD"
+      "LOAD",
     ];
 
     for (const keyword of dangerousKeywords) {
@@ -126,7 +131,7 @@ export class Collection {
       const regex = new RegExp(`\\b${keyword}\\b`, "i");
       if (regex.test(cleanSql)) {
         throw new SeekdbValueError(
-          `Dangerous SQL keyword detected: ${keyword}`,
+          `Dangerous SQL keyword detected: ${keyword}`
         );
       }
     }
@@ -168,14 +173,14 @@ export class Collection {
         embeddingsArray = await this.embeddingFunction.generate(documentsArray);
       } else {
         throw new SeekdbValueError(
-          "Documents provided but no embeddings and no embedding function",
+          "Documents provided but no embeddings and no embedding function"
         );
       }
     }
 
     if (!embeddingsArray) {
       throw new SeekdbValueError(
-        "Either embeddings or documents must be provided",
+        "Either embeddings or documents must be provided"
       );
     }
 
@@ -185,7 +190,7 @@ export class Collection {
       for (let i = 0; i < embeddingsArray.length; i++) {
         if (embeddingsArray[i].length !== dimension) {
           throw new SeekdbValueError(
-            `Dimension mismatch at index ${i}. Expected ${dimension}, got ${embeddingsArray[i].length}`,
+            `Dimension mismatch at index ${i}. Expected ${dimension}, got ${embeddingsArray[i].length}`
           );
         }
       }
@@ -234,7 +239,7 @@ export class Collection {
     // Validate that at least one field is being updated
     if (!embeddingsArray && !metadatasArray && !documentsArray) {
       throw new SeekdbValueError(
-        "At least one of embeddings, metadatas, or documents must be provided",
+        "At least one of embeddings, metadatas, or documents must be provided"
       );
     }
 
@@ -272,7 +277,10 @@ export class Collection {
         continue;
       }
 
-      const { sql, params } = SQLBuilder.buildUpdate(this.context, { id, updates });
+      const { sql, params } = SQLBuilder.buildUpdate(this.context, {
+        id,
+        updates,
+      });
       await this.#client.execute(sql, params);
     }
   }
@@ -309,7 +317,7 @@ export class Collection {
     // Validate that at least one field is provided
     if (!embeddingsArray && !metadatasArray && !documentsArray) {
       throw new SeekdbValueError(
-        "At least one of embeddings, metadatas, or documents must be provided",
+        "At least one of embeddings, metadatas, or documents must be provided"
       );
     }
 
@@ -346,7 +354,10 @@ export class Collection {
         }
 
         if (Object.keys(updates).length > 0) {
-          const { sql, params } = SQLBuilder.buildUpdate(this.context, { id, updates });
+          const { sql, params } = SQLBuilder.buildUpdate(this.context, {
+            id,
+            updates,
+          });
           await this.#client.execute(sql, params);
         }
       } else {
@@ -370,7 +381,7 @@ export class Collection {
     // Validate at least one filter
     if (!ids && !where && !whereDocument) {
       throw new SeekdbValueError(
-        "At least one of ids, where, or whereDocument must be provided",
+        "At least one of ids, where, or whereDocument must be provided"
       );
     }
 
@@ -388,7 +399,7 @@ export class Collection {
    * Get data from collection
    */
   async get<TMeta extends Metadata = Metadata>(
-    options: GetOptions = {},
+    options: GetOptions = {}
   ): Promise<GetResult<TMeta>> {
     const {
       ids: filterIds,
@@ -432,14 +443,14 @@ export class Collection {
         if (!include || include.includes("metadatas")) {
           const meta = row[CollectionFieldNames.METADATA];
           resultMetadatas.push(
-            meta ? (typeof meta === "string" ? JSON.parse(meta) : meta) : null,
+            meta ? (typeof meta === "string" ? JSON.parse(meta) : meta) : null
           );
         }
 
         if (!include || include.includes("embeddings")) {
           const vec = row[CollectionFieldNames.EMBEDDING];
           resultEmbeddings.push(
-            vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null,
+            vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null
           );
         }
       }
@@ -464,7 +475,7 @@ export class Collection {
    * Query collection with vector similarity search
    */
   async query<TMeta extends Metadata = Metadata>(
-    options: QueryOptions,
+    options: QueryOptions
   ): Promise<QueryResult<TMeta>> {
     let {
       queryEmbeddings,
@@ -488,12 +499,12 @@ export class Collection {
         queryEmbeddings = await this.embeddingFunction.generate(textsArray);
       } else {
         throw new SeekdbValueError(
-          "queryTexts provided but no queryEmbeddings and no embedding function",
+          "queryTexts provided but no queryEmbeddings and no embedding function"
         );
       }
     } else {
       throw new SeekdbValueError(
-        "Either queryEmbeddings or queryTexts must be provided",
+        "Either queryEmbeddings or queryTexts must be provided"
       );
     }
 
@@ -521,7 +532,7 @@ export class Collection {
           include: include as string[] | undefined,
           distance: distance ?? this.distance,
           approximate,
-        },
+        }
       );
 
       const rows = await this.#client.execute(sql, params);
@@ -543,18 +554,14 @@ export class Collection {
           if (!include || include.includes("metadatas")) {
             const meta = row[CollectionFieldNames.METADATA];
             queryMetadatas.push(
-              meta
-                ? typeof meta === "string"
-                  ? JSON.parse(meta)
-                  : meta
-                : null,
+              meta ? (typeof meta === "string" ? JSON.parse(meta) : meta) : null
             );
           }
 
           if (include?.includes("embeddings")) {
             const vec = row[CollectionFieldNames.EMBEDDING];
             queryEmbeddings.push(
-              vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null,
+              vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null
             );
           }
 
@@ -600,7 +607,7 @@ export class Collection {
    * @private
    */
   private async _buildKnnExpression(
-    knn: HybridSearchOptions["knn"],
+    knn: HybridSearchOptions["knn"]
   ): Promise<any | null> {
     if (!knn) {
       return null;
@@ -642,24 +649,24 @@ export class Collection {
           }
         } catch (error) {
           throw new SeekdbValueError(
-            `Failed to generate embeddings from queryTexts: ${error}`,
+            `Failed to generate embeddings from queryTexts: ${error}`
           );
         }
       } else {
         throw new SeekdbValueError(
           "knn.queryTexts provided but no knn.queryEmbeddings and no embedding function. " +
-          "Either:\n" +
-          "  1. Provide knn.queryEmbeddings directly, or\n" +
-          "  2. Provide embedding function to auto-generate embeddings from knn.queryTexts.",
+            "Either:\n" +
+            "  1. Provide knn.queryEmbeddings directly, or\n" +
+            "  2. Provide embedding function to auto-generate embeddings from knn.queryTexts."
         );
       }
     } else {
       // Neither queryEmbeddings nor queryTexts provided, raise an error
       throw new SeekdbValueError(
         "knn requires either queryEmbeddings or queryTexts. " +
-        "Please provide either:\n" +
-        "  1. knn.queryEmbeddings directly, or\n" +
-        "  2. knn.queryTexts with embedding function to generate embeddings.",
+          "Please provide either:\n" +
+          "  1. knn.queryEmbeddings directly, or\n" +
+          "  2. knn.queryTexts with embedding function to generate embeddings."
       );
     }
 
@@ -689,7 +696,7 @@ export class Collection {
    * Hybrid search (full-text + vector)
    */
   async hybridSearch<TMeta extends Metadata = Metadata>(
-    options: HybridSearchOptions,
+    options: HybridSearchOptions
   ): Promise<QueryResult<TMeta>> {
     const { query, knn, rank, nResults = 10, include } = options;
 
@@ -784,14 +791,14 @@ export class Collection {
         if (!include || include.includes("metadatas")) {
           const meta = row[CollectionFieldNames.METADATA];
           metadatas.push(
-            meta ? (typeof meta === "string" ? JSON.parse(meta) : meta) : null,
+            meta ? (typeof meta === "string" ? JSON.parse(meta) : meta) : null
           );
         }
 
         if (include?.includes("embeddings")) {
           const vec = row[CollectionFieldNames.EMBEDDING];
           embeddings.push(
-            vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null,
+            vec ? (typeof vec === "string" ? JSON.parse(vec) : vec) : null
           );
         }
 
@@ -835,16 +842,16 @@ export class Collection {
 
     if (await this.client.hasCollection(targetName)) {
       throw new SeekdbValueError(
-        `Collection '${targetName}' already exists. Please use a different name.`,
+        `Collection '${targetName}' already exists. Please use a different name.`
       );
     }
 
-    let targetCollectionId: string
-    let sourceSettings: CollectionMetadata['settings']
-    let targetCollectionName = ''
+    let targetCollectionId: string;
+    let sourceSettings: CollectionMetadata["settings"];
+    let targetCollectionName = "";
 
     const sourceMetadata = await getCollectionMetadata(this.#client, this.name);
-    if (sourceMetadata) sourceSettings = sourceMetadata.settings
+    if (sourceMetadata) sourceSettings = sourceMetadata.settings;
     else {
       // if source collection has no metadata, it's a v1 collection
       sourceSettings = {
@@ -852,18 +859,30 @@ export class Collection {
           dimension: this.dimension,
           distance: this.distance,
         },
-        embeddingFunction: this.embeddingFunction ? {
-          name: this.embeddingFunction.name,
-          properties: this.embeddingFunction.getConfig()
-        } : undefined
-      }
+        embeddingFunction: this.embeddingFunction
+          ? {
+              name: this.embeddingFunction.name,
+              properties: this.embeddingFunction.getConfig(),
+            }
+          : undefined,
+      };
     }
 
     try {
       // coyp metadata and get collection_id
-      targetCollectionId = await insertCollectionMetadata(this.#client, targetName, sourceSettings);
-      targetCollectionName = CollectionNames.tableName(targetName, targetCollectionId);
-      const sourceTableName = CollectionNames.tableName(this.name, this.collectionId);
+      targetCollectionId = await insertCollectionMetadata(
+        this.#client,
+        targetName,
+        sourceSettings
+      );
+      targetCollectionName = CollectionNames.tableName(
+        targetName,
+        targetCollectionId
+      );
+      const sourceTableName = CollectionNames.tableName(
+        this.name,
+        this.collectionId
+      );
 
       const sql = SQLBuilder.buildFork(sourceTableName, targetCollectionName);
       await this.#client.execute(sql);
@@ -1090,7 +1109,7 @@ export class Collection {
    * ```
    */
   async peek<TMeta extends Metadata = Metadata>(
-    limit: number = 10,
+    limit: number = 10
   ): Promise<GetResult<TMeta>> {
     return this.get<TMeta>({
       limit,

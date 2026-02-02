@@ -12,7 +12,7 @@ export const toSnake = (input: any): any => {
       Object.entries(input).map(([key, value]) => [
         convertToSnake(key),
         toSnake(value),
-      ]),
+      ])
     );
   }
 
