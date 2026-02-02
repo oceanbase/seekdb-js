@@ -67,7 +67,6 @@ jobs:
 
   test:
     if: github.repository == 'oceanbase/seekdb-js'
-    needs: [lint, build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

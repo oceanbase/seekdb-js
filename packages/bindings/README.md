@@ -12,38 +12,52 @@ The native addon is structured in three layers:
    - Provides low-level bindings for database operations
 
 2. **JavaScript Wrapper** (`pkgs/js-bindings/seekdb.js`)
-   - Platform-specific loading of `.node` files
-   - Supports Linux (x64/arm64) and macOS (x64/arm64)
+   - Loads native `.node` from `SEEKDB_BINDINGS_PATH` or from S3-downloaded zip; local dev can use sibling dirs after build
+   - Supports Linux (x64/arm64) and macOS (arm64 only). **Native bindings are not published to npm**; they are built by CI and hosted on S3.
 
 3. **TypeScript API Layer** (`../seekdb/src/client-embedded.ts`)
    - High-level TypeScript API
    - Uses the native bindings through `@seekdb/js-bindings`
    - Provides the same interface as remote server mode
 
-## Building
+## Distribution (S3, not npm)
 
-To build the native addon:
+Native bindings are **not** published to npm. They are built by [`.github/workflows/build-js-bindings.yml`](../../.github/workflows/build-js-bindings.yml) and uploaded to S3:
+
+- **Base URL**: `s3://oceanbase-seekdb-builds/seekdb-js-bindings/all_commits/<commit_sha>/`
+- **Zips**: `seekdb-js-bindings-linux-x64.zip`, `seekdb-js-bindings-linux-arm64.zip`, `seekdb-js-bindings-darwin-arm64.zip`
+
+**Usage**: Download the zip for your platform, extract it to a directory, and set the environment variable:
+
+```bash
+export SEEKDB_BINDINGS_PATH=/path/to/extracted/dir   # dir must contain seekdb.node and libseekdb.so/dylib
+```
+
+The loader package **`pkgs/js-bindings`** is the only package in the repo; it resolves the native addon from `SEEKDB_BINDINGS_PATH` or, for local development, from sibling dirs `pkgs/js-bindings-<platform>-<arch>/` after a local build.
+
+## Building (CI / local dev)
+
+To build the native addon locally (e.g. for development):
 
 ```bash
 cd bindings
-npm install
-npm run build
+pnpm install
+pnpm run build
 ```
 
 This will:
 1. Fetch the seekdb library for your platform (via Python scripts)
 2. Compile the C++ bindings using node-gyp
-3. Copy the compiled `.node` file and library to platform-specific packages
+3. Copy the compiled `.node` file and library into `pkgs/js-bindings-<platform>-<arch>/` (build output only; these dirs are not published to npm)
 
 ## Platform Support
 
 The bindings support the following platforms:
 - Linux x64
 - Linux arm64
-- macOS x64
-- macOS arm64
+- macOS arm64 (Apple Silicon)
 
-Note: Windows is not currently supported.
+Note: macOS x64 and Windows are not currently supported.
 
 ## C API Integration
 
@@ -69,12 +83,7 @@ Note: C API types (`SeekdbHandle`, `SeekdbResult`, `SeekdbRow`) from seekdb.h us
 
 ### Package Structure
 
-The bindings are organized as follows:
-- `@seekdb/js-bindings` - Main package that loads platform-specific bindings
-- `@seekdb/js-bindings-linux-x64` - Linux x64 binaries
-- `@seekdb/js-bindings-linux-arm64` - Linux arm64 binaries
-- `@seekdb/js-bindings-darwin-x64` - macOS x64 binaries
-- `@seekdb/js-bindings-darwin-arm64` - macOS arm64 binaries
+- **`@seekdb/js-bindings`** (only package in repo) – Loader that loads the native addon from `SEEKDB_BINDINGS_PATH` or from sibling build output dirs. Native binaries for each platform are built by CI and hosted on S3 (not npm); users download the zip and set `SEEKDB_BINDINGS_PATH`.
 
 ### TODO
 

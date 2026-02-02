@@ -1,0 +1,200 @@
+# Build, pack and upload seekdb JS bindings for multiple platforms to S3
+#
+# Platforms: linux-x64, linux-arm64, darwin-arm64 (macOS x64 not supported)
+# Artifacts: seekdb-js-bindings-<platform>.zip per platform; upload to s3://oceanbase-seekdb-builds/seekdb-js-bindings/
+#
+name: Build JS bindings
+run-name: Build JS bindings for ${{ github.sha }}
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - "*.*.x"
+      - "integration/*"
+    paths-ignore:
+      - "!.github/workflows/build-js-bindings*"
+      - ".github/**"
+      - "*.md"
+      - "LICENSE"
+      - "CODEOWNERS"
+      - "docs/**"
+      - "packages/seekdb/**"
+      - "packages/embeddings/**"
+      - "examples/**"
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - ".github/**"
+      - "!.github/workflows/build-js-bindings*"
+      - "*.md"
+      - "LICENSE"
+      - "CODEOWNERS"
+      - "docs/**"
+      - "packages/seekdb/**"
+      - "packages/embeddings/**"
+      - "examples/**"
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+  BUCKET_NAME: ${{ vars.AWS_S3_BUCKET || 'oceanbase-seekdb-builds' }}
+  DESTINATION_TARGET_PATH: ${{ vars.SEEKDB_JS_BINDINGS_S3_PATH || format('s3://oceanbase-seekdb-builds/seekdb-js-bindings/all_commits/{0}', github.sha) }}
+  S3_BUCKET: ${{ vars.AWS_S3_BUCKET || 'oceanbase-seekdb-builds' }}
+  S3_PREFIX: seekdb-js-bindings/all_commits/${{ github.sha }}
+
+jobs:
+  # ---------- Build JS bindings on Linux ----------
+  build-linux:
+    name: Build JS bindings (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            runner: ubuntu-22.04
+            artifact_name: seekdb-js-bindings-linux-x64
+            pkg_dir: js-bindings-linux-x64
+          - platform: linux-arm64
+            runner: ubuntu-22.04-arm
+            artifact_name: seekdb-js-bindings-linux-arm64
+            pkg_dir: js-bindings-linux-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Setup Python (Linux)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build bindings (Linux)
+        working-directory: packages/bindings
+        run: |
+          node-gyp configure && node-gyp build
+
+      - name: Pack artifact (Linux)
+        working-directory: packages/bindings/pkgs/${{ matrix.pkg_dir }}
+        run: zip -r ../../../../${{ matrix.artifact_name }}.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}.zip
+
+  # ---------- Build JS bindings on macOS ----------
+  build-macos:
+    name: Build JS bindings (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: darwin-arm64
+            runner: macos-14
+            artifact_name: seekdb-js-bindings-darwin-arm64
+            pkg_dir: js-bindings-darwin-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build bindings (macOS)
+        working-directory: packages/bindings
+        run: |
+          node-gyp configure && node-gyp build
+
+      - name: Pack artifact (macOS)
+        working-directory: packages/bindings/pkgs/${{ matrix.pkg_dir }}
+        run: zip -r ../../../../${{ matrix.artifact_name }}.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}.zip
+
+  # ---------- Collect artifacts and upload to S3 ----------
+  release-artifacts:
+    name: Collect artifacts and upload to S3
+    runs-on: ubuntu-22.04
+    needs:
+      - build-linux
+      - build-macos
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: List all artifacts
+        run: |
+          echo "=== All artifacts ==="
+          find release-artifacts -type f | sort
+
+      - name: Upload combined artifact (for workflow download)
+        uses: actions/upload-artifact@v4
+        with:
+          name: seekdb-js-bindings-all-platforms
+          path: release-artifacts/
+
+      - name: Configure AWS credentials
+        if: env.DESTINATION_TARGET_PATH != '' || env.S3_BUCKET != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload to S3
+        if: env.DESTINATION_TARGET_PATH != '' || env.S3_BUCKET != ''
+        run: |
+          set -e
+          if [ -n "${{ env.DESTINATION_TARGET_PATH }}" ]; then
+            S3_TARGET="${{ env.DESTINATION_TARGET_PATH }}"
+          else
+            S3_TARGET="s3://${{ env.S3_BUCKET }}/${{ env.S3_PREFIX }}/"
+          fi
+          [ "${S3_TARGET: -1}" != "/" ] && S3_TARGET="${S3_TARGET}/"
+          echo "Uploading to $S3_TARGET"
+          aws s3 sync release-artifacts/ "$S3_TARGET" --exclude "*" --include "*.zip" --no-progress
+          echo "Uploaded:"
+          aws s3 ls "$S3_TARGET" --recursive
+          echo "Done."
+        continue-on-error: true

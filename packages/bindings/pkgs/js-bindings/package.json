@@ -10,12 +10,6 @@
       "default": "./seekdb.js"
     }
   },
-  "optionalDependencies": {
-    "@seekdb/js-bindings-darwin-arm64": "workspace:*",
-    "@seekdb/js-bindings-darwin-x64": "workspace:*",
-    "@seekdb/js-bindings-linux-arm64": "workspace:*",
-    "@seekdb/js-bindings-linux-x64": "workspace:*"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/oceanbase/seekdb-js.git"

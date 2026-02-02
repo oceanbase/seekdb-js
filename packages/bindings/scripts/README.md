@@ -31,10 +31,9 @@ These scripts download libseekdb files for specific platforms. They are automati
 
 - `fetch_libseekdb_linux_x64.py` - Linux x64
 - `fetch_libseekdb_linux_arm64.py` - Linux arm64
-- `fetch_libseekdb_darwin_x64.py` - macOS x64 (**not supported yet**; prints a warning when downloading)
-- `fetch_libseekdb_darwin_arm64.py` - macOS arm64
+- `fetch_libseekdb_darwin_arm64.py` - macOS arm64 (Apple Silicon)
 
-Note: Windows is not currently supported.
+Note: Windows and macOS x64 (Intel Silicon) is not currently supported.
 
 **Manual usage (if needed):**
 

@@ -59,28 +59,7 @@ importers:
         specifier: ^5.0.10
         version: 5.0.10
 
-  packages/bindings/pkgs/js-bindings:
-    optionalDependencies:
-      '@seekdb/js-bindings-darwin-arm64':
-        specifier: workspace:*
-        version: link:../js-bindings-darwin-arm64
-      '@seekdb/js-bindings-darwin-x64':
-        specifier: workspace:*
-        version: link:../js-bindings-darwin-x64
-      '@seekdb/js-bindings-linux-arm64':
-        specifier: workspace:*
-        version: link:../js-bindings-linux-arm64
-      '@seekdb/js-bindings-linux-x64':
-        specifier: workspace:*
-        version: link:../js-bindings-linux-x64
-
-  packages/bindings/pkgs/js-bindings-darwin-arm64: {}
-
-  packages/bindings/pkgs/js-bindings-darwin-x64: {}
-
-  packages/bindings/pkgs/js-bindings-linux-arm64: {}
-
-  packages/bindings/pkgs/js-bindings-linux-x64: {}
+  packages/bindings/pkgs/js-bindings: {}
 
   packages/embeddings/amazon-bedrock:
     dependencies:
