@@ -372,7 +372,7 @@ describe("Collection Embedding Function Tests", () => {
         constructor(config: any = {}) {
           this.config = config;
         }
-        name = "my_custom_model";
+        name = "my_custom_model_ef";
         async generate(texts: string[]): Promise<number[][]> {
           // Returns 4-dimensional vectors
           return texts.map(() => [0.1, 0.2, 0.3, 0.4]);
@@ -386,7 +386,7 @@ describe("Collection Embedding Function Tests", () => {
       }
 
       // Register the model
-      registerEmbeddingFunction("my_custom_model", CustomModel);
+      registerEmbeddingFunction("my_custom_model_ef", CustomModel);
 
       // Get an instance of the model
       const ef = new CustomModel({ dimension: 4, model: "test" });
@@ -422,7 +422,7 @@ describe("Collection Embedding Function Tests", () => {
 
       expect(retrievedCollection.embeddingFunction).toBeDefined();
       expect(retrievedCollection.embeddingFunction!.name).toBe(
-        "my_custom_model"
+        "my_custom_model_ef"
       );
       expect(retrievedCollection.embeddingFunction instanceof CustomModel).toBe(
         true

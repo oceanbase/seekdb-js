@@ -90,7 +90,7 @@ describe("TencentHunyuanEmbeddingFunction", () => {
 
     const config = embedder.getConfig();
     expect(config.model_name).toBe("custom-model");
-    expect(config.api_key).toBe("custom-key");
+    expect(config.api_key).toBeUndefined();
   });
 
   it("should not include organization_id in config", () => {

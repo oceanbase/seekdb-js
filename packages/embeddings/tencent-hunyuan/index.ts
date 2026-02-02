@@ -89,9 +89,13 @@ export class TencentHunyuanEmbeddingFunction
   static buildFromConfig(
     config: EmbeddingConfig
   ): TencentHunyuanEmbeddingFunction {
+    if (!config.api_key_env_var) {
+      throw new Error(
+        "Building tencent hunyuan embedding function from config: api_key_env_var is required in config."
+      );
+    }
     return new TencentHunyuanEmbeddingFunction({
       modelName: config.model_name,
-      apiKey: config.api_key,
       apiKeyEnvVar: config.api_key_env_var,
       dimensions: config.dimensions,
       baseURL: config.base_url,

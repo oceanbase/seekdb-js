@@ -37,6 +37,7 @@ import type {
   Configuration,
   HNSWConfiguration,
   FulltextAnalyzerConfig,
+  ConfigurationParam,
 } from "./types.js";
 
 /**
@@ -92,10 +93,9 @@ export class SeekdbClient {
     }
 
     let distance = hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
-    let dimension: number;
 
     // Calculate actual dimension from embedding function if provided
-    let actualDimension: number | undefined;
+    let dimension: number | undefined;
 
     // Handle embedding function: undefined means use default, null means no EF
     if (ef === undefined) {
@@ -106,12 +106,12 @@ export class SeekdbClient {
     if (ef !== null) {
       // Priority 1: Read dimension property (avoid model initialization)
       if ("dimension" in ef && typeof ef.dimension === "number") {
-        actualDimension = ef.dimension;
+        dimension = ef.dimension;
       } else {
         // Priority 2: Call generate to calculate dimension
         const testEmbeddings = await ef.generate(["seekdb"]);
-        actualDimension = testEmbeddings[0]?.length;
-        if (!actualDimension) {
+        dimension = testEmbeddings[0]?.length;
+        if (!dimension) {
           throw new SeekdbValueError(
             "Embedding function returned empty result when called with 'seekdb'"
           );
@@ -122,7 +122,7 @@ export class SeekdbClient {
     // Determine final dimension based on configuration and embedding function
     if (configuration === null) {
       // configuration=null: MUST have embedding function to infer dimension
-      if (ef === null || actualDimension === undefined) {
+      if (ef === null || dimension === undefined) {
         throw new SeekdbValueError(
           "Cannot create collection: configuration is explicitly set to null and " +
             "embedding_function is also null. Cannot determine dimension without either a configuration " +
@@ -132,18 +132,17 @@ export class SeekdbClient {
             "  3. Do not set configuration=null (use default configuration)."
         );
       }
-      dimension = actualDimension;
     } else if (hnsw?.dimension !== undefined) {
       // configuration has explicit dimension
-      if (actualDimension !== undefined && hnsw.dimension !== actualDimension) {
+      if (dimension !== undefined && hnsw.dimension !== dimension) {
         throw new SeekdbValueError(
-          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`
+          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${dimension})`
         );
       }
       dimension = hnsw.dimension;
     } else {
-      // configuration has no dimension: use actualDimension or default
-      dimension = actualDimension ?? DEFAULT_VECTOR_DIMENSION;
+      // configuration has no dimension: use dimension or default
+      dimension = dimension ?? DEFAULT_VECTOR_DIMENSION;
     }
 
     // Prepare embedding function metadata (only if ef supports persistence)
@@ -156,7 +155,10 @@ export class SeekdbClient {
 
     // Insert metadata and get collection_id
     const collectionId = await insertCollectionMetadata(this._internal, name, {
-      configuration,
+      configuration: {
+        hnsw: { dimension, distance },
+        fulltextConfig,
+      },
       embeddingFunction: embeddingFunctionMetadata,
     });
 
