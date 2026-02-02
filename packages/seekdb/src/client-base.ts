@@ -101,7 +101,6 @@ export abstract class BaseSeekdbClient {
 
     let distance = hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
     let dimension: number;
-    let actualDimension: number | undefined;
 
     if (ef === undefined) {
       ef = await getEmbeddingFunction();
@@ -109,11 +108,11 @@ export abstract class BaseSeekdbClient {
 
     if (ef !== null) {
       if ("dimension" in ef && typeof ef.dimension === "number") {
-        actualDimension = ef.dimension;
+        dimension = ef.dimension;
       } else {
         const testEmbeddings = await ef.generate(["seekdb"]);
-        actualDimension = testEmbeddings[0]?.length;
-        if (!actualDimension) {
+        dimension = testEmbeddings[0]?.length;
+        if (!dimension) {
           throw new SeekdbValueError(
             "Embedding function returned empty result when called with 'seekdb'"
           );
@@ -122,23 +121,23 @@ export abstract class BaseSeekdbClient {
     }
 
     if (configuration === null) {
-      if (ef === null || actualDimension === undefined) {
+      if (ef === null || dimension === undefined) {
         throw new SeekdbValueError(
           "Cannot create collection: configuration is explicitly set to null and " +
-            "embedding_function is also null. Cannot determine dimension without either a configuration " +
-            "or an embedding function."
+          "embedding_function is also null. Cannot determine dimension without either a configuration " +
+          "or an embedding function."
         );
       }
-      dimension = actualDimension;
+      dimension = dimension;
     } else if (hnsw?.dimension !== undefined) {
-      if (actualDimension !== undefined && hnsw.dimension !== actualDimension) {
+      if (dimension !== undefined && hnsw.dimension !== dimension) {
         throw new SeekdbValueError(
-          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`
+          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${dimension})`
         );
       }
       dimension = hnsw.dimension;
     } else {
-      dimension = actualDimension ?? DEFAULT_VECTOR_DIMENSION;
+      dimension = dimension ?? DEFAULT_VECTOR_DIMENSION;
     }
 
     let embeddingFunctionMetadata:
@@ -149,7 +148,10 @@ export abstract class BaseSeekdbClient {
     }
 
     const collectionId = await insertCollectionMetadata(this._internal, name, {
-      configuration,
+      configuration: {
+        hnsw: { dimension, distance },
+        fulltextConfig,
+      },
       embeddingFunction: embeddingFunctionMetadata,
     });
 
