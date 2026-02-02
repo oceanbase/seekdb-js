@@ -407,7 +407,6 @@ export class Collection {
     await this.#client.execute(sql, params);
   }
 
-
   /**
    * Get data from collection
    */
@@ -448,11 +447,14 @@ export class Collection {
     if (rows) {
       for (const row of rows) {
         if (!row[CollectionFieldNames.ID]) {
-          throw new Error(`ID field '${CollectionFieldNames.ID}' not found in row. Available keys: ${Object.keys(row).join(", ")}`);
+          throw new Error(
+            `ID field '${CollectionFieldNames.ID}' not found in row. Available keys: ${Object.keys(row).join(", ")}`
+          );
         }
         // Normalize values
         const idValue = normalizeValue(row[CollectionFieldNames.ID]);
-        const idString = idValue !== null && idValue !== undefined ? String(idValue) : null;
+        const idString =
+          idValue !== null && idValue !== undefined ? String(idValue) : null;
         if (idString !== null) {
           resultIds.push(idString);
         }
@@ -460,7 +462,11 @@ export class Collection {
         if (!include || include.includes("documents")) {
           const docValue = normalizeValue(row[CollectionFieldNames.DOCUMENT]);
           // Preserve null for null document (match server; round-trip add({ documents: [null] }) -> get() -> null)
-          resultDocuments.push(docValue !== null && docValue !== undefined ? String(docValue) : (null as any));
+          resultDocuments.push(
+            docValue !== null && docValue !== undefined
+              ? String(docValue)
+              : (null as any)
+          );
         }
 
         if (!include || include.includes("metadatas")) {
@@ -574,14 +580,21 @@ export class Collection {
           }
           const idValue = row[CollectionFieldNames.ID];
           const idValueNormalized = normalizeValue(idValue);
-          const idString = idValueNormalized !== null && idValueNormalized !== undefined ? String(idValueNormalized) : null;
+          const idString =
+            idValueNormalized !== null && idValueNormalized !== undefined
+              ? String(idValueNormalized)
+              : null;
           if (idString !== null) {
             queryIds.push(idString);
           }
 
           if (!include || include.includes("documents")) {
             const docValue = normalizeValue(row[CollectionFieldNames.DOCUMENT]);
-            queryDocuments.push(docValue !== null && docValue !== undefined ? String(docValue) : null);
+            queryDocuments.push(
+              docValue !== null && docValue !== undefined
+                ? String(docValue)
+                : null
+            );
           }
 
           if (!include || include.includes("metadatas")) {
@@ -817,10 +830,12 @@ export class Collection {
     let normalizedSql = normalizeValue(querySql);
 
     // Convert to string and clean up
-    if (typeof normalizedSql === 'string') {
+    if (typeof normalizedSql === "string") {
       querySql = normalizedSql.trim().replace(/^['"]|['"]$/g, "");
     } else {
-      querySql = String(normalizedSql).trim().replace(/^['"]|['"]$/g, "");
+      querySql = String(normalizedSql)
+        .trim()
+        .replace(/^['"]|['"]$/g, "");
     }
 
     // Security check: Validate the SQL query before execution
@@ -912,7 +927,7 @@ export class Collection {
 
     if (!this.client) {
       throw new SeekdbValueError(
-        "Collection fork requires a client reference; this collection was created without one.",
+        "Collection fork requires a client reference; this collection was created without one."
       );
     }
     if (await this.client.hasCollection(targetName)) {

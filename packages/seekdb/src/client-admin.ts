@@ -15,7 +15,7 @@ export class SeekdbAdminClient {
     if (!args.host) {
       throw new Error(
         "SeekdbAdminClient requires host parameter for remote server mode. " +
-        "For embedded mode, use AdminClient() factory function."
+          "For embedded mode, use AdminClient() factory function."
       );
     }
     this._internal = new InternalClient({

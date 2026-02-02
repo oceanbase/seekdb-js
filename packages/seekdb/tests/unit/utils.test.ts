@@ -124,7 +124,7 @@ describe("Utility Functions", () => {
       const result = normalizeValue({ VARCHAR: "" });
       // The function returns the object as-is when extraction fails (empty string is falsy)
       expect(result).toEqual({ VARCHAR: "" });
-      
+
       // For JSON string, similar issue - empty string is falsy in || expression
       // So it falls back to regex or returns original
       const jsonResult = normalizeValue('{"VARCHAR":""}');
@@ -468,7 +468,15 @@ describe("Utility Functions", () => {
 
     test("returns 2D array as-is", () => {
       expect(normalizeEmbeddings([[1, 2, 3]])).toEqual([[1, 2, 3]]);
-      expect(normalizeEmbeddings([[1, 2], [3, 4]])).toEqual([[1, 2], [3, 4]]);
+      expect(
+        normalizeEmbeddings([
+          [1, 2],
+          [3, 4],
+        ])
+      ).toEqual([
+        [1, 2],
+        [3, 4],
+      ]);
     });
 
     test("handles empty array", () => {
@@ -632,7 +640,11 @@ describe("Utility Functions", () => {
         { table_name: "c$v1$collection3" },
       ];
       const tableNames = extractTableNamesFromResult(result, prefix);
-      expect(tableNames).toEqual(["c$v1$collection1", "c$v1$collection2", "c$v1$collection3"]);
+      expect(tableNames).toEqual([
+        "c$v1$collection1",
+        "c$v1$collection2",
+        "c$v1$collection3",
+      ]);
     });
 
     test("removes backticks from table names", () => {

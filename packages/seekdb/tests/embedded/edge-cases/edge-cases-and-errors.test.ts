@@ -287,7 +287,7 @@ describe("Embedded Mode - Edge Cases and Error Handling", () => {
         const specialMetadata = {
           "key with spaces": "value",
           "key-with-dashes": "value",
-          "key_with_underscores": "value",
+          key_with_underscores: "value",
           "key.with.dots": "value",
           "key:with:colons": "value",
           'key"with"quotes': "value",

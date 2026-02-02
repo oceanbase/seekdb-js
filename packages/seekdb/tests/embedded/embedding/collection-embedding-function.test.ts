@@ -5,11 +5,16 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekdbClient } from "../../../src/client.js";
 import type { HNSWConfiguration } from "../../../src/types.js";
-import { generateCollectionName, Simple3DEmbeddingFunction } from "../../test-utils.js";
+import {
+  generateCollectionName,
+  Simple3DEmbeddingFunction,
+} from "../../test-utils.js";
 import { SeekdbValueError } from "../../../src/errors.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
 
-const TEST_CONFIG = getEmbeddedTestConfig("collection-embedding-function.test.ts");
+const TEST_CONFIG = getEmbeddedTestConfig(
+  "collection-embedding-function.test.ts"
+);
 
 describe("Embedded Mode - Collection Embedding Function Tests", () => {
   let client: SeekdbClient;

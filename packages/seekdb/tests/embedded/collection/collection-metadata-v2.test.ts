@@ -67,7 +67,7 @@ describe("Embedded Mode - Collection Metadata V2", () => {
       expect(collection.collectionId).toHaveLength(32);
 
       const tableExists = await metadataTableExists(
-        (client as any)._delegate._internal,
+        (client as any)._delegate._internal
       );
       expect(tableExists).toBe(true);
     });
@@ -75,14 +75,18 @@ describe("Embedded Mode - Collection Metadata V2", () => {
     test("should store collection metadata in metadata table", async () => {
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        collectionName,
+        collectionName
       );
 
       expect(metadata).toBeDefined();
       expect(metadata?.collectionName).toBe(collectionName);
       expect(metadata?.collectionId).toBeDefined();
-      expect((metadata?.settings.configuration as Configuration)?.hnsw?.dimension).toBe(3);
-      expect((metadata?.settings.configuration as Configuration)?.hnsw?.distance).toBe("cosine");
+      expect(
+        (metadata?.settings.configuration as Configuration)?.hnsw?.dimension
+      ).toBe(3);
+      expect(
+        (metadata?.settings.configuration as Configuration)?.hnsw?.distance
+      ).toBe("cosine");
     });
 
     test("should retrieve v2 collection with collectionId", async () => {
@@ -146,7 +150,7 @@ describe("Embedded Mode - Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        collectionName,
+        collectionName
       );
       expect(metadata).toBeNull();
     });
@@ -167,14 +171,20 @@ describe("Embedded Mode - Collection Metadata V2", () => {
           await client.deleteCollection(v1CollectionName);
         }
       } catch (error) {
-        console.error(`Failed to cleanup v1 collection ${v1CollectionName}:`, error);
+        console.error(
+          `Failed to cleanup v1 collection ${v1CollectionName}:`,
+          error
+        );
       }
       try {
         if (await client.hasCollection(v2CollectionName)) {
           await client.deleteCollection(v2CollectionName);
         }
       } catch (error) {
-        console.error(`Failed to cleanup v2 collection ${v2CollectionName}:`, error);
+        console.error(
+          `Failed to cleanup v2 collection ${v2CollectionName}:`,
+          error
+        );
       }
     });
 
@@ -304,7 +314,7 @@ describe("Embedded Mode - Collection Metadata V2", () => {
 
       const v1Metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        v1CollectionName,
+        v1CollectionName
       );
       expect(v1Metadata).toBeNull();
     });
@@ -317,7 +327,7 @@ describe("Embedded Mode - Collection Metadata V2", () => {
 
       const v2Metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        v2CollectionName,
+        v2CollectionName
       );
       expect(v2Metadata).toBeNull();
     });
@@ -368,7 +378,7 @@ describe("Embedded Mode - Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        name,
+        name
       );
 
       expect(metadata).toBeDefined();
@@ -392,7 +402,7 @@ describe("Embedded Mode - Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        name,
+        name
       );
 
       expect(metadata).toBeDefined();
@@ -475,7 +485,7 @@ describe("Embedded Mode - Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        name,
+        name
       );
 
       expect(metadata).toBeDefined();

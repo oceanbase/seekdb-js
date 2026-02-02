@@ -280,6 +280,4 @@ describe("Server Mode - Enhanced Hybrid Search", () => {
       });
     });
   });
-
-  });
 });

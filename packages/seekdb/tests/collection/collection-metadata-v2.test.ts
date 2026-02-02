@@ -67,7 +67,7 @@ describe("Collection Metadata V2", () => {
 
       // Verify metadata table exists
       const tableExists = await metadataTableExists(
-        (client as any)._delegate._internal,
+        (client as any)._delegate._internal
       );
       expect(tableExists).toBe(true);
     });
@@ -75,7 +75,7 @@ describe("Collection Metadata V2", () => {
     test("should store collection metadata in metadata table", async () => {
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        collectionName,
+        collectionName
       );
 
       expect(metadata).toBeDefined();
@@ -156,7 +156,7 @@ describe("Collection Metadata V2", () => {
       // Verify metadata is cleaned up
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        collectionName,
+        collectionName
       );
       expect(metadata).toBeNull();
     });
@@ -340,7 +340,7 @@ describe("Collection Metadata V2", () => {
       // Verify no metadata entry for v1 collection
       const v1Metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        v1CollectionName,
+        v1CollectionName
       );
       expect(v1Metadata).toBeNull();
     });
@@ -355,7 +355,7 @@ describe("Collection Metadata V2", () => {
       // Verify metadata is cleaned up
       const v2Metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        v2CollectionName,
+        v2CollectionName
       );
       expect(v2Metadata).toBeNull();
     });
@@ -412,7 +412,7 @@ describe("Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        name,
+        name
       );
 
       expect(metadata).toBeDefined();
@@ -436,7 +436,7 @@ describe("Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        name,
+        name
       );
 
       expect(metadata).toBeDefined();
@@ -522,7 +522,7 @@ describe("Collection Metadata V2", () => {
 
       const metadata = await getCollectionMetadata(
         (client as any)._delegate._internal,
-        name,
+        name
       );
 
       expect(metadata).toBeDefined();

@@ -240,13 +240,19 @@ export function normalizeValue(value: any): any {
   }
 
   // If it's already a standard type (not a JSON string), return as-is
-  if (typeof value !== 'string') {
+  if (typeof value !== "string") {
     // Handle object with type information (e.g., {VARCHAR: "value"})
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
       // Try to extract the actual value from type-wrapped objects
-      const extracted = value.VARCHAR || value.MEDIUMTEXT || value.TEXT ||
-        value.LONGTEXT || value.varchar || value.mediumtext ||
-        value.text || value.longtext;
+      const extracted =
+        value.VARCHAR ||
+        value.MEDIUMTEXT ||
+        value.TEXT ||
+        value.LONGTEXT ||
+        value.varchar ||
+        value.mediumtext ||
+        value.text ||
+        value.longtext;
       if (extracted !== undefined && extracted !== null) {
         return extracted;
       }
@@ -258,22 +264,34 @@ export function normalizeValue(value: any): any {
 
   // Handle JSON-like string format: {"VARCHAR":"value", ...} or {"MEDIUMTEXT":"value", ...}
   const trimmed = value.trim();
-  if (trimmed.startsWith('{') &&
-    (trimmed.includes('VARCHAR') || trimmed.includes('MEDIUMTEXT') ||
-      trimmed.includes('TEXT') || trimmed.includes('LONGTEXT'))) {
+  if (
+    trimmed.startsWith("{") &&
+    (trimmed.includes("VARCHAR") ||
+      trimmed.includes("MEDIUMTEXT") ||
+      trimmed.includes("TEXT") ||
+      trimmed.includes("LONGTEXT"))
+  ) {
     try {
       // Try to parse as JSON
-      const cleaned = value.replace(/[\x00-\x1F\x7F]/g, '');
+      const cleaned = value.replace(/[\x00-\x1F\x7F]/g, "");
       const parsed = JSON.parse(cleaned);
       // Extract the actual value from type-wrapped JSON
-      const extracted = parsed.VARCHAR || parsed.MEDIUMTEXT || parsed.TEXT ||
-        parsed.LONGTEXT || parsed.varchar || parsed.mediumtext ||
-        parsed.text || parsed.longtext;
+      const extracted =
+        parsed.VARCHAR ||
+        parsed.MEDIUMTEXT ||
+        parsed.TEXT ||
+        parsed.LONGTEXT ||
+        parsed.varchar ||
+        parsed.mediumtext ||
+        parsed.text ||
+        parsed.longtext;
       if (extracted !== undefined && extracted !== null) {
         return extracted;
       }
       // If extraction failed, try regex fallback
-      const match = value.match(/"(?:VARCHAR|MEDIUMTEXT|TEXT|LONGTEXT)"\s*:\s*"([^"]+)"/);
+      const match = value.match(
+        /"(?:VARCHAR|MEDIUMTEXT|TEXT|LONGTEXT)"\s*:\s*"([^"]+)"/
+      );
       if (match && match[1]) {
         return match[1];
       }
@@ -281,7 +299,9 @@ export function normalizeValue(value: any): any {
       return value;
     } catch (e) {
       // If JSON parse fails, try regex extraction
-      const match = value.match(/"(?:VARCHAR|MEDIUMTEXT|TEXT|LONGTEXT)"\s*:\s*"([^"]+)"/);
+      const match = value.match(
+        /"(?:VARCHAR|MEDIUMTEXT|TEXT|LONGTEXT)"\s*:\s*"([^"]+)"/
+      );
       if (match && match[1]) {
         return match[1];
       }
@@ -326,7 +346,7 @@ export function parseEmbeddingBinaryString(str: string): number[] | null {
  * Applies normalizeValue to all values in the row
  */
 export function normalizeRow(row: any): any {
-  if (!row || typeof row !== 'object') {
+  if (!row || typeof row !== "object") {
     return row;
   }
 
@@ -344,7 +364,7 @@ export function normalizeRows(rows: any[]): any[] {
   if (!Array.isArray(rows)) {
     return rows;
   }
-  return rows.map(row => normalizeRow(row));
+  return rows.map((row) => normalizeRow(row));
 }
 
 /**
@@ -355,7 +375,7 @@ export function extractColumnValue(
   row: any,
   possibleColumnNames: string[]
 ): any {
-  if (!row || typeof row !== 'object') {
+  if (!row || typeof row !== "object") {
     return undefined;
   }
 
@@ -370,7 +390,9 @@ export function extractColumnValue(
   const rowKeys = Object.keys(row);
   for (const colName of possibleColumnNames) {
     const lowerColName = colName.toLowerCase();
-    const matchedKey = rowKeys.find(key => key.toLowerCase() === lowerColName);
+    const matchedKey = rowKeys.find(
+      (key) => key.toLowerCase() === lowerColName
+    );
     if (matchedKey) {
       return normalizeValue(row[matchedKey]);
     }
@@ -378,7 +400,7 @@ export function extractColumnValue(
 
   // Try to find by checking if any key contains the column name
   for (const colName of possibleColumnNames) {
-    const matchedKey = rowKeys.find(key =>
+    const matchedKey = rowKeys.find((key) =>
       key.toLowerCase().includes(colName.toLowerCase())
     );
     if (matchedKey) {
@@ -413,28 +435,24 @@ export function extractEmbeddingField(schema: any[]): any | null {
   }
 
   // Try to find by Field name matching CollectionFieldNames.EMBEDDING
-  let embeddingField = schema.find(
-    (row: any) => {
-      const fieldName = extractStringValue(row, ['Field', 'field', 'FIELD']);
-      return fieldName === CollectionFieldNames.EMBEDDING;
-    }
-  );
+  let embeddingField = schema.find((row: any) => {
+    const fieldName = extractStringValue(row, ["Field", "field", "FIELD"]);
+    return fieldName === CollectionFieldNames.EMBEDDING;
+  });
 
   // Fallback: try to find by Type containing VECTOR
   if (!embeddingField) {
-    embeddingField = schema.find(
-      (row: any) => {
-        const typeValue = extractStringValue(row, ['Type', 'type', 'TYPE']);
-        return typeValue && /VECTOR\(/i.test(typeValue);
-      }
-    );
+    embeddingField = schema.find((row: any) => {
+      const typeValue = extractStringValue(row, ["Type", "type", "TYPE"]);
+      return typeValue && /VECTOR\(/i.test(typeValue);
+    });
   }
 
   // Another fallback: check all values for VECTOR type
   if (!embeddingField) {
     for (const row of schema) {
       for (const value of Object.values(row)) {
-        const strValue = typeof value === 'string' ? value : String(value);
+        const strValue = typeof value === "string" ? value : String(value);
         if (/VECTOR\(/i.test(strValue)) {
           return row;
         }
@@ -454,12 +472,12 @@ export function extractDimension(embeddingField: any): number | null {
   }
 
   // Try to get Type value
-  let typeValue = extractStringValue(embeddingField, ['Type', 'type', 'TYPE']);
+  let typeValue = extractStringValue(embeddingField, ["Type", "type", "TYPE"]);
 
   // If not found, search all values
   if (!typeValue || !/VECTOR\(/i.test(typeValue)) {
     for (const value of Object.values(embeddingField)) {
-      const strValue = typeof value === 'string' ? value : String(value);
+      const strValue = typeof value === "string" ? value : String(value);
       if (/VECTOR\(/i.test(strValue)) {
         typeValue = strValue;
         break;
@@ -484,7 +502,7 @@ export function extractDimension(embeddingField: any): number | null {
  * Generic helper that works for both embedded and server modes
  */
 export function extractDistance(createTableRow: any): string | null {
-  if (!createTableRow || typeof createTableRow !== 'object') {
+  if (!createTableRow || typeof createTableRow !== "object") {
     return null;
   }
 
@@ -493,7 +511,13 @@ export function extractDistance(createTableRow: any): string | null {
   let createStmt: string | null = null;
 
   // Try standard column names
-  const possibleColumnNames = ['Create Table', 'Create table', 'CREATE TABLE', 'col_1', 'col_0'];
+  const possibleColumnNames = [
+    "Create Table",
+    "Create table",
+    "CREATE TABLE",
+    "col_1",
+    "col_0",
+  ];
   for (const colName of possibleColumnNames) {
     if (colName in createTableRow) {
       const value = createTableRow[colName];
@@ -522,10 +546,12 @@ export function extractDistance(createTableRow: any): string | null {
 
   // Strategy 3: If CREATE TABLE statement found, extract distance from it
   if (createStmt) {
-    const normalized = createStmt.replace(/\s+/g, ' ').replace(/\n/g, ' ');
+    const normalized = createStmt.replace(/\s+/g, " ").replace(/\n/g, " ");
 
     // Try exact match first: distance=l2, distance=cosine, etc.
-    const exactMatch = normalized.match(/distance\s*=\s*(l2|cosine|inner_product|ip)\b/i);
+    const exactMatch = normalized.match(
+      /distance\s*=\s*(l2|cosine|inner_product|ip)\b/i
+    );
     if (exactMatch && exactMatch[1]) {
       return exactMatch[1].toLowerCase();
     }
@@ -533,7 +559,10 @@ export function extractDistance(createTableRow: any): string | null {
     // Try permissive match: distance= followed by any non-whitespace, non-comma, non-paren sequence
     const permissiveMatch = normalized.match(/distance\s*=\s*([^,\s\)]+)/i);
     if (permissiveMatch && permissiveMatch[1]) {
-      const parsedDistance = permissiveMatch[1].toLowerCase().replace(/['"]/g, '').trim();
+      const parsedDistance = permissiveMatch[1]
+        .toLowerCase()
+        .replace(/['"]/g, "")
+        .trim();
       if (
         parsedDistance === "l2" ||
         parsedDistance === "cosine" ||
@@ -549,17 +578,22 @@ export function extractDistance(createTableRow: any): string | null {
   for (const value of Object.values(createTableRow)) {
     if (value !== null && value !== undefined) {
       const strValue = String(value);
-      const normalized = strValue.replace(/\s+/g, ' ').replace(/\n/g, ' ');
+      const normalized = strValue.replace(/\s+/g, " ").replace(/\n/g, " ");
 
-      if (normalized.includes('distance')) {
-        const exactMatch = normalized.match(/distance\s*=\s*(l2|cosine|inner_product|ip)\b/i);
+      if (normalized.includes("distance")) {
+        const exactMatch = normalized.match(
+          /distance\s*=\s*(l2|cosine|inner_product|ip)\b/i
+        );
         if (exactMatch && exactMatch[1]) {
           return exactMatch[1].toLowerCase();
         }
 
         const permissiveMatch = normalized.match(/distance\s*=\s*([^,\s\)]+)/i);
         if (permissiveMatch && permissiveMatch[1]) {
-          const parsedDistance = permissiveMatch[1].toLowerCase().replace(/['"]/g, '').trim();
+          const parsedDistance = permissiveMatch[1]
+            .toLowerCase()
+            .replace(/['"]/g, "")
+            .trim();
           if (
             parsedDistance === "l2" ||
             parsedDistance === "cosine" ||
@@ -581,19 +615,19 @@ export function extractDistance(createTableRow: any): string | null {
  * Used for extracting table names in listCollections
  */
 export const TABLE_NAME_COLUMNS: string[] = [
-  'Tables_in_database',
-  'Table',
-  'table',
-  'TABLE',
-  'Table_name',
-  'table_name',
-  'TABLE_NAME'
+  "Tables_in_database",
+  "Table",
+  "table",
+  "TABLE",
+  "Table_name",
+  "table_name",
+  "TABLE_NAME",
 ];
 
 /**
  * Shared core logic for listCollections
  * Extracts table names from query results and filters by prefix
- * 
+ *
  * @param result - Query result rows
  * @param prefix - Table name prefix to filter (e.g., "c$v1$")
  * @returns Array of table names matching the prefix
@@ -628,8 +662,8 @@ export function extractTableNamesFromResult(
     }
 
     // Remove backticks if present
-    if (tableName && typeof tableName === 'string') {
-      tableName = tableName.replace(/^`|`$/g, '');
+    if (tableName && typeof tableName === "string") {
+      tableName = tableName.replace(/^`|`$/g, "");
 
       // Only process if table name starts with prefix and we haven't seen it before
       if (tableName.startsWith(prefix) && !seenNames.has(tableName)) {
@@ -645,14 +679,16 @@ export function extractTableNamesFromResult(
 /**
  * Query table names using multiple strategies
  * Tries SHOW TABLES LIKE, then SHOW TABLES, then information_schema (if supported)
- * 
+ *
  * @param internalClient - Internal client for executing queries
  * @param prefix - Table name prefix to filter (e.g., "c$v1$")
  * @param tryInformationSchema - Whether to try information_schema fallback (default: true)
  * @returns Query result rows, or null if no results
  */
 export async function queryTableNames(
-  internalClient: { execute(sql: string, params?: unknown[]): Promise<any[] | null> },
+  internalClient: {
+    execute(sql: string, params?: unknown[]): Promise<any[] | null>;
+  },
   prefix: string,
   tryInformationSchema: boolean = true
 ): Promise<any[] | null> {

@@ -1,22 +1,22 @@
-const path = require('path');
+const path = require("path");
 
 const getRuntimePlatformArch = () => `${process.platform}-${process.arch}`;
 
 const S3_BINDINGS_BASE =
-  'https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/seekdb-js-bindings/all_commits/';
+  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/seekdb-js-bindings/all_commits/";
 
 /**
  * Load native binding: from SEEKDB_BINDINGS_PATH, or from sibling dir (local dev build), or throw.
  * @throw Error if there isn't any available native binding for the current platform/arch.
  */
 function getNativeNodeBinding(runtimePlatformArch) {
-  const [platform, arch] = runtimePlatformArch.split('-');
+  const [platform, arch] = runtimePlatformArch.split("-");
   const dirName = `js-bindings-${platform}-${arch}`;
 
   // 1) Explicit path (e.g. user downloaded zip from S3 and set env)
   const envPath = process.env.SEEKDB_BINDINGS_PATH;
   if (envPath) {
-    const nodePath = path.join(envPath, 'seekdb.node');
+    const nodePath = path.join(envPath, "seekdb.node");
     try {
       return require(nodePath);
     } catch (err) {
@@ -28,7 +28,7 @@ function getNativeNodeBinding(runtimePlatformArch) {
   }
 
   // 2) Sibling dir (local dev: bindings built in monorepo, pkgs/js-bindings-<platform>-<arch>)
-  const siblingPath = path.join(__dirname, '..', dirName, 'seekdb.node');
+  const siblingPath = path.join(__dirname, "..", dirName, "seekdb.node");
   try {
     return require(siblingPath);
   } catch {

@@ -120,7 +120,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
       expect(collections.length).toBeGreaterThanOrEqual(2);
 
       // Verify collections exist
-      const names = collections.map(c => c.name);
+      const names = collections.map((c) => c.name);
       expect(names).toContain(collectionName1);
       expect(names).toContain(collectionName2);
 
@@ -180,7 +180,9 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
     });
 
     test("get_or_create_collection - gets if exists", async () => {
-      const collectionName = generateCollectionName("test_get_or_create_existing");
+      const collectionName = generateCollectionName(
+        "test_get_or_create_existing"
+      );
       const created = await client.createCollection({
         name: collectionName,
         configuration: { dimension: 3, distance: "l2" },
@@ -230,7 +232,11 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
     });
 
     test("create collection with different distance metrics", async () => {
-      const distances: Array<"l2" | "cosine" | "inner_product"> = ["l2", "cosine", "inner_product"];
+      const distances: Array<"l2" | "cosine" | "inner_product"> = [
+        "l2",
+        "cosine",
+        "inner_product",
+      ];
 
       for (const distance of distances) {
         const collectionName = generateCollectionName(`test_${distance}`);

@@ -1,11 +1,11 @@
 /**
  * Type definitions for seekdb native bindings
- * 
+ *
  * These types correspond to the C API types and C++ wrapper classes:
  * - Database -> SeekdbDatabase (wrapper)
  * - Connection -> SeekdbConnection (wrapper, uses SeekdbHandle from C API)
  * - Result -> SeekdbResultWrapper (wrapper, uses SeekdbResult from C API)
- * 
+ *
  * C API types (from seekdb.h):
  * - SeekdbHandle - Connection handle
  * - SeekdbResult - Query result handle
@@ -61,7 +61,11 @@ export function close_sync(database: Database): void;
  * @returns Connection handle
  * @throws Error if connection cannot be established
  */
-export function connect(database: Database, database_name: string, autocommit: boolean): Connection;
+export function connect(
+  database: Database,
+  database_name: string,
+  autocommit: boolean
+): Connection;
 
 /**
  * Disconnect from a database
@@ -78,4 +82,8 @@ export function disconnect(connection: Connection): void;
  * @throws Error if query execution fails
  * @note Column name inference is handled automatically by C ABI layer
  */
-export function execute(connection: Connection, sql: string, params?: any[]): Promise<Result>;
+export function execute(
+  connection: Connection,
+  sql: string,
+  params?: any[]
+): Promise<Result>;

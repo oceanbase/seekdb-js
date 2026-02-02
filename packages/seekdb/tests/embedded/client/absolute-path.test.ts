@@ -11,7 +11,10 @@ import {
   getEmbeddedTestConfigAbsolute,
   cleanupTestDbAbsolute,
 } from "../test-utils.js";
-import { generateCollectionName, generateDatabaseName } from "../../test-utils.js";
+import {
+  generateCollectionName,
+  generateDatabaseName,
+} from "../../test-utils.js";
 
 const TEST_FILE = "absolute-path.test.ts";
 const TEST_CONFIG = getEmbeddedTestConfigAbsolute(TEST_FILE);

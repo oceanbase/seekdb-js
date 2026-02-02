@@ -46,6 +46,7 @@ pnpm run build
 ```
 
 This will:
+
 1. Fetch the seekdb library for your platform (via Python scripts)
 2. Compile the C++ bindings using node-gyp
 3. Copy the compiled `.node` file and library into `pkgs/js-bindings-<platform>-<arch>/` (build output only; these dirs are not published to npm)
@@ -53,6 +54,7 @@ This will:
 ## Platform Support
 
 The bindings support the following platforms:
+
 - Linux x64
 - Linux arm64
 - macOS arm64 (Apple Silicon)
@@ -74,8 +76,9 @@ The bindings use the seekdb C API from `https://github.com/oceanbase/seekdb/src/
 ### Naming Convention
 
 All C++ wrapper types use `Seekdb` (db in lowercase) to match the seekdb package naming convention:
+
 - `SeekdbDatabase` - Database wrapper
-- `SeekdbConnection` - Connection wrapper  
+- `SeekdbConnection` - Connection wrapper
 - `SeekdbResultWrapper` - Result wrapper (named `Wrapper` to avoid conflict with C API `SeekdbResult` type)
 - `SeekdbNodeAddon` - Main addon class
 

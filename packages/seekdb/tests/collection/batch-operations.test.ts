@@ -36,12 +36,12 @@ describe("Server Mode - Batch Operations", () => {
       ]);
       const documents = Array.from(
         { length: batchSize },
-        (_, i) => `Document ${i}`,
+        (_, i) => `Document ${i}`
       );
-      const metadatas = Array.from(
-        { length: batchSize },
-        (_, i) => ({ index: i, batch: "large" }),
-      );
+      const metadatas = Array.from({ length: batchSize }, (_, i) => ({
+        index: i,
+        batch: "large",
+      }));
 
       await collection.add({
         ids,
@@ -163,7 +163,5 @@ describe("Server Mode - Batch Operations", () => {
 
       await client.deleteCollection(collectionName);
     }, 60000);
-  });
-
   });
 });

@@ -4,7 +4,10 @@
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekdbClient } from "../../../src/client.js";
 import { Collection } from "../../../src/collection.js";
-import { generateCollectionName, Simple3DEmbeddingFunction } from "../../test-utils.js";
+import {
+  generateCollectionName,
+  Simple3DEmbeddingFunction,
+} from "../../test-utils.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
 
 const TEST_CONFIG = getEmbeddedTestConfig("collection-query.test.ts");
@@ -131,7 +134,9 @@ describe("Embedded Mode - Collection Query Operations", () => {
 
     test("query with queryTexts using embedding function", async () => {
       if (!client) {
-        throw new Error("Client is not available - this should not happen if beforeAll succeeded");
+        throw new Error(
+          "Client is not available - this should not happen if beforeAll succeeded"
+        );
       }
       const ef = Simple3DEmbeddingFunction();
       const collectionWithEF = await client.createCollection({

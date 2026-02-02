@@ -5,10 +5,7 @@
 
 import { SeekdbClient } from "./client.js";
 import { SeekdbAdminClient } from "./client-admin.js";
-import type {
-  SeekdbClientArgs,
-  SeekdbAdminClientArgs,
-} from "./types.js";
+import type { SeekdbClientArgs, SeekdbAdminClientArgs } from "./types.js";
 import {
   DEFAULT_TENANT,
   DEFAULT_DATABASE,
@@ -37,7 +34,7 @@ function _defaultSeekdbPath(): string {
  */
 function _createServerClient(
   args: SeekdbClientArgs,
-  isAdmin: boolean = false,
+  isAdmin: boolean = false
 ): SeekdbClient {
   const { path: dbPath, host, port, tenant, database, user, password } = args;
 
@@ -80,22 +77,22 @@ function _createServerClient(
   } catch (error) {
     throw new Error(
       "Default embedded mode is not available because native addon could not be loaded. " +
-      "Please provide host/port parameters to use RemoteServerClient, or provide path parameter for embedded mode.",
+        "Please provide host/port parameters to use RemoteServerClient, or provide path parameter for embedded mode."
     );
   }
 }
 
 /**
  * Smart client factory function
- * 
+ *
  * Automatically selects embedded or remote server mode based on parameters:
  * - If path is provided, uses embedded mode
  * - If host/port is provided, uses remote server mode
  * - If neither path nor host is provided, defaults to embedded mode (if available)
- * 
+ *
  * @param args - Client configuration arguments
  * @returns SeekdbClient instance (supports both embedded and server modes)
- * 
+ *
  * @example
  * ```typescript
  * // Embedded mode with no args (default path: cwd/seekdb.db, default database)
@@ -106,7 +103,7 @@ function _createServerClient(
  *
  * // Embedded mode (default path: current working directory)
  * const client = SeekdbClient({ database: "db1" });
- * 
+ *
  * // Remote server mode
  * const client = Client({
  *   host: "localhost",
@@ -149,9 +146,7 @@ export function Client(args: SeekdbClientArgs = {}): SeekdbClient {
  * });
  * ```
  */
-export function AdminClient(
-  args: SeekdbAdminClientArgs = {},
-): SeekdbClient {
+export function AdminClient(args: SeekdbAdminClientArgs = {}): SeekdbClient {
   // Embedded: admin database is built-in in SeekdbEmbeddedClient; no need to specify.
   // Server: connect to information_schema for admin operations.
   const clientArgs: SeekdbClientArgs =

@@ -21,7 +21,7 @@ describe("Embedded Mode - Collection Get Operations", () => {
     try {
       await client.close();
       // Wait a bit to ensure database is fully closed before cleanup
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
       // Ignore errors during cleanup
     }

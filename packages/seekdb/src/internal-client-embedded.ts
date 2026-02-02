@@ -34,7 +34,7 @@ export class InternalEmbeddedClient implements IInternalClient {
     if (!_nativeAddon) {
       throw new Error(
         "InternalEmbeddedClient requires native addon. " +
-        "Please install @seekdb/js-bindings or use remote server mode."
+          "Please install @seekdb/js-bindings or use remote server mode."
       );
     }
   }
@@ -72,8 +72,16 @@ export class InternalEmbeddedClient implements IInternalClient {
       this._connection = _nativeAddon.connect(this._db, this.database, true);
       // Auto-set session defaults so 100KB+ documents work without user config (align with server behavior).
       try {
-        await _nativeAddon.execute(this._connection, "SET SESSION ob_default_lob_inrow_threshold = 262144", undefined);
-        await _nativeAddon.execute(this._connection, "SET SESSION max_allowed_packet = 2097152", undefined);
+        await _nativeAddon.execute(
+          this._connection,
+          "SET SESSION ob_default_lob_inrow_threshold = 262144",
+          undefined
+        );
+        await _nativeAddon.execute(
+          this._connection,
+          "SET SESSION max_allowed_packet = 2097152",
+          undefined
+        );
       } catch (_) {
         // Ignore if backend does not support these (e.g. older version); 100KB may still work with table default.
       }
@@ -95,7 +103,7 @@ export class InternalEmbeddedClient implements IInternalClient {
    */
   async execute(
     sql: string,
-    params?: unknown[],
+    params?: unknown[]
   ): Promise<RowDataPacket[] | null> {
     if (!_nativeAddon) {
       throw new Error("Native addon is not available");

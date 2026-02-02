@@ -17,7 +17,7 @@ import type { Database } from "./database.js";
 
 /**
  * seekdb Client - Unified client for both embedded and remote server modes
- * 
+ *
  * This class acts as a facade that delegates to either SeekdbEmbeddedClient
  * or SeekdbServerClient based on the provided parameters.
  */
@@ -111,31 +111,22 @@ export class SeekdbClient {
   // ==================== Database Management (admin) ====================
   // Explicit createDatabase: no auto-create on connect. Aligns with server and pyseekdb.
 
-  async createDatabase(
-    name: string,
-    tenant?: string,
-  ): Promise<void> {
+  async createDatabase(name: string, tenant?: string): Promise<void> {
     return this._delegate.createDatabase(name, tenant);
   }
 
-  async getDatabase(
-    name: string,
-    tenant?: string,
-  ): Promise<Database> {
+  async getDatabase(name: string, tenant?: string): Promise<Database> {
     return this._delegate.getDatabase(name, tenant);
   }
 
-  async deleteDatabase(
-    name: string,
-    tenant?: string,
-  ): Promise<void> {
+  async deleteDatabase(name: string, tenant?: string): Promise<void> {
     return this._delegate.deleteDatabase(name, tenant);
   }
 
   async listDatabases(
     limit?: number,
     offset?: number,
-    tenant?: string,
+    tenant?: string
   ): Promise<Database[]> {
     return this._delegate.listDatabases(limit, offset, tenant);
   }

@@ -111,6 +111,4 @@ describe("Server Mode - Query Approximate Parameter", () => {
       await client.deleteCollection(collection.name);
     });
   });
-
-  });
 });

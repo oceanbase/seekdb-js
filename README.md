@@ -54,10 +54,10 @@ npm install seekdb
 
 The SDK supports two modes; the constructor arguments to `SeekdbClient` determine which is used. For database management (create/list/get/delete database), use `AdminClient()` which returns a `SeekdbClient` instance.
 
-| Mode | Parameter | Description |
-| ---- | --------- | ----------- |
-| **Embedded** | `path` (database directory path) | Runs locally with no separate seekdb server; data is stored under the given path (e.g. `./seekdb.db`). Requires native addon `@seekdb/js-bindings`. |
-| **Server** | `host` (and `port`, `user`, `password`, etc.) | Connects to a remote seekdb or OceanBase instance. |
+| Mode         | Parameter                                     | Description                                                                                                                                         |
+| ------------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Embedded** | `path` (database directory path)              | Runs locally with no separate seekdb server; data is stored under the given path (e.g. `./seekdb.db`). Requires native addon `@seekdb/js-bindings`. |
+| **Server**   | `host` (and `port`, `user`, `password`, etc.) | Connects to a remote seekdb or OceanBase instance.                                                                                                  |
 
 - **SeekdbClient**: Pass `path` for embedded mode, or `host` (and port, user, password, etc.) for server mode.
 - **AdminClient()**: For admin operations only; pass `path` for embedded or `host` for server. In embedded mode you do not specify a database name.
@@ -131,7 +131,7 @@ const client = new SeekdbClient({
 import { SeekdbClient } from "seekdb";
 
 const client = new SeekdbClient({
-  path: "./seekdb.db",  // database file path
+  path: "./seekdb.db", // database file path
   database: "test",
 });
 ```

@@ -152,7 +152,7 @@ describe("AdminClient Database Management", () => {
       const differentTenant = "different_tenant";
 
       // Mock console.warn to capture warnings
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       try {
         // Create database with different tenant (should use client tenant)
@@ -161,8 +161,8 @@ describe("AdminClient Database Management", () => {
         // Verify warning was issued
         expect(warnSpy).toHaveBeenCalledWith(
           expect.stringContaining(
-            `Specified tenant '${differentTenant}' differs from client tenant '${TEST_CONFIG.tenant}', using client tenant`,
-          ),
+            `Specified tenant '${differentTenant}' differs from client tenant '${TEST_CONFIG.tenant}', using client tenant`
+          )
         );
 
         // Verify database was created with client tenant
@@ -184,7 +184,7 @@ describe("AdminClient Database Management", () => {
       const testDbName = generateDatabaseName("test_server_db");
 
       // Mock console.warn to verify no warning is issued for DEFAULT_TENANT
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       try {
         // Create database with DEFAULT_TENANT (should not warn if it matches client tenant)

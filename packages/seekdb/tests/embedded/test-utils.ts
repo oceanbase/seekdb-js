@@ -10,7 +10,9 @@ import * as fs from "node:fs/promises";
 const TEST_DB_BASE_DIR = "./tests/embedded/seekdb.db";
 
 /** When set (e.g. SEEKDB_EMBED_SAME_PATH=1), all embedded tests use the same path to verify no cross-path state. */
-const USE_SAME_PATH = process.env.SEEKDB_EMBED_SAME_PATH === "1" || process.env.SEEKDB_EMBED_SAME_PATH === "true";
+const USE_SAME_PATH =
+  process.env.SEEKDB_EMBED_SAME_PATH === "1" ||
+  process.env.SEEKDB_EMBED_SAME_PATH === "true";
 
 /**
  * Get test database directory for a specific test file
@@ -62,7 +64,9 @@ export function getEmbeddedTestConfigAbsolute(testFileName: string): {
 /**
  * Clean up test database directory for absolute-path tests.
  */
-export async function cleanupTestDbAbsolute(testFileName: string): Promise<void> {
+export async function cleanupTestDbAbsolute(
+  testFileName: string
+): Promise<void> {
   const testDbDir = getAbsoluteTestDbDir(testFileName);
   await waitForDbCleanup();
   const maxRetries = 5;
@@ -83,7 +87,7 @@ export async function cleanupTestDbAbsolute(testFileName: string): Promise<void>
  */
 async function waitForDbCleanup(): Promise<void> {
   // Wait a bit to ensure database files are fully closed
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 /**
@@ -111,7 +115,7 @@ export async function cleanupTestDb(testFileName: string): Promise<void> {
       }
       // Wait before retry with exponential backoff
       const delay = Math.min(100 * Math.pow(2, attempt), 1000);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }

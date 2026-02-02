@@ -16,7 +16,7 @@ export default defineConfig({
       ),
       "@seekdb/js-bindings": resolve(
         __dirname,
-        "../bindings/pkgs/js-bindings/seekdb.js",
+        "../bindings/pkgs/js-bindings/seekdb.js"
       ),
     },
   },

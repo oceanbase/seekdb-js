@@ -265,6 +265,4 @@ describe("Server Mode - Complex Query Scenarios", () => {
       });
     });
   });
-
-  });
 });

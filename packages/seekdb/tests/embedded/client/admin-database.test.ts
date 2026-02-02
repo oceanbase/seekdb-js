@@ -10,7 +10,10 @@ import { AdminClient } from "../../../src/factory.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
 import { SeekdbValueError } from "../../../src/errors.js";
 import { Database } from "../../../src/database.js";
-import { generateCollectionName, generateDatabaseName } from "../../test-utils.js";
+import {
+  generateCollectionName,
+  generateDatabaseName,
+} from "../../test-utils.js";
 
 const TEST_CONFIG = getEmbeddedTestConfig("admin-database.test.ts");
 
@@ -49,7 +52,7 @@ describe("Embedded Mode - Admin Database Management", () => {
   test("AdminClient getDatabase throws for non-existent database", async () => {
     const admin = AdminClient({ path: TEST_CONFIG.path });
     await expect(admin.getDatabase("nonexistent_db_xyz")).rejects.toThrow(
-      SeekdbValueError,
+      SeekdbValueError
     );
     await admin.close();
   });
@@ -58,14 +61,14 @@ describe("Embedded Mode - Admin Database Management", () => {
     const admin = AdminClient({ path: TEST_CONFIG.path });
     await admin.createDatabase("admin_to_delete_db");
     expect((await admin.listDatabases()).map((d) => d.name)).toContain(
-      "admin_to_delete_db",
+      "admin_to_delete_db"
     );
     await admin.deleteDatabase("admin_to_delete_db");
     expect((await admin.listDatabases()).map((d) => d.name)).not.toContain(
-      "admin_to_delete_db",
+      "admin_to_delete_db"
     );
     await expect(admin.getDatabase("admin_to_delete_db")).rejects.toThrow(
-      SeekdbValueError,
+      SeekdbValueError
     );
     await admin.close();
   });
@@ -78,7 +81,10 @@ describe("Embedded Mode - Admin Database Management", () => {
       // ignore
     }
     await admin.close();
-    const client = new SeekdbClient({ path: TEST_CONFIG.path, database: "test_new_db" });
+    const client = new SeekdbClient({
+      path: TEST_CONFIG.path,
+      database: "test_new_db",
+    });
     await expect(client.listCollections()).rejects.toThrow();
     await client.close();
   });
@@ -272,8 +278,14 @@ describe("Embedded Mode - Admin Database Management", () => {
     });
 
     test("client on db_a creates collection, client on db_b creates collection", async () => {
-      const clientA = new SeekdbClient({ path: TEST_CONFIG.path, database: DB_A });
-      const clientB = new SeekdbClient({ path: TEST_CONFIG.path, database: DB_B });
+      const clientA = new SeekdbClient({
+        path: TEST_CONFIG.path,
+        database: DB_A,
+      });
+      const clientB = new SeekdbClient({
+        path: TEST_CONFIG.path,
+        database: DB_B,
+      });
 
       const nameA = generateCollectionName("coll_a");
       const nameB = generateCollectionName("coll_b");
@@ -302,8 +314,14 @@ describe("Embedded Mode - Admin Database Management", () => {
     });
 
     test("collections are isolated per database on same path", async () => {
-      const clientA = new SeekdbClient({ path: TEST_CONFIG.path, database: DB_A });
-      const clientB = new SeekdbClient({ path: TEST_CONFIG.path, database: DB_B });
+      const clientA = new SeekdbClient({
+        path: TEST_CONFIG.path,
+        database: DB_A,
+      });
+      const clientB = new SeekdbClient({
+        path: TEST_CONFIG.path,
+        database: DB_B,
+      });
 
       const listA = await clientA.listCollections();
       const listB = await clientB.listCollections();

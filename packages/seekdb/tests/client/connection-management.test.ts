@@ -18,7 +18,7 @@ describe("Server Mode - Connection Management", () => {
 
     test("isConnected returns true after operation", async () => {
       const client = new SeekdbClient(TEST_CONFIG);
-      
+
       // Perform an operation to establish connection
       try {
         await client.listCollections();
@@ -28,17 +28,17 @@ describe("Server Mode - Connection Management", () => {
         // If server not available, skip this test
         // Connection state may vary
       }
-      
+
       await client.close();
     });
 
     test("close() closes the connection", async () => {
       const client = new SeekdbClient(TEST_CONFIG);
-      
+
       try {
         await client.listCollections();
         expect(client.isConnected()).toBe(true);
-        
+
         await client.close();
         // After close, connection should be closed
         expect(client.isConnected()).toBe(false);
@@ -50,16 +50,16 @@ describe("Server Mode - Connection Management", () => {
 
     test("operations work after close and reconnect", async () => {
       const client = new SeekdbClient(TEST_CONFIG);
-      
+
       try {
         // First operation
         await client.listCollections();
         await client.close();
-        
+
         // Second operation should reconnect automatically
         const collections = await client.listCollections();
         expect(Array.isArray(collections)).toBe(true);
-        
+
         await client.close();
       } catch (error) {
         // If server not available, just close
@@ -69,7 +69,7 @@ describe("Server Mode - Connection Management", () => {
 
     test("multiple close() calls are safe", async () => {
       const client = new SeekdbClient(TEST_CONFIG);
-      
+
       try {
         await client.listCollections();
         await client.close();
@@ -79,7 +79,5 @@ describe("Server Mode - Connection Management", () => {
         await client.close();
       }
     });
-  });
-
   });
 });

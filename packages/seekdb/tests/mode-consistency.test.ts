@@ -236,7 +236,9 @@ describe("Mode Consistency Tests", () => {
 
       expect(serverResults.metadatas![0]).toEqual(testMetadata);
       expect(embeddedResults.metadatas![0]).toEqual(testMetadata);
-      expect(serverResults.metadatas![0]).toEqual(embeddedResults.metadatas![0]);
+      expect(serverResults.metadatas![0]).toEqual(
+        embeddedResults.metadatas![0]
+      );
 
       // Embeddings should be the same (within floating point precision)
       expect(serverResults.embeddings![0]).toEqual(testEmbedding);

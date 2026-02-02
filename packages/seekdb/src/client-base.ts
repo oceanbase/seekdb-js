@@ -21,7 +21,10 @@ import {
   CollectionFieldNames,
 } from "./utils.js";
 import { SeekdbValueError, InvalidCollectionError } from "./errors.js";
-import { getEmbeddingFunction, supportsPersistence } from "./embedding-function.js";
+import {
+  getEmbeddingFunction,
+  supportsPersistence,
+} from "./embedding-function.js";
 import {
   insertCollectionMetadata,
   getCollectionMetadata,
@@ -72,7 +75,7 @@ export abstract class BaseSeekdbClient {
    * Supports Configuration (hnsw + fulltextConfig), HNSWConfiguration, and configuration=null with embedding function.
    */
   async createCollection(
-    options: CreateCollectionOptions,
+    options: CreateCollectionOptions
   ): Promise<Collection> {
     const { name, configuration, embeddingFunction } = options;
 
@@ -112,7 +115,7 @@ export abstract class BaseSeekdbClient {
         actualDimension = testEmbeddings[0]?.length;
         if (!actualDimension) {
           throw new SeekdbValueError(
-            "Embedding function returned empty result when called with 'seekdb'",
+            "Embedding function returned empty result when called with 'seekdb'"
           );
         }
       }
@@ -122,15 +125,15 @@ export abstract class BaseSeekdbClient {
       if (ef === null || actualDimension === undefined) {
         throw new SeekdbValueError(
           "Cannot create collection: configuration is explicitly set to null and " +
-          "embedding_function is also null. Cannot determine dimension without either a configuration " +
-          "or an embedding function.",
+            "embedding_function is also null. Cannot determine dimension without either a configuration " +
+            "or an embedding function."
         );
       }
       dimension = actualDimension;
     } else if (hnsw?.dimension !== undefined) {
       if (actualDimension !== undefined && hnsw.dimension !== actualDimension) {
         throw new SeekdbValueError(
-          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`,
+          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${actualDimension})`
         );
       }
       dimension = hnsw.dimension;
@@ -138,7 +141,9 @@ export abstract class BaseSeekdbClient {
       dimension = actualDimension ?? DEFAULT_VECTOR_DIMENSION;
     }
 
-    let embeddingFunctionMetadata: { name: string; properties: any } | undefined;
+    let embeddingFunctionMetadata:
+      | { name: string; properties: any }
+      | undefined;
     if (supportsPersistence(ef)) {
       embeddingFunctionMetadata = { name: ef.name, properties: ef.getConfig() };
     }
@@ -154,7 +159,7 @@ export abstract class BaseSeekdbClient {
       distance,
       undefined,
       collectionId,
-      fulltextConfig,
+      fulltextConfig
     );
 
     try {
@@ -182,9 +187,11 @@ export abstract class BaseSeekdbClient {
   /**
    * Extract metadata from v1 table COMMENT (JSON string).
    */
-  private static extractMetadataFromComment(createTable: string): Metadata | undefined {
+  private static extractMetadataFromComment(
+    createTable: string
+  ): Metadata | undefined {
     const commentMatch = createTable.match(
-      /COMMENT\s*=\s*'([^']*(?:''[^']*)*)'/,
+      /COMMENT\s*=\s*'([^']*(?:''[^']*)*)'/
     );
     if (!commentMatch) return undefined;
     try {
@@ -212,14 +219,20 @@ export abstract class BaseSeekdbClient {
     const metadata = await getCollectionMetadata(this._internal, name);
 
     if (metadata) {
-      const { collectionId: cId, settings: { embeddingFunction: embeddingFunctionMeta, configuration } = {} } = metadata;
+      const {
+        collectionId: cId,
+        settings: {
+          embeddingFunction: embeddingFunctionMeta,
+          configuration,
+        } = {},
+      } = metadata;
 
       const sql = SQLBuilder.buildShowTable(name, cId);
       const result = await this._internal.execute(sql);
 
       if (!result || result.length === 0) {
         throw new InvalidCollectionError(
-          `Collection metadata exists but table not found: ${name}`,
+          `Collection metadata exists but table not found: ${name}`
         );
       }
 
@@ -249,23 +262,23 @@ export abstract class BaseSeekdbClient {
 
       if (!schema) {
         throw new InvalidCollectionError(
-          `Unable to retrieve schema for collection: ${name}`,
+          `Unable to retrieve schema for collection: ${name}`
         );
       }
 
       const embeddingField = schema.find(
-        (row: any) => row.Field === CollectionFieldNames.EMBEDDING,
+        (row: any) => row.Field === CollectionFieldNames.EMBEDDING
       );
       if (!embeddingField) {
         throw new InvalidCollectionError(
-          `Collection ${name} does not have embedding field`,
+          `Collection ${name} does not have embedding field`
         );
       }
 
       const match = (embeddingField as any).Type?.match?.(/VECTOR\((\d+)\)/i);
       if (!match) {
         throw new InvalidCollectionError(
-          `Invalid embedding type: ${(embeddingField as any).Type}`,
+          `Invalid embedding type: ${(embeddingField as any).Type}`
         );
       }
 
@@ -282,15 +295,23 @@ export abstract class BaseSeekdbClient {
             (createTableResult[0] as any)["create table"] ||
             "";
           const distanceMatch = createStmt.match(
-            /with\s*\([^)]*distance\s*=\s*['"]?(\w+)['"]?/i,
+            /with\s*\([^)]*distance\s*=\s*['"]?(\w+)['"]?/i
           );
           if (distanceMatch) {
             const parsed = distanceMatch[1].toLowerCase();
-            if (parsed === "l2" || parsed === "cosine" || parsed === "inner_product" || parsed === "ip") {
-              distance = (parsed === "ip" ? "inner_product" : parsed) as DistanceMetric;
+            if (
+              parsed === "l2" ||
+              parsed === "cosine" ||
+              parsed === "inner_product" ||
+              parsed === "ip"
+            ) {
+              distance = (
+                parsed === "ip" ? "inner_product" : parsed
+              ) as DistanceMetric;
             }
           }
-          collectionMetadata = BaseSeekdbClient.extractMetadataFromComment(createStmt);
+          collectionMetadata =
+            BaseSeekdbClient.extractMetadataFromComment(createStmt);
         }
       } catch {
         // Use default distance
@@ -299,7 +320,7 @@ export abstract class BaseSeekdbClient {
 
     const ef = await resolveEmbeddingFunction(
       embeddingFunctionConfig,
-      embeddingFunction,
+      embeddingFunction
     );
 
     return new Collection({
@@ -342,7 +363,9 @@ export abstract class BaseSeekdbClient {
       const tableNames = extractTableNamesFromResult(result, prefix);
 
       for (const tableName of tableNames) {
-        const collectionName = CollectionNames.extractCollectionName(tableName) ?? tableName.substring(prefix.length);
+        const collectionName =
+          CollectionNames.extractCollectionName(tableName) ??
+          tableName.substring(prefix.length);
         if (!collectionName || collectionNames.has(collectionName)) continue;
 
         try {
@@ -397,7 +420,7 @@ export abstract class BaseSeekdbClient {
    * Get or create collection
    */
   async getOrCreateCollection(
-    options: CreateCollectionOptions,
+    options: CreateCollectionOptions
   ): Promise<Collection> {
     const { name } = options;
 
@@ -410,8 +433,10 @@ export abstract class BaseSeekdbClient {
       });
     } catch (error) {
       const isNotFound =
-        (error instanceof SeekdbValueError && error.message.includes("not found")) ||
-        (error instanceof InvalidCollectionError && error.message.includes("not found"));
+        (error instanceof SeekdbValueError &&
+          error.message.includes("not found")) ||
+        (error instanceof InvalidCollectionError &&
+          error.message.includes("not found"));
       if (isNotFound) {
         return await this.createCollection(options);
       }
@@ -436,7 +461,7 @@ export abstract class BaseSeekdbClient {
    */
   async createDatabase(
     name: string,
-    tenant: string = DEFAULT_TENANT,
+    tenant: string = DEFAULT_TENANT
   ): Promise<void> {
     if (!name || typeof name !== "string") {
       throw new SeekdbValueError("Database name must be a non-empty string");
@@ -451,7 +476,7 @@ export abstract class BaseSeekdbClient {
    */
   async getDatabase(
     name: string,
-    tenant: string = DEFAULT_TENANT,
+    tenant: string = DEFAULT_TENANT
   ): Promise<Database> {
     if (!name || typeof name !== "string") {
       throw new SeekdbValueError("Database name must be a non-empty string");
@@ -481,7 +506,7 @@ export abstract class BaseSeekdbClient {
    */
   async deleteDatabase(
     name: string,
-    tenant: string = DEFAULT_TENANT,
+    tenant: string = DEFAULT_TENANT
   ): Promise<void> {
     if (!name || typeof name !== "string") {
       throw new SeekdbValueError("Database name must be a non-empty string");
@@ -497,7 +522,7 @@ export abstract class BaseSeekdbClient {
   async listDatabases(
     limit?: number,
     offset?: number,
-    tenant: string = DEFAULT_TENANT,
+    tenant: string = DEFAULT_TENANT
   ): Promise<Database[]> {
     if (limit !== undefined && (!Number.isInteger(limit) || limit < 0)) {
       throw new SeekdbValueError("limit must be a non-negative integer");
@@ -518,7 +543,10 @@ export abstract class BaseSeekdbClient {
         params.push(limit);
       }
     }
-    const rows = await internal.execute(sql, params.length > 0 ? params : undefined);
+    const rows = await internal.execute(
+      sql,
+      params.length > 0 ? params : undefined
+    );
     const databases: Database[] = [];
     if (rows) {
       for (const row of rows) {

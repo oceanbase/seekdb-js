@@ -30,7 +30,7 @@ export const METADATA_TABLE_NAME = "sdk_collections";
  */
 function getColumn(row: Record<string, unknown>, columnName: string): unknown {
   const key = Object.keys(row).find(
-    (k) => k.toLowerCase() === columnName.toLowerCase(),
+    (k) => k.toLowerCase() === columnName.toLowerCase()
   );
   return key !== undefined ? row[key] : (row as any)[columnName];
 }
@@ -39,7 +39,7 @@ function getColumn(row: Record<string, unknown>, columnName: string): unknown {
  * Ensure metadata table exists, create if not
  */
 export async function ensureMetadataTable(
-  client: IInternalClient,
+  client: IInternalClient
 ): Promise<void> {
   const createTableSql = `
     CREATE TABLE IF NOT EXISTS ${METADATA_TABLE_NAME} (
@@ -94,7 +94,9 @@ export async function insertCollectionMetadata(
     const retryDelayMs = 20;
     let result: Record<string, unknown>[] | null = null;
     for (let i = 0; i < maxRetries; i++) {
-      result = await client.execute(selectSql, [collectionName]) as Record<string, unknown>[] | null;
+      result = (await client.execute(selectSql, [collectionName])) as
+        | Record<string, unknown>[]
+        | null;
       if (result && result.length > 0) break;
       if (i < maxRetries - 1) {
         await new Promise((r) => setTimeout(r, retryDelayMs));
@@ -109,7 +111,9 @@ export async function insertCollectionMetadata(
         ORDER BY created_at DESC
         LIMIT 1
       `;
-      const fallback = await client.execute(fallbackSql) as Record<string, unknown>[] | null;
+      const fallback = (await client.execute(fallbackSql)) as
+        | Record<string, unknown>[]
+        | null;
       if (fallback && fallback.length > 0) {
         const row = fallback[0];
         const name = getColumn(row, "collection_name");
@@ -126,7 +130,7 @@ export async function insertCollectionMetadata(
     const collectionId = getColumn(result[0], "collection_id");
     if (collectionId == null || typeof collectionId !== "string") {
       throw new Error(
-        "Failed to retrieve collection_id after inserting metadata",
+        "Failed to retrieve collection_id after inserting metadata"
       );
     }
     return collectionId;
@@ -147,7 +151,7 @@ export async function insertCollectionMetadata(
  */
 export async function getCollectionMetadata(
   client: IInternalClient,
-  collectionName: string,
+  collectionName: string
 ): Promise<CollectionMetadata | null> {
   const selectSql = `
     SELECT collection_id, collection_name, settings, created_at, updated_at
@@ -198,7 +202,7 @@ export async function getCollectionMetadata(
  */
 export async function getCollectionMetadataById(
   client: IInternalClient,
-  collectionId: string,
+  collectionId: string
 ): Promise<CollectionMetadata | null> {
   const selectSql = `
     SELECT collection_id, collection_name, settings, created_at, updated_at
@@ -249,7 +253,7 @@ export async function getCollectionMetadataById(
  */
 export async function deleteCollectionMetadata(
   client: IInternalClient,
-  collectionName: string,
+  collectionName: string
 ): Promise<void> {
   const deleteSql = `
     DELETE FROM ${METADATA_TABLE_NAME}
@@ -276,7 +280,7 @@ export async function deleteCollectionMetadata(
  * List all collection metadata
  */
 export async function listCollectionMetadata(
-  client: IInternalClient,
+  client: IInternalClient
 ): Promise<CollectionMetadata[]> {
   const selectSql = `
     SELECT collection_id, collection_name, settings, created_at, updated_at
@@ -327,7 +331,7 @@ export async function listCollectionMetadata(
  * Check if metadata table exists
  */
 export async function metadataTableExists(
-  client: IInternalClient,
+  client: IInternalClient
 ): Promise<boolean> {
   const sql = `SHOW TABLES LIKE '${METADATA_TABLE_NAME}'`;
 

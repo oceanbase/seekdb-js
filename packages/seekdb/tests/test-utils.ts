@@ -140,7 +140,11 @@ export class TestDefaultEmbeddingFunction implements EmbeddingFunction {
   readonly name = "default-embed";
 
   async generate(texts: string[]): Promise<number[][]> {
-    return texts.map(() => Array(384).fill(0).map(() => Math.random()));
+    return texts.map(() =>
+      Array(384)
+        .fill(0)
+        .map(() => Math.random())
+    );
   }
 
   getConfig(): EmbeddingConfig {
