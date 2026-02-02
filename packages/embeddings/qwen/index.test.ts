@@ -5,8 +5,16 @@ import { QwenEmbeddingFunction, QwenEmbeddingConfig } from "./index";
 vi.mock("openai", () => {
   const mockCreate = vi.fn().mockResolvedValue({
     data: [
-      { embedding: Array(1024).fill(0).map((_, i) => i / 1000) },
-      { embedding: Array(1024).fill(0).map((_, i) => (i + 100) / 1000) },
+      {
+        embedding: Array(1024)
+          .fill(0)
+          .map((_, i) => i / 1000),
+      },
+      {
+        embedding: Array(1024)
+          .fill(0)
+          .map((_, i) => (i + 100) / 1000),
+      },
     ],
   });
 
@@ -26,7 +34,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should initialize with default parameters", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction();
     expect(embedder.name).toBe("qwen");
 
@@ -38,7 +46,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should initialize with custom parameters", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction({
       modelName: "text-embedding-v3",
       dimensions: 768,
@@ -54,7 +62,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should initialize with all optional parameters", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction({
       modelName: "custom-model",
       apiKey: "custom-key",
@@ -102,7 +110,9 @@ describe("QwenEmbeddingFunction", () => {
         apiKeyEnvVar: "CUSTOM_DASHSCOPE_API_KEY",
       });
 
-      expect(embedder.getConfig().api_key_env_var).toBe("CUSTOM_DASHSCOPE_API_KEY");
+      expect(embedder.getConfig().api_key_env_var).toBe(
+        "CUSTOM_DASHSCOPE_API_KEY"
+      );
     } finally {
       delete process.env.CUSTOM_DASHSCOPE_API_KEY;
     }
@@ -110,14 +120,14 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should use CN region by default", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction();
     expect(embedder.name).toBe("qwen");
   });
 
   it("should support international region", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction({
       region: "intl",
     });
@@ -127,7 +137,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should generate embeddings with correct dimensions", async () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction();
     const texts = ["Hello world", "Test text"];
     const embeddings = await embedder.generate(texts);
@@ -141,7 +151,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should return correct config", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction({
       modelName: "test-model",
       dimensions: 768,
@@ -157,7 +167,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should return config in snake_case format", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction({
       modelName: "test-model",
       apiKeyEnvVar: "DASHSCOPE_API_KEY",
@@ -180,7 +190,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should build instance from snake_case config", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const snakeCaseConfig = {
       model_name: "custom-model",
       api_key: "custom-key",
@@ -203,7 +213,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should maintain consistency in round-trip conversion", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const originalConfig: QwenEmbeddingConfig = {
       modelName: "round-trip-model",
       apiKey: "round-trip-key",
@@ -227,7 +237,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should build instance with default values from empty config", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = QwenEmbeddingFunction.buildFromConfig({});
 
     expect(embedder).toBeInstanceOf(QwenEmbeddingFunction);
@@ -241,7 +251,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should not include organization_id in config", () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction({
       modelName: "test-model",
     });
@@ -252,7 +262,7 @@ describe("QwenEmbeddingFunction", () => {
 
   it("should call OpenAI client with correct parameters including encoding_format", async () => {
     process.env.DASHSCOPE_API_KEY = "test-api-key";
-    
+
     const embedder = new QwenEmbeddingFunction({
       modelName: "test-model",
       dimensions: 1024,

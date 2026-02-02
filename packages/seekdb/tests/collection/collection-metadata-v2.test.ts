@@ -81,8 +81,12 @@ describe("Collection Metadata V2", () => {
       expect(metadata).toBeDefined();
       expect(metadata?.collectionName).toBe(collectionName);
       expect(metadata?.collectionId).toBeDefined();
-      expect((metadata?.settings.configuration as Configuration)?.hnsw?.dimension).toBe(3);
-      expect((metadata?.settings.configuration as Configuration)?.hnsw?.distance).toBe("cosine");
+      expect(
+        (metadata?.settings.configuration as Configuration)?.hnsw?.dimension
+      ).toBe(3);
+      expect(
+        (metadata?.settings.configuration as Configuration)?.hnsw?.distance
+      ).toBe("cosine");
     });
 
     test("should retrieve v2 collection with collectionId", async () => {
@@ -177,7 +181,7 @@ describe("Collection Metadata V2", () => {
       } catch (error) {
         console.error(
           `Failed to cleanup v1 collection ${v1CollectionName}:`,
-          error,
+          error
         );
       }
 
@@ -190,7 +194,7 @@ describe("Collection Metadata V2", () => {
       } catch (error) {
         console.error(
           `Failed to cleanup v2 collection ${v2CollectionName}:`,
-          error,
+          error
         );
       }
     });
@@ -234,12 +238,8 @@ describe("Collection Metadata V2", () => {
       const collections = await client.listCollections();
 
       // Should have both v1 and v2 collections
-      const v1Collection = collections.find(
-        (c) => c.name === v1CollectionName,
-      );
-      const v2Collection = collections.find(
-        (c) => c.name === v2CollectionName,
-      );
+      const v1Collection = collections.find((c) => c.name === v1CollectionName);
+      const v2Collection = collections.find((c) => c.name === v2CollectionName);
 
       expect(v1Collection).toBeDefined();
       expect(v1Collection?.collectionId).toBeUndefined(); // v1 has no collectionId

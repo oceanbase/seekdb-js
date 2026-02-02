@@ -9,38 +9,50 @@ This directory contains Python scripts for managing the seekdb native bindings, 
 Generic utility module for downloading libseekdb library files from a URL (zip archive).
 
 **Function signature:**
+
 ```python
-fetch_libseekdb(zip_url, output_dir, files)
+fetch_libseekdb(zip_url, output_dir)
 ```
+
+Downloads the zip and extracts all contents into `output_dir`.
+
+### `libseekdb_url_config.py`
+
+**URL is maintained here.** All platform scripts get the zip download prefix from this file:
+
+- Current: S3 build artifacts (`oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com`)
+- Original GitHub releases URL is kept in the file but commented out; uncomment to switch back
+
+To change the download source or commit path, edit `LIBSEEKDB_URL_PREFIX` in `libseekdb_url_config.py`.
 
 ### Platform-specific fetch scripts
 
-These scripts download libseekdb files from GitHub releases for specific platforms. They are automatically called by `node-gyp` during the build process via `binding.gyp`:
+These scripts download libseekdb files for specific platforms. They are automatically called by `node-gyp` during the build process via `binding.gyp`:
 
 - `fetch_libseekdb_linux_x64.py` - Linux x64
 - `fetch_libseekdb_linux_arm64.py` - Linux arm64
-- `fetch_libseekdb_darwin_x64.py` - macOS x64
+- `fetch_libseekdb_darwin_x64.py` - macOS x64 (**not supported yet**; prints a warning when downloading)
 - `fetch_libseekdb_darwin_arm64.py` - macOS arm64
 
 Note: Windows is not currently supported.
 
 **Manual usage (if needed):**
+
 ```bash
 python scripts/fetch_libseekdb_linux_x64.py
 ```
 
-These scripts download libseekdb library files from GitHub releases. Each script specifies:
-- `zip_url`: URL to the platform-specific zip archive
-- `output_dir`: Directory to extract files to (defaults to `../libseekdb`)
-- `files`: List of files to extract from the zip archive
+Each script specifies:
 
-To update the version or URL, modify the `zip_url` variable in each script.
+- `zip_url`: Built from the shared prefix via `libseekdb_url_config.get_zip_url()`
+- `output_dir`: Directory to extract all zip contents to (defaults to `../libseekdb`)
 
 ### `checkFunctionSignatures.mjs`
 
 Checks that function signatures in TypeScript definitions and C++ bindings match the C API header.
 
 **Usage:**
+
 ```bash
 # Check signatures
 node scripts/checkFunctionSignatures.mjs
@@ -69,6 +81,7 @@ Note: The libseekdb library is automatically fetched during the build process th
 ## Dependencies
 
 Python 3.x is required. The scripts use standard library modules:
+
 - `os` - File system operations
 - `urllib.request` - HTTP downloads
 - `zipfile` - Zip archive extraction

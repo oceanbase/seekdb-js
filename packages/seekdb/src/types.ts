@@ -284,7 +284,7 @@ export interface HybridSearchOptions {
 }
 
 export interface ForkOptions {
-  name: string
+  name: string;
 }
 
 // ==================== Database Types ====================
@@ -306,7 +306,7 @@ export interface EmbeddingFunction {
 }
 
 export interface EmbeddingFunctionConstructor {
-  new(config: EmbeddingConfig): EmbeddingFunction;
+  new (config: EmbeddingConfig): EmbeddingFunction;
   buildFromConfig(config: EmbeddingConfig): EmbeddingFunction;
   getModelDimensions?: () => Record<string, number>;
 }

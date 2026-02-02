@@ -12,7 +12,7 @@ export default defineConfig({
       seekdb: resolve(__dirname, "./src/index.ts"),
       "@seekdb/default-embed": resolve(
         __dirname,
-        "../embeddings/default-embed/index.ts",
+        "../embeddings/default-embed/index.ts"
       ),
       "@seekdb/js-bindings": resolve(
         __dirname,

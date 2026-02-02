@@ -117,7 +117,7 @@ describe("Collection Embedding Function Tests", () => {
     test("createCollection with dimension mismatch should throw error", async () => {
       const collectionName = generateCollectionName("test_dim_mismatch");
       console.log(
-        `\nTesting createCollection with dimension mismatch (should fail)`,
+        `\nTesting createCollection with dimension mismatch (should fail)`
       );
 
       const customEf = Simple3DEmbeddingFunction();
@@ -128,7 +128,7 @@ describe("Collection Embedding Function Tests", () => {
           name: collectionName,
           configuration: config,
           embeddingFunction: customEf,
-        }),
+        })
       ).rejects.toThrow(/dimension/i);
 
       console.log(`   Correctly raised error for dimension mismatch`);
@@ -137,7 +137,7 @@ describe("Collection Embedding Function Tests", () => {
     test("createCollection with configuration=undefined and embeddingFunction", async () => {
       const collectionName = generateCollectionName("test_config_none_with_ef");
       console.log(
-        `\nTesting createCollection with configuration=undefined and embeddingFunction provided`,
+        `\nTesting createCollection with configuration=undefined and embeddingFunction provided`
       );
 
       const customEf = Simple3DEmbeddingFunction();
@@ -160,7 +160,7 @@ describe("Collection Embedding Function Tests", () => {
     test("createCollection with both undefined should use defaults", async () => {
       const collectionName = generateCollectionName("test_both_none");
       console.log(
-        `\nTesting createCollection with both undefined (should use defaults)`,
+        `\nTesting createCollection with both undefined (should use defaults)`
       );
 
       // When both are undefined, should use DefaultEmbeddingFunction
@@ -180,7 +180,7 @@ describe("Collection Embedding Function Tests", () => {
     test("createCollection with configuration=null and embeddingFunction=null should throw error", async () => {
       const collectionName = generateCollectionName("test_both_null");
       console.log(
-        `\nTesting createCollection with configuration=null and embeddingFunction=null (should fail)`,
+        `\nTesting createCollection with configuration=null and embeddingFunction=null (should fail)`
       );
 
       // When both are explicitly null, should raise error
@@ -189,8 +189,10 @@ describe("Collection Embedding Function Tests", () => {
           name: collectionName,
           configuration: null,
           embeddingFunction: null,
-        }),
-      ).rejects.toThrow(/Cannot create collection.*configuration.*null.*embedding_function.*null/i);
+        })
+      ).rejects.toThrow(
+        /Cannot create collection.*configuration.*null.*embedding_function.*null/i
+      );
 
       console.log(`   Correctly raised error for both null`);
     });
@@ -198,7 +200,7 @@ describe("Collection Embedding Function Tests", () => {
     test("createCollection should prioritize dimension property over generate call", async () => {
       const collectionName = generateCollectionName("test_dimension_priority");
       console.log(
-        `\nTesting createCollection prioritizes dimension property (avoid generate call)`,
+        `\nTesting createCollection prioritizes dimension property (avoid generate call)`
       );
 
       let generateCalled = false;
@@ -281,7 +283,7 @@ describe("Collection Embedding Function Tests", () => {
 
       console.log(`   Collection dimension: ${retrievedCollection.dimension}`);
       console.log(
-        `   Embedding function: ${retrievedCollection.embeddingFunction}`,
+        `   Embedding function: ${retrievedCollection.embeddingFunction}`
       );
 
       await client.deleteCollection(collectionName);
@@ -310,7 +312,7 @@ describe("Collection Embedding Function Tests", () => {
 
     test("getOrCreateCollection getting existing collection", async () => {
       const collectionName = generateCollectionName(
-        "test_get_or_create_existing",
+        "test_get_or_create_existing"
       );
       console.log(`\nTesting getOrCreateCollection (get existing)`);
 
@@ -340,10 +342,10 @@ describe("Collection Embedding Function Tests", () => {
 
     test("getOrCreateCollection with custom embedding function", async () => {
       const collectionName = generateCollectionName(
-        "test_get_or_create_custom_ef",
+        "test_get_or_create_custom_ef"
       );
       console.log(
-        `\nTesting getOrCreateCollection with custom embedding function`,
+        `\nTesting getOrCreateCollection with custom embedding function`
       );
 
       const customEf = Simple3DEmbeddingFunction();
@@ -410,7 +412,7 @@ describe("Collection Embedding Function Tests", () => {
 
       // Use in collection creation
       const collectionName = generateCollectionName(
-        "test_registered_custom_ef",
+        "test_registered_custom_ef"
       );
       const collection = await client.createCollection({
         name: collectionName,
@@ -426,9 +428,11 @@ describe("Collection Embedding Function Tests", () => {
       });
 
       expect(retrievedCollection.embeddingFunction).toBeDefined();
-      expect(retrievedCollection.embeddingFunction!.name).toBe("my_custom_model");
+      expect(retrievedCollection.embeddingFunction!.name).toBe(
+        "my_custom_model"
+      );
       expect(retrievedCollection.embeddingFunction instanceof CustomModel).toBe(
-        true,
+        true
       );
       expect(retrievedCollection.embeddingFunction!.getConfig()).toEqual({
         dimension: 4,
@@ -436,7 +440,7 @@ describe("Collection Embedding Function Tests", () => {
       });
 
       console.log(
-        `   Collection created with registered custom model, dimension: ${collection.dimension}`,
+        `   Collection created with registered custom model, dimension: ${collection.dimension}`
       );
 
       await client.deleteCollection(collectionName);
@@ -570,5 +574,4 @@ describe("Collection Embedding Function Tests", () => {
       }
     });
   });
-
 });

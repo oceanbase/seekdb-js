@@ -59,7 +59,7 @@ export class SeekdbClient {
    * Create a new collection
    */
   async createCollection(
-    options: CreateCollectionOptions,
+    options: CreateCollectionOptions
   ): Promise<Collection> {
     return this._delegate.createCollection(options);
   }
@@ -96,7 +96,7 @@ export class SeekdbClient {
    * Get or create collection
    */
   async getOrCreateCollection(
-    options: CreateCollectionOptions,
+    options: CreateCollectionOptions
   ): Promise<Collection> {
     return this._delegate.getOrCreateCollection(options);
   }

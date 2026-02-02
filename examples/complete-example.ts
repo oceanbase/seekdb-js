@@ -66,7 +66,7 @@ async function main() {
   // 2.4 List all collections
   const allCollections = await client.listCollections();
   console.log(
-    `All collections: ${allCollections.map((c) => c.name).join(", ")}`,
+    `All collections: ${allCollections.map((c) => c.name).join(", ")}`
   );
 
   // ============================================================================
@@ -85,7 +85,7 @@ async function main() {
   ];
 
   const embeddings = documents.map(() =>
-    Array.from({ length: dimension }, () => Math.random()),
+    Array.from({ length: dimension }, () => Math.random())
   );
 
   const ids = documents.map(() => crypto.randomUUID());
@@ -394,7 +394,7 @@ async function main() {
   for (let i = 0; i < preview.ids.length; i++) {
     console.log(`  ID: ${preview.ids[i]}, Document: ${preview.documents?.[i]}`);
     console.log(
-      `  Metadata: ${JSON.stringify(preview.metadatas?.[i])}, Embedding dim: ${preview.embeddings?.[i]?.length ?? 0}`,
+      `  Metadata: ${JSON.stringify(preview.metadatas?.[i])}, Embedding dim: ${preview.embeddings?.[i]?.length ?? 0}`
     );
   }
 
