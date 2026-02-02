@@ -58,7 +58,7 @@ export class InternalEmbeddedClient implements IInternalClient {
           if (!error.message || !error.message.includes("initialized twice")) {
             throw error;
           }
-          db = _dbCache.get(this.path) ?? null;
+          db = _dbCache.get(this.path);
         }
       }
       this._db = db ?? null;
