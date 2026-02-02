@@ -3,7 +3,7 @@ const path = require("path");
 const getRuntimePlatformArch = () => `${process.platform}-${process.arch}`;
 
 const S3_BINDINGS_BASE =
-  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/seekdb-js-bindings/all_commits/";
+  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/js-bindings/all_commits/";
 
 /**
  * Load native binding: from SEEKDB_BINDINGS_PATH, or from sibling dir (local dev build), or throw.
@@ -11,7 +11,7 @@ const S3_BINDINGS_BASE =
  */
 function getNativeNodeBinding(runtimePlatformArch) {
   const [platform, arch] = runtimePlatformArch.split("-");
-  const dirName = `js-bindings-${platform}-${arch}`;
+  const dirName = `seekdb-js-bindings-${platform}-${arch}`;
 
   // 1) Explicit path (e.g. user downloaded zip from S3 and set env)
   const envPath = process.env.SEEKDB_BINDINGS_PATH;

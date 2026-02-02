@@ -1,7 +1,7 @@
 # Build, pack and upload seekdb JS bindings for multiple platforms to S3
 #
 # Platforms: linux-x64, linux-arm64, darwin-arm64 (macOS x64 not supported)
-# Artifacts: seekdb-js-bindings-<platform>.zip per platform; upload to s3://oceanbase-seekdb-builds/seekdb-js-bindings/
+# S3: s3://oceanbase-seekdb-builds/js-bindings/all_commits/<sha>/seekdb-js-bindings-<platform>.zip
 #
 name: Build JS bindings
 run-name: Build JS bindings for ${{ github.sha }}
@@ -40,9 +40,9 @@ on:
 env:
   AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
   BUCKET_NAME: ${{ vars.AWS_S3_BUCKET || 'oceanbase-seekdb-builds' }}
-  DESTINATION_TARGET_PATH: ${{ vars.SEEKDB_JS_BINDINGS_S3_PATH || format('s3://oceanbase-seekdb-builds/seekdb-js-bindings/all_commits/{0}', github.sha) }}
+  DESTINATION_TARGET_PATH: ${{ vars.SEEKDB_JS_BINDINGS_S3_PATH || format('s3://oceanbase-seekdb-builds/js-bindings/all_commits/{0}', github.sha) }}
   S3_BUCKET: ${{ vars.AWS_S3_BUCKET || 'oceanbase-seekdb-builds' }}
-  S3_PREFIX: seekdb-js-bindings/all_commits/${{ github.sha }}
+  S3_PREFIX: js-bindings/all_commits/${{ github.sha }}
 
 jobs:
   # ---------- Build JS bindings on Linux ----------
@@ -55,12 +55,8 @@ jobs:
         include:
           - platform: linux-x64
             runner: ubuntu-22.04
-            artifact_name: seekdb-js-bindings-linux-x64
-            pkg_dir: js-bindings-linux-x64
           - platform: linux-arm64
             runner: ubuntu-22.04-arm
-            artifact_name: seekdb-js-bindings-linux-arm64
-            pkg_dir: js-bindings-linux-arm64
 
     steps:
       - name: Checkout
@@ -90,14 +86,14 @@ jobs:
         run: pnpm run build
 
       - name: Pack artifact (Linux)
-        working-directory: packages/bindings/pkgs/${{ matrix.pkg_dir }}
-        run: zip -r ../../../../${{ matrix.artifact_name }}.zip .
+        working-directory: packages/bindings/pkgs/js-bindings-${{ matrix.platform }}
+        run: zip -r ../../../../seekdb-js-bindings-${{ matrix.platform }}.zip .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}.zip
+          name: seekdb-js-bindings-${{ matrix.platform }}
+          path: seekdb-js-bindings-${{ matrix.platform }}.zip
 
   # ---------- Build JS bindings on macOS ----------
   build-macos:
@@ -109,8 +105,6 @@ jobs:
         include:
           - platform: darwin-arm64
             runner: macos-14
-            artifact_name: seekdb-js-bindings-darwin-arm64
-            pkg_dir: js-bindings-darwin-arm64
 
     steps:
       - name: Checkout
@@ -135,14 +129,14 @@ jobs:
         run: pnpm run build
 
       - name: Pack artifact (macOS)
-        working-directory: packages/bindings/pkgs/${{ matrix.pkg_dir }}
-        run: zip -r ../../../../${{ matrix.artifact_name }}.zip .
+        working-directory: packages/bindings/pkgs/js-bindings-${{ matrix.platform }}
+        run: zip -r ../../../../seekdb-js-bindings-${{ matrix.platform }}.zip .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}.zip
+          name: seekdb-js-bindings-${{ matrix.platform }}
+          path: seekdb-js-bindings-${{ matrix.platform }}.zip
 
   # ---------- Collect artifacts and upload to S3 ----------
   release-artifacts:
@@ -156,17 +150,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release-artifacts
+          merge-multiple: true
 
       - name: List all artifacts
         run: |
           echo "=== All artifacts ==="
-          find release-artifacts -type f | sort
-
-      - name: Upload combined artifact (for workflow download)
-        uses: actions/upload-artifact@v4
-        with:
-          name: seekdb-js-bindings-all-platforms
-          path: release-artifacts/
+          ls -la release-artifacts/
 
       - name: Configure AWS credentials
         if: env.DESTINATION_TARGET_PATH != '' || env.S3_BUCKET != ''
@@ -187,7 +176,7 @@ jobs:
           fi
           [ "${S3_TARGET: -1}" != "/" ] && S3_TARGET="${S3_TARGET}/"
           echo "Uploading to $S3_TARGET"
-          aws s3 sync release-artifacts/ "$S3_TARGET" --exclude "*" --include "*.zip" --no-progress
+          aws s3 cp release-artifacts/ "$S3_TARGET" --recursive --exclude "*" --include "*.zip" --no-progress
           echo "Uploaded:"
           aws s3 ls "$S3_TARGET" --recursive
           echo "Done."

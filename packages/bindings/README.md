@@ -24,8 +24,9 @@ The native addon is structured in three layers:
 
 Native bindings are **not** published to npm. They are built by [`.github/workflows/build-js-bindings.yml`](../../.github/workflows/build-js-bindings.yml) and uploaded to S3:
 
-- **Base URL**: `s3://oceanbase-seekdb-builds/seekdb-js-bindings/all_commits/<commit_sha>/`
+- **Base path**: `s3://oceanbase-seekdb-builds/js-bindings/all_commits/<commit_sha>/`
 - **Zips**: `seekdb-js-bindings-linux-x64.zip`, `seekdb-js-bindings-linux-arm64.zip`, `seekdb-js-bindings-darwin-arm64.zip`
+- **HTTPS**: `https://oceanbase-seekdb-builds.s3.<region>.amazonaws.com/js-bindings/all_commits/<commit_sha>/seekdb-js-bindings-<platform>.zip`
 
 **Usage**: Download the zip for your platform, extract it to a directory, and set the environment variable:
 
