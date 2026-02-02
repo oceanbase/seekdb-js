@@ -114,7 +114,8 @@ describe("GoogleVertexEmbeddingFunction", () => {
       api_endpoint: "us-central1-aiplatform.googleapis.com",
     };
 
-    const embedder = GoogleVertexEmbeddingFunction.buildFromConfig(snakeCaseConfig);
+    const embedder =
+      GoogleVertexEmbeddingFunction.buildFromConfig(snakeCaseConfig);
 
     expect(embedder).toBeInstanceOf(GoogleVertexEmbeddingFunction);
     expect(embedder.name).toBe("google-vertex");

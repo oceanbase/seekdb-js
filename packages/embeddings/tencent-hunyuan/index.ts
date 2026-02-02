@@ -1,4 +1,8 @@
-import { EmbeddingFunction, registerEmbeddingFunction, EmbeddingConfig } from "seekdb";
+import {
+  EmbeddingFunction,
+  registerEmbeddingFunction,
+  EmbeddingConfig,
+} from "seekdb";
 import { OpenAIEmbeddingFunction, OpenAIEmbeddingConfig } from "@seekdb/openai";
 
 // Known Tencent Hunyuan embedding model dimensions
@@ -36,7 +40,8 @@ const baseURL = "https://api.hunyuan.cloud.tencent.com/v1";
 
 export class TencentHunyuanEmbeddingFunction
   extends OpenAIEmbeddingFunction
-  implements EmbeddingFunction {
+  implements EmbeddingFunction
+{
   readonly name: string = embeddingFunctionName;
 
   constructor(config: TencentHunyuanEmbeddingConfig = {}) {
@@ -81,7 +86,9 @@ export class TencentHunyuanEmbeddingFunction
     return restConfig;
   }
 
-  static buildFromConfig(config: EmbeddingConfig): TencentHunyuanEmbeddingFunction {
+  static buildFromConfig(
+    config: EmbeddingConfig
+  ): TencentHunyuanEmbeddingFunction {
     return new TencentHunyuanEmbeddingFunction({
       modelName: config.model_name,
       apiKey: config.api_key,
@@ -93,4 +100,7 @@ export class TencentHunyuanEmbeddingFunction
 }
 
 // Register at the bottom
-registerEmbeddingFunction(embeddingFunctionName, TencentHunyuanEmbeddingFunction);
+registerEmbeddingFunction(
+  embeddingFunctionName,
+  TencentHunyuanEmbeddingFunction
+);

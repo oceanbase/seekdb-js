@@ -10,6 +10,8 @@
 
 </div>
 
+For complete usage, please refer to the official documentation.
+
 ## Table of contents
 
 [Why seekdb-js?](#why-seekdb-js)<br/>
@@ -179,6 +181,8 @@ const hybridResults = await collection.hybridSearch({
 
 The SDK supports multiple Embedding Functions for generating vectors locally or in the cloud.
 
+For complete usage, please refer to the official documentation.
+
 #### Default Embedding
 
 Uses a local model (`Xenova/all-MiniLM-L6-v2`) by default. No API Key required. Suitable for quick development and testing.
@@ -291,37 +295,39 @@ First, implement the `EmbeddingFunction` interface:
 
 ```typescript
 import type { EmbeddingFunction } from "seekdb";
+import { registerEmbeddingFunction } from "seekdb";
 
 interface MyCustomEmbeddingConfig {
   apiKeyEnv: string;
 }
-
 class MyCustomEmbeddingFunction implements EmbeddingFunction {
-  readonly name = "my-model";
+  // The name of the `embeddingFunction`, must be unique.
+  readonly name = "my_custom_embedding";
   private apiKeyEnv: string;
   dimension: number;
-
   constructor(config: MyCustomEmbeddingConfig) {
     this.apiKeyEnv = config.apiKeyEnv;
     this.dimension = 384;
   }
-
-  // generating embeddings for the texts
+  // Implement your vector generation code here
   async generate(texts: string[]): Promise<number[][]> {
     const embeddings: number[][] = [];
     return embeddings;
   }
-
+  // The configuration of the current `embeddingFunction` instance, used to restore this instance
   getConfig(): MyCustomEmbeddingConfig {
     return {
       apiKeyEnv: this.apiKeyEnv,
     };
   }
-
+  // Create a new instance of the current `embeddingFunction` based on the provided configuration
   static buildFromConfig(config: MyCustomEmbeddingConfig): EmbeddingFunction {
     return new MyCustomEmbeddingFunction(config);
   }
 }
+
+// Register the constructor
+registerEmbeddingFunction("my_custom_embedding", MyCustomEmbeddingFunction);
 ```
 
 Then use it:
@@ -330,7 +336,6 @@ Then use it:
 const customEmbed = new MyCustomEmbeddingFunction({
   apiKeyEnv: "MY_CUSTOM_API_KEY_ENV",
 });
-
 const collection = await client.createCollection({
   name: "custom_embed_collection",
   configuration: {

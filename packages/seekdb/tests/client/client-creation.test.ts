@@ -127,7 +127,7 @@ describe("Client Creation and Collection Management", () => {
 
     test("has_collection - should return false for non-existent collection", async () => {
       const nonExistentName = generateCollectionName(
-        "test_collection_nonexistent",
+        "test_collection_nonexistent"
       );
       const exists = await client.hasCollection(nonExistentName);
       expect(exists).toBe(false);
@@ -225,7 +225,7 @@ describe("Client Creation and Collection Management", () => {
         try {
           await client.deleteCollection(testCollectionName1);
           await client.deleteCollection(testCollectionName2);
-        } catch (e) { }
+        } catch (e) {}
       }
     });
 
@@ -245,7 +245,7 @@ describe("Client Creation and Collection Management", () => {
 
     test("delete_collection - should raise error for non-existent collection", async () => {
       const testCollectionName = generateCollectionName(
-        "test_collection_nonexistent",
+        "test_collection_nonexistent"
       );
 
       await expect(async () => {
@@ -255,7 +255,7 @@ describe("Client Creation and Collection Management", () => {
 
     test("get_or_create_collection without configuration - should use default configuration", async () => {
       const testCollectionName = generateCollectionName(
-        "test_collection_default",
+        "test_collection_default"
       );
 
       const defaultCollection = await client.getOrCreateCollection({
@@ -348,13 +348,13 @@ describe("Client Creation and Collection Management", () => {
       expect(previewWithData.embeddings).toBeDefined();
       expect(previewWithData.ids.length).toBe(2);
       expect(previewWithData.ids.length).toBe(
-        previewWithData.documents!.length,
+        previewWithData.documents!.length
       );
       expect(previewWithData.ids.length).toBe(
-        previewWithData.metadatas!.length,
+        previewWithData.metadatas!.length
       );
       expect(previewWithData.ids.length).toBe(
-        previewWithData.embeddings!.length,
+        previewWithData.embeddings!.length
       );
 
       // Test peek with different limit
@@ -441,7 +441,7 @@ describe("Client Creation and Collection Management", () => {
 
     test("create_collection - with Configuration fulltextConfig with properties (IK mode)", async () => {
       const testCollectionName = generateCollectionName(
-        "test_config_fulltext_ik_props",
+        "test_config_fulltext_ik_props"
       );
 
       const collection = await client.createCollection({
@@ -471,7 +471,7 @@ describe("Client Creation and Collection Management", () => {
 
     test("create_collection - with Configuration fulltextConfig with properties (NGRAM size)", async () => {
       const testCollectionName = generateCollectionName(
-        "test_config_fulltext_ngram_props",
+        "test_config_fulltext_ngram_props"
       );
 
       const collection = await client.createCollection({
@@ -501,7 +501,7 @@ describe("Client Creation and Collection Management", () => {
 
     test("create_collection - with Configuration only fulltextConfig (no hnsw)", async () => {
       const testCollectionName = generateCollectionName(
-        "test_config_fulltext_only",
+        "test_config_fulltext_only"
       );
 
       const collection = await client.createCollection({
@@ -524,7 +524,6 @@ describe("Client Creation and Collection Management", () => {
     });
   });
 
-
   describe("fulltextConfig", () => {
     test("buildFulltextClause - default when config is undefined", () => {
       expect(SQLBuilder.buildFulltextClause(undefined)).toBe("WITH PARSER ik");
@@ -532,7 +531,7 @@ describe("Client Creation and Collection Management", () => {
 
     test("buildFulltextClause - analyzer only (space)", () => {
       expect(SQLBuilder.buildFulltextClause({ analyzer: "space" })).toBe(
-        "WITH PARSER space",
+        "WITH PARSER space"
       );
     });
 
@@ -541,7 +540,7 @@ describe("Client Creation and Collection Management", () => {
         SQLBuilder.buildFulltextClause({
           analyzer: "ik",
           properties: { ik_mode: "max_word" },
-        }),
+        })
       ).toBe("WITH PARSER ik PARSER_PROPERTIES=(ik_mode='max_word')");
     });
 
@@ -563,7 +562,7 @@ describe("Client Creation and Collection Management", () => {
         "cosine",
         undefined,
         undefined,
-        fulltextConfig,
+        fulltextConfig
       );
       expect(sql).toContain("FULLTEXT INDEX");
       expect(sql).toContain("WITH PARSER space");
@@ -603,5 +602,4 @@ describe("Client Creation and Collection Management", () => {
       }
     });
   });
-
 });

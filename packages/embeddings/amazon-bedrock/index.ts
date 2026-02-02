@@ -136,7 +136,9 @@ export class AmazonBedrockEmbeddingFunction implements EmbeddingFunction {
     };
   }
 
-  static buildFromConfig(config: EmbeddingConfig): AmazonBedrockEmbeddingFunction {
+  static buildFromConfig(
+    config: EmbeddingConfig
+  ): AmazonBedrockEmbeddingFunction {
     if (!config.api_key || !config.region) {
       throw new Error(
         "api_key and region are required in config. Generate API key at: https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys-generate.html"
@@ -151,4 +153,7 @@ export class AmazonBedrockEmbeddingFunction implements EmbeddingFunction {
   }
 }
 
-registerEmbeddingFunction(embeddingFunctionName, AmazonBedrockEmbeddingFunction);
+registerEmbeddingFunction(
+  embeddingFunctionName,
+  AmazonBedrockEmbeddingFunction
+);

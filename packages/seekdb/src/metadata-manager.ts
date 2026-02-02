@@ -11,7 +11,7 @@ export interface CollectionMetadata {
   collectionId: string;
   collectionName: string;
   settings: {
-    configuration?: CreateCollectionOptions['configuration'];
+    configuration?: CreateCollectionOptions["configuration"];
     version?: CollectionVersion;
     embeddingFunction?: {
       name: string;
@@ -56,7 +56,7 @@ export async function ensureMetadataTable(
     await client.execute(createTableSql);
   } catch (error) {
     throw new Error(
-      `Failed to create metadata table: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to create metadata table: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -67,7 +67,7 @@ export async function ensureMetadataTable(
 export async function insertCollectionMetadata(
   client: IInternalClient,
   collectionName: string,
-  settings: CollectionMetadata["settings"],
+  settings: CollectionMetadata["settings"]
 ): Promise<string> {
   // Ensure metadata table exists
   await ensureMetadataTable(client);
@@ -119,7 +119,7 @@ export async function insertCollectionMetadata(
         }
       }
       throw new Error(
-        "Failed to retrieve collection_id after inserting metadata",
+        "Failed to retrieve collection_id after inserting metadata"
       );
     }
 
@@ -132,10 +132,13 @@ export async function insertCollectionMetadata(
     return collectionId;
   } catch (error) {
     if (error instanceof TypeError)
-      throw new Error(`Failed to stringify Embedding Function config. Please ensure the getConfig() method returns a JSON-serializable object: ${error.message}`);
-    else throw new Error(
-      `Failed to insert collection metadata: ${error instanceof Error ? error.message : String(error)}`,
-    );
+      throw new Error(
+        `Failed to stringify Embedding Function config. Please ensure the getConfig() method returns a JSON-serializable object: ${error.message}`
+      );
+    else
+      throw new Error(
+        `Failed to insert collection metadata: ${error instanceof Error ? error.message : String(error)}`
+      );
   }
 }
 
@@ -169,8 +172,12 @@ export async function getCollectionMetadata(
       collectionId: row.collection_id as string,
       collectionName: row.collection_name as string,
       settings,
-      createdAt: row.created_at ? new Date(row.created_at as string) : undefined,
-      updatedAt: row.updated_at ? new Date(row.updated_at as string) : undefined,
+      createdAt: row.created_at
+        ? new Date(row.created_at as string)
+        : undefined,
+      updatedAt: row.updated_at
+        ? new Date(row.updated_at as string)
+        : undefined,
     };
   } catch (error) {
     // If table doesn't exist, return null (fallback to v1)
@@ -216,8 +223,12 @@ export async function getCollectionMetadataById(
       collectionId: row.collection_id as string,
       collectionName: row.collection_name as string,
       settings,
-      createdAt: row.created_at ? new Date(row.created_at as string) : undefined,
-      updatedAt: row.updated_at ? new Date(row.updated_at as string) : undefined,
+      createdAt: row.created_at
+        ? new Date(row.created_at as string)
+        : undefined,
+      updatedAt: row.updated_at
+        ? new Date(row.updated_at as string)
+        : undefined,
     };
   } catch (error) {
     // If table doesn't exist, return null
@@ -290,8 +301,12 @@ export async function listCollectionMetadata(
         collectionId: row.collection_id as string,
         collectionName: row.collection_name as string,
         settings,
-        createdAt: row.created_at ? new Date(row.created_at as string) : undefined,
-        updatedAt: row.updated_at ? new Date(row.updated_at as string) : undefined,
+        createdAt: row.created_at
+          ? new Date(row.created_at as string)
+          : undefined,
+        updatedAt: row.updated_at
+          ? new Date(row.updated_at as string)
+          : undefined,
       };
     });
   } catch (error) {

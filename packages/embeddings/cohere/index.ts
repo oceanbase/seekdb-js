@@ -78,7 +78,7 @@ export class CohereEmbeddingFunction implements EmbeddingFunction {
 
     if (!apiKey) {
       throw new Error(
-        `Cohere API key is required. Please provide it in the constructor or set the environment variable ${this.apiKeyEnvVar}.`,
+        `Cohere API key is required. Please provide it in the constructor or set the environment variable ${this.apiKeyEnvVar}.`
       );
     }
 
@@ -92,7 +92,7 @@ export class CohereEmbeddingFunction implements EmbeddingFunction {
 
     if (!this.image && texts.length > 96) {
       throw new Error(
-        "Cohere embedding supports a maximum of 96 text inputs at a time",
+        "Cohere embedding supports a maximum of 96 text inputs at a time"
       );
     }
 

@@ -22,11 +22,11 @@ export const isEmbeddingFunctionRegistered = (name: string): boolean => {
  */
 export const registerEmbeddingFunction = (
   name: string,
-  fn: EmbeddingFunctionConstructor,
+  fn: EmbeddingFunctionConstructor
 ) => {
   if (registry.has(name)) {
     throw new Error(
-      `Embedding function with name ${name} is already registered.`,
+      `Embedding function with name ${name} is already registered.`
     );
   }
   registry.set(name, fn);
@@ -34,18 +34,18 @@ export const registerEmbeddingFunction = (
 
 /**
  * Check if an embedding function supports persistence (can be restored from config).
- * 
+ *
  * An embedding function supports persistence if:
  * - It is not null/undefined
  * - It has a getConfig() method
  * - Its constructor has a buildFromConfig() static method
  * - Calling getConfig() does not throw an error
- * 
+ *
  * @param ef - The embedding function to check
  * @returns true if the embedding function supports persistence
  */
 export function supportsPersistence(
-  ef: EmbeddingFunction | null | undefined,
+  ef: EmbeddingFunction | null | undefined
 ): ef is EmbeddingFunction {
   if (ef == null) {
     return false;
@@ -80,7 +80,7 @@ export function supportsPersistence(
  */
 export async function getEmbeddingFunction(
   name: string = "default-embed",
-  config?: any,
+  config?: any
 ): Promise<EmbeddingFunction> {
   const finalConfig = config || ({} as any);
 
@@ -92,14 +92,14 @@ export async function getEmbeddingFunction(
     } catch (error: any) {
       throw new Error(
         `Embedding function '${name}' is not registered. \n\n` +
-        `--- For seekdb built-in embedding function ---\n` +
-        `  1. Install: npm install @seekdb/${name}\n` +
-        `  2. Import: Add this at the top of your file: import '@seekdb/${name}';\n` +
-        `The package will automatically register itself upon import.\n\n` +
-        `--- For custom embedding function ---\n` +
-        `Please create your own embedding function class that implements the EmbeddingFunction interface. \n` +
-        `You can see more details in the README.md of the package.\n\n` +
-        `Error: ${error instanceof Error ? error.message : String(error)}`,
+          `--- For seekdb built-in embedding function ---\n` +
+          `  1. Install: npm install @seekdb/${name}\n` +
+          `  2. Import: Add this at the top of your file: import '@seekdb/${name}';\n` +
+          `The package will automatically register itself upon import.\n\n` +
+          `--- For custom embedding function ---\n` +
+          `Please create your own embedding function class that implements the EmbeddingFunction interface. \n` +
+          `You can see more details in the README.md of the package.\n\n` +
+          `Error: ${error instanceof Error ? error.message : String(error)}`
       );
     }
     // If the embedding function is not registered, register it
@@ -114,12 +114,12 @@ export async function getEmbeddingFunction(
     }
     if (Ctor.buildFromConfig) {
       return Ctor.buildFromConfig(finalConfig);
-    };
+    }
     // Instantiate (if configuration is incorrect, the constructor will throw)
     return new Ctor(finalConfig);
   } catch (error) {
     throw new Error(
-      `Failed to instantiate embedding function '${name}': ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to instantiate embedding function '${name}': ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

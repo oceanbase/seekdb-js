@@ -50,7 +50,8 @@ export class GoogleVertexEmbeddingFunction implements EmbeddingFunction {
     const allEmbeddings: number[][] = [];
 
     // Import google protobuf dynamically
-    const { google } = await import("@google-cloud/aiplatform/build/protos/protos.js");
+    const { google } =
+      await import("@google-cloud/aiplatform/build/protos/protos.js");
 
     // Google Vertex AI embedding API processes one text at a time
     for (const text of texts) {
@@ -76,7 +77,8 @@ export class GoogleVertexEmbeddingFunction implements EmbeddingFunction {
       }
 
       const prediction = response.predictions[0];
-      const embeddingsProto = (prediction as any).structValue?.fields?.embeddings;
+      const embeddingsProto = (prediction as any).structValue?.fields
+        ?.embeddings;
       const valuesProto = embeddingsProto?.structValue?.fields?.values;
       const embedding = valuesProto?.listValue?.values?.map(
         (v: any) => v.numberValue

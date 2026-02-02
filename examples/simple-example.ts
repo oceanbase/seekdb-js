@@ -48,7 +48,7 @@ async function main() {
   });
 
   console.log(
-    `Created collection '${collection.name}' with dimension: ${collection.dimension}`,
+    `Created collection '${collection.name}' with dimension: ${collection.dimension}`
   );
   console.log(`Embedding function: ${collection.embeddingFunction?.name}`);
 
@@ -81,7 +81,7 @@ async function main() {
 
   console.log(`\nAdded ${documents.length} documents to collection`);
   console.log(
-    "Note: Embeddings were automatically generated from documents using the embedding function",
+    "Note: Embeddings were automatically generated from documents using the embedding function"
   );
 
   // ==================== Step 4: Query the Collection ====================
