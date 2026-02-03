@@ -124,8 +124,8 @@ export abstract class BaseSeekdbClient {
       if (ef === null || dimension === undefined) {
         throw new SeekdbValueError(
           "Cannot create collection: configuration is explicitly set to null and " +
-          "embedding_function is also null. Cannot determine dimension without either a configuration " +
-          "or an embedding function."
+            "embedding_function is also null. Cannot determine dimension without either a configuration " +
+            "or an embedding function."
         );
       }
       dimension = dimension;

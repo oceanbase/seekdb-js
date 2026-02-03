@@ -262,7 +262,7 @@ describe("Client Creation and Collection Management", () => {
         try {
           await client.deleteCollection(testCollectionName1);
           await client.deleteCollection(testCollectionName2);
-        } catch (e) { }
+        } catch (e) {}
       }
     });
 
