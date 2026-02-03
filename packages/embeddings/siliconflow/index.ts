@@ -100,9 +100,13 @@ export class SiliconFlowEmbeddingFunction
   static buildFromConfig(
     config: EmbeddingConfig
   ): SiliconFlowEmbeddingFunction {
+    if (!config.api_key_env_var) {
+      throw new Error(
+        "Building siliconflow embedding function from config: api_key_env_var is required in config."
+      );
+    }
     return new SiliconFlowEmbeddingFunction({
       modelName: config.model_name,
-      apiKey: config.api_key,
       apiKeyEnvVar: config.api_key_env_var,
       dimensions: config.dimensions,
       baseURL: config.base_url,

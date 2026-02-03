@@ -73,7 +73,7 @@ describe("QwenEmbeddingFunction", () => {
 
     const config = embedder.getConfig();
     expect(config.model_name).toBe("custom-model");
-    expect(config.api_key).toBe("custom-key");
+    expect(config.api_key).toBeUndefined();
     expect(config.api_key_env_var).toBe("CUSTOM_DASHSCOPE_KEY");
     expect(config.dimensions).toBe(2048);
   });
@@ -99,7 +99,7 @@ describe("QwenEmbeddingFunction", () => {
     });
 
     expect(embedder.name).toBe("qwen");
-    expect(embedder.getConfig().api_key).toBe("custom-api-key");
+    expect(embedder.getConfig().api_key).toBeUndefined();
   });
 
   it("should use custom API key environment variable", () => {
@@ -206,7 +206,7 @@ describe("QwenEmbeddingFunction", () => {
     // Verify config is correctly converted
     const config = embedder.getConfig();
     expect(config.model_name).toBe("custom-model");
-    expect(config.api_key).toBe("custom-key");
+    expect(config.api_key).toBeUndefined();
     expect(config.api_key_env_var).toBe("DASHSCOPE_API_KEY");
     expect(config.dimensions).toBe(2048);
   });
@@ -230,7 +230,7 @@ describe("QwenEmbeddingFunction", () => {
     // Verify configs match after round-trip
     expect(finalConfig).toEqual(snakeConfig);
     expect(finalConfig.model_name).toBe("round-trip-model");
-    expect(finalConfig.api_key).toBe("round-trip-key");
+    expect(finalConfig.api_key).toBeUndefined();
     expect(finalConfig.api_key_env_var).toBe("DASHSCOPE_API_KEY");
     expect(finalConfig.dimensions).toBe(512);
   });
