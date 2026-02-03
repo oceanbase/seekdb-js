@@ -4,9 +4,10 @@
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekdbClient } from "../../src/client.js";
-import { HNSWConfiguration } from "../../src/types.js";
-import { SQLBuilder } from "../../src/sql-builder.js";
+import { EmbeddingFunction, HNSWConfiguration } from "../../src/types.js";
 import { TEST_CONFIG, generateCollectionName } from "../test-utils.js";
+import { SQLBuilder } from "../../src/sql-builder.js";
+import { registerEmbeddingFunction } from "../../src/embedding-function.js";
 
 describe("Client Creation and Collection Management", () => {
   let client: SeekdbClient;
@@ -125,6 +126,42 @@ describe("Client Creation and Collection Management", () => {
       await client.deleteCollection(testCollectionName);
     });
 
+    test("get_collection - should extract correct distance metric (cosine)", async () => {
+      const testCollectionName = generateCollectionName("test_distance_cosine");
+
+      class CustomModel implements EmbeddingFunction {
+        private config: any;
+        constructor(config: any = {}) {
+          this.config = config;
+        }
+        name = "my_custom_model_creation";
+        dimension = 64;
+        async generate(texts: string[]): Promise<number[][]> {
+          // Returns 4-dimensional vectors
+          return texts.map(() => [0.1, 0.2, 0.3, 0.4]);
+        }
+        getConfig() {
+          return this.config;
+        }
+        static buildFromConfig(config: any): EmbeddingFunction {
+          return new CustomModel(config);
+        }
+      }
+      registerEmbeddingFunction("my_custom_model_creation", CustomModel);
+      await client.createCollection({
+        name: testCollectionName,
+        embeddingFunction: new CustomModel(),
+      });
+
+      const collection = await client.getCollection({
+        name: testCollectionName,
+      });
+
+      expect(collection.distance).toBe("cosine");
+      expect(collection.dimension).toBe(64);
+      await client.deleteCollection(testCollectionName);
+    });
+
     test("has_collection - should return false for non-existent collection", async () => {
       const nonExistentName = generateCollectionName(
         "test_collection_nonexistent"
@@ -225,7 +262,7 @@ describe("Client Creation and Collection Management", () => {
         try {
           await client.deleteCollection(testCollectionName1);
           await client.deleteCollection(testCollectionName2);
-        } catch (e) {}
+        } catch (e) { }
       }
     });
 

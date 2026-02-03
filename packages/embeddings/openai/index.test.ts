@@ -76,7 +76,7 @@ describe("OpenAIEmbeddingFunction", () => {
 
     const config = embedder.getConfig();
     expect(config.model_name).toBe("custom-model");
-    expect(config.api_key).toBe("custom-key");
+    expect(config.api_key).toBeUndefined();
     expect(config.api_key_env_var).toBe("CUSTOM_OPENAI_KEY");
     expect(config.organization_id).toBe("org-456");
     expect(config.dimensions).toBe(2048);
@@ -103,7 +103,7 @@ describe("OpenAIEmbeddingFunction", () => {
     });
 
     expect(embedder.name).toBe("openai");
-    expect(embedder.getConfig().api_key).toBe("custom-api-key");
+    expect(embedder.getConfig().api_key).toBeUndefined();
   });
 
   it("should use custom API key environment variable", () => {
@@ -197,7 +197,7 @@ describe("OpenAIEmbeddingFunction", () => {
     // Verify config is correctly converted
     const config = embedder.getConfig();
     expect(config.model_name).toBe("custom-model");
-    expect(config.api_key).toBe("custom-key");
+    expect(config.api_key).toBeUndefined();
     expect(config.api_key_env_var).toBe("OPENAI_API_KEY");
     expect(config.organization_id).toBe("org-789");
     expect(config.dimensions).toBe(2048);
@@ -222,7 +222,7 @@ describe("OpenAIEmbeddingFunction", () => {
     // Verify configs match after round-trip
     expect(finalConfig).toEqual(snakeConfig);
     expect(finalConfig.model_name).toBe("round-trip-model");
-    expect(finalConfig.api_key).toBe("round-trip-key");
+    expect(finalConfig.api_key).toBeUndefined();
     expect(finalConfig.api_key_env_var).toBe("OPENAI_API_KEY");
     expect(finalConfig.organization_id).toBe("org-round-trip");
     expect(finalConfig.dimensions).toBe(1024);

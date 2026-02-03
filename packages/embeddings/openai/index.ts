@@ -98,7 +98,6 @@ export class OpenAIEmbeddingFunction implements EmbeddingFunction {
 
   getConfig(): OpenAIEmbeddingConfig {
     return {
-      api_key: this.apiKey,
       model_name: this.modelName,
       dimensions: this.dimensions,
       organization_id: this.organizationId,
@@ -108,8 +107,12 @@ export class OpenAIEmbeddingFunction implements EmbeddingFunction {
   }
 
   static buildFromConfig(config: EmbeddingConfig): OpenAIEmbeddingFunction {
+    if (!config.api_key_env_var) {
+      throw new Error(
+        "Building OpenAI embedding function from config: api_key_env_var is required in config."
+      );
+    }
     return new OpenAIEmbeddingFunction({
-      apiKey: config.api_key,
       modelName: config.model_name,
       dimensions: config.dimensions,
       organizationId: config.organization_id,
