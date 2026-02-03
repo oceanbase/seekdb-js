@@ -7,4 +7,4 @@ ZIP_NAME = "libseekdb-linux-x64.zip"
 zip_url = get_zip_url(ZIP_NAME)
 output_dir = os.path.join(os.path.dirname(__file__), "..", "libseekdb")
 
-fetch_libseekdb(zip_url, output_dir)
+fetch_libseekdb(zip_url, output_dir, "libseekdb.zip")

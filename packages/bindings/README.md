@@ -31,10 +31,10 @@ Native bindings are **not** published to npm. They are built by [`.github/workfl
 **Usage**: Download the zip for your platform, extract it to a directory, and set the environment variable:
 
 ```bash
-export SEEKDB_BINDINGS_PATH=/path/to/extracted/dir   # dir must contain seekdb.node and libseekdb.so/dylib
+export SEEKDB_BINDINGS_PATH=/path/to/extracted/dir   # dir must contain seekdb.node, libseekdb.so/dylib; macOS may also need libs/ for runtime deps
 ```
 
-The loader package **`pkgs/js-bindings`** is the only package in the repo; it resolves the native addon from `SEEKDB_BINDINGS_PATH` or, for local development, from sibling dirs `pkgs/js-bindings-<platform>-<arch>/` after a local build.
+The loader package **`pkgs/js-bindings`** is the only package in the repo; it resolves the native addon from `SEEKDB_BINDINGS_PATH` or, for local development, from the same directory (`pkgs/js-bindings/seekdb.node`) after a local build.
 
 ## Building (CI / local dev)
 
@@ -48,9 +48,9 @@ pnpm run build
 
 This will:
 
-1. Fetch the seekdb library for your platform (via Python scripts)
-2. Compile the C++ bindings using node-gyp
-3. Copy the compiled `.node` file and library into `pkgs/js-bindings-<platform>-<arch>/` (build output only; these dirs are not published to npm)
+1. Fetch the libseekdb library for your platform (Python scripts invoked by `binding.gyp`)
+2. If the archive contains a `libs/` directory, copy it to `pkgs/js-bindings/libs/` (e.g. macOS runtime deps)
+3. Compile the C++ bindings with node-gyp and copy `seekdb.node` and `libseekdb.so`/`libseekdb.dylib` into `pkgs/js-bindings/`
 
 ## Platform Support
 
@@ -64,7 +64,7 @@ Note: macOS x64 and Windows are not currently supported.
 
 ## C API Integration
 
-The bindings use the seekdb C API from `https://github.com/oceanbase/seekdb/src/include/seekdb.h` and link against `libseekdb.so` from the build directory.
+The bindings use the seekdb C API (see `seekdb.h` in `libseekdb/` after fetch) and link against `libseekdb.so` / `libseekdb.dylib`. The native library is downloaded and extracted by platform-specific Python scripts in `scripts/` (invoked from `binding.gyp`); see `scripts/README.md` for details.
 
 ### Current Implementation
 
@@ -91,7 +91,6 @@ Note: C API types (`SeekdbHandle`, `SeekdbResult`, `SeekdbRow`) from seekdb.h us
 
 ### TODO
 
-- [ ] Add fetch scripts for libseekdb (similar to duckdb-node-neo)
 - [ ] Support for transactions (begin/commit/rollback)
 - [ ] Support for execute_update (INSERT/UPDATE/DELETE)
 - [ ] Add comprehensive tests for native bindings

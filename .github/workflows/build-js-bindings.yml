@@ -86,8 +86,8 @@ jobs:
         run: pnpm run build
 
       - name: Pack artifact (Linux)
-        working-directory: packages/bindings/pkgs/js-bindings-${{ matrix.platform }}
-        run: zip -r ../../../../seekdb-js-bindings-${{ matrix.platform }}.zip .
+        working-directory: packages/bindings/pkgs/js-bindings
+        run: zip -r ../../../../seekdb-js-bindings-${{ matrix.platform }}.zip . -x "seekdb.js" -x "seekdb.d.ts" -x "package.json"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -129,7 +129,7 @@ jobs:
         run: pnpm run build
 
       - name: Pack artifact (macOS)
-        working-directory: packages/bindings/pkgs/js-bindings-${{ matrix.platform }}
+        working-directory: packages/bindings/pkgs/js-bindings
         run: zip -r ../../../../seekdb-js-bindings-${{ matrix.platform }}.zip .
 
       - name: Upload artifact

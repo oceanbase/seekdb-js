@@ -10,9 +10,6 @@ const S3_BINDINGS_BASE =
  * @throw Error if there isn't any available native binding for the current platform/arch.
  */
 function getNativeNodeBinding(runtimePlatformArch) {
-  const [platform, arch] = runtimePlatformArch.split("-");
-  const dirName = `seekdb-js-bindings-${platform}-${arch}`;
-
   // 1) Explicit path (e.g. user downloaded zip from S3 and set env)
   const envPath = process.env.SEEKDB_BINDINGS_PATH;
   if (envPath) {
@@ -27,10 +24,10 @@ function getNativeNodeBinding(runtimePlatformArch) {
     }
   }
 
-  // 2) Sibling dir (local dev: bindings built in monorepo, pkgs/js-bindings-<platform>-<arch>)
-  const siblingPath = path.join(__dirname, "..", dirName, "seekdb.node");
+  // 2) Same dir (local dev: build outputs seekdb.node into pkgs/js-bindings)
+  const sameDirPath = path.join(__dirname, "seekdb.node");
   try {
-    return require(siblingPath);
+    return require(sameDirPath);
   } catch {
     // Fall through to error
   }
