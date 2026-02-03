@@ -1,70 +1,71 @@
-# 测试文件组织说明
+# Test Layout
 
-## 目录结构
+## Directory structure
 
-测试文件按功能分类组织，Server 和 Embedded 模式保持相同的目录结构。
+Tests are grouped by feature. Server and Embedded modes share the same layout under their roots.
 
 ```
 tests/
-├── unit/                    # 单元测试（不需要数据库）
-├── client/                  # 客户端相关
-├── collection/              # Collection 操作
-├── embedding/               # Embedding Function
-├── admin/                   # 管理功能
-├── data/                    # 数据相关
-├── edge-cases/              # 边界情况
-├── examples/                # 示例
-├── mode-consistency.test.ts # 模式一致性对比
-├── test-utils.ts            # 测试工具（Server 模式）
-└── embedded/                # Embedded Mode 测试（相同结构）
+├── unit/                    # Unit tests (no database)
+├── client/                  # Client creation, factory, connection
+├── collection/              # Collection operations
+├── embedding/               # Embedding function
+├── admin/                   # Admin / database management
+├── data/                    # Data normalization, etc.
+├── edge-cases/              # Edge cases and errors
+├── examples/                # Examples
+├── test-utils.ts            # Shared test helpers (server mode)
+└── embedded/                # Embedded-mode tests (same layout; requires native addon)
     ├── client/
+    ├── mode-consistency.test.ts  # Embedded vs server behavior consistency
     ├── collection/
     ├── embedding/
     ├── data/
     ├── edge-cases/
     ├── examples/
-    └── test-utils.ts        # 测试工具（Embedded 模式）
+    └── test-utils.ts        # Embedded-specific helpers (getTestDbDir, cleanupTestDb, etc.)
 ```
 
-## 导入路径规则
+## Import paths
 
-### Server Mode 测试（`tests/{category}/`）
+### Server-mode tests (`tests/{category}/`)
 
-- 导入 src：`from "../../src/..."`
-- 导入 test-utils：`from "../test-utils.js"`
+- From src: `from "../../src/..."`
+- From test-utils: `from "../test-utils.js"`
 
-### Embedded Mode 测试（`tests/embedded/{category}/`）
+### Embedded-mode tests (`tests/embedded/{category}/`)
 
-- 导入 src：`from "../../../src/..."`（若在 `embedded/collection/` 等子目录则为 `../../../src`）
-- 导入根目录 test-utils（如 `generateCollectionName`、`MockEmbeddingFunction`）：`from "../../test-utils.js"`
-- 导入 embedded 专用 test-utils（`getEmbeddedTestConfig`、`cleanupTestDb`、`getTestDbDir`）：`from "../test-utils.js"`（若在 `embedded/client/` 或 `embedded/collection/` 等，则用 `../test-utils.js` 指向 `embedded/test-utils.ts`）
+- From src: `from "../../../src/..."` (or `../../../src` when in subdirs like `embedded/collection/`)
+- From root test-utils (e.g. `generateCollectionName`, `MockEmbeddingFunction`): `from "../../test-utils.js"`
+- From embedded test-utils (`getTestDbDir`, `cleanupTestDb`, `getEmbeddedTestConfig`): `from "../test-utils.js"` (when in `embedded/client/`, `embedded/collection/`, etc., `../test-utils.js` points to `embedded/test-utils.ts`)
 
-### 单元测试（`tests/unit/`）
+### Unit tests (`tests/unit/`)
 
-- 导入 src：`from "../../src/..."`
-- 导入 errors：`from "../../src/errors.js"`
+- From src: `from "../../src/..."`
+- From errors: `from "../../src/errors.js"`
 
-## 测试执行
+## Running tests
 
 ```bash
-# 所有测试
-npx vitest packages/seekdb/tests
+# All tests (from repo root)
+pnpm test
 
-# 特定功能
-npx vitest packages/seekdb/tests/collection/
+# From packages/seekdb
+pnpm exec vitest run
 
-# Embedded 模式
-npx vitest packages/seekdb/tests/embedded/
+# Specific area
+pnpm exec vitest run tests/collection/
 
-# 单元测试（最快）
-npx vitest packages/seekdb/tests/unit/
+# Embedded only (requires native addon)
+pnpm exec vitest run tests/embedded/
+
+# Unit tests only (fastest)
+pnpm exec vitest run tests/unit/
 ```
 
-## Embedded 模式说明
+## Embedded mode
 
-- **目录**：`tests/embedded/` 下结构与 server 对应，用例与 server 模式对齐，便于无服务器环境下跑全量单测。
-- **配置**：使用 `getEmbeddedTestConfig(testFileName)` 得到 `{ path, database }`；管理端使用 `AdminClient({ path: TEST_CONFIG.path })`。
-- **清理**：`beforeAll` 中调用 `cleanupTestDb(testFileName)`；每个测试文件使用独立目录 `getTestDbDir(testFileName)`。
-- **覆盖报告**：见 `tests/embedded/COVERAGE_REPORT.md`。
-  ��该测试文件对应的数据库目录；每个测试文件使用独立目录（`getTestDbDir(testFileName)`），避免互相影响。
-- **覆盖报告**：Server 与 Embedded 用例对应关系及差异说明见 `tests/embedded/COVERAGE_REPORT.md`。
+- **Location**: `tests/embedded/` mirrors the server layout so the same scenarios can run without a server.
+- **Config**: Use `getEmbeddedTestConfig(testFileName)` for `{ path, database }`; admin tests use `AdminClient({ path })`.
+- **Cleanup**: Call `cleanupTestDb(testFileName)` in `beforeAll`; each file uses its own DB dir via `getTestDbDir(testFileName)` to avoid cross-test effects.
+- **Coverage**: See `tests/embedded/COVERAGE_REPORT.md` for how server and embedded tests align and any differences.

@@ -1,14 +1,15 @@
 /**
- * Mode consistency tests
- * Compares behavior between embedded and server modes to ensure they are functionally identical
+ * Mode consistency tests (embedded + server)
+ * Compares behavior between embedded and server modes to ensure they are functionally identical.
+ * Lives under embedded/ because it requires the native addon.
  */
 
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
-import { SeekdbClient } from "../src/client.js";
-import { Client } from "../src/factory.js";
-import { TEST_CONFIG, generateCollectionName } from "./test-utils.js";
-import { getTestDbDir, cleanupTestDb } from "./embedded/test-utils.js";
-import type { SeekdbClient as SeekdbClientType } from "../src/client.js";
+import { SeekdbClient } from "../../src/client.js";
+import { Client } from "../../src/factory.js";
+import { TEST_CONFIG, generateCollectionName } from "../test-utils.js";
+import { getTestDbDir, cleanupTestDb } from "./test-utils.js";
+import type { SeekdbClient as SeekdbClientType } from "../../src/client.js";
 
 describe("Mode Consistency Tests", () => {
   describe("Collection Creation and Retrieval", () => {

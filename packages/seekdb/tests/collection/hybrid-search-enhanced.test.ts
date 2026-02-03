@@ -123,9 +123,10 @@ describe("Server Mode - Enhanced Hybrid Search", () => {
             queryEmbeddings: [[1, 2, 3]],
             nResults: 10,
           });
-
           expect(results.ids).toBeDefined();
-          expect(results.ids.length).toBe(0);
+          // One query => one result set; empty collection => zero results for that query
+          expect(results.ids.length).toBe(1);
+          expect(results.ids[0].length).toBe(0);
         } catch (error: any) {
           if (error.message?.includes("not supported")) {
             return;

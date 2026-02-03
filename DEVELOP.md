@@ -104,7 +104,7 @@ pnpm --filter seekdb exec vitest run tests/embedded/
 
 - **Embedded-mode tests** live under `packages/seekdb/tests/embedded/` and use a temporary database path per test file. They do not require a seekdb/OceanBase server. Run them with the command above when no server is available.
 - **Server-mode tests** (under `packages/seekdb/tests/` but outside `embedded/`) connect to `127.0.0.1:2881` and require a local seekdb or OceanBase instance.
-- **Mode consistency** tests (`mode-consistency.test.ts`) run both modes in the same file and require a server for the server part.
+- **Mode consistency** tests (`tests/embedded/mode-consistency.test.ts`) run both embedded and server modes in the same file; they require the native addon and a server for the server part.
 - Embedded test coverage vs server is documented in `packages/seekdb/tests/embedded/COVERAGE_REPORT.md`.
 
 ### Linting & Formatting
