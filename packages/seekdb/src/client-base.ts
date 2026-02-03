@@ -100,7 +100,7 @@ export abstract class BaseSeekdbClient {
     }
 
     let distance = hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
-    let dimension: number;
+    let dimension: number | undefined = undefined;
 
     if (ef === undefined) {
       ef = await getEmbeddingFunction();
