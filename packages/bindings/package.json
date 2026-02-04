@@ -5,7 +5,7 @@
   "scripts": {
     "install": "npm run build:package",
     "build": "npm run build:package",
-    "build:package": "node-gyp configure && node-gyp build",
+    "build:package": "python3 scripts/fetch_libseekdb.py --fetch-if-empty && node-gyp configure && node-gyp build && python3 scripts/fetch_libseekdb.py --copy-only && python3 scripts/fetch_libseekdb.py --sign-dylibs",
     "check:signatures": "node scripts/checkFunctionSignatures.mjs",
     "check:signatures:write": "node scripts/checkFunctionSignatures.mjs writeFiles",
     "clean": "npm run clean:gyp && npm run clean:libseekdb && npm run clean:package",
