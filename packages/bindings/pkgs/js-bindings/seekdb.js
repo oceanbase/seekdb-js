@@ -2,9 +2,6 @@ const path = require("path");
 
 const getRuntimePlatformArch = () => `${process.platform}-${process.arch}`;
 
-const S3_BINDINGS_BASE =
-  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/js-bindings/all_commits/";
-
 /**
  * Load native binding: from SEEKDB_BINDINGS_PATH, or from sibling dir (local dev build), or throw.
  * @throw Error if there isn't any available native binding for the current platform/arch.
@@ -19,7 +16,7 @@ function getNativeNodeBinding(runtimePlatformArch) {
     } catch (err) {
       throw new Error(
         `SeekDB native binding: SEEKDB_BINDINGS_PATH is set but failed to load ${nodePath}: ${err.message}. ` +
-          `Ensure the directory contains seekdb.node (and libseekdb.so/dylib). Download from S3 if needed.`
+          `Ensure the directory contains seekdb.node (and libseekdb.so/dylib).`
       );
     }
   }
@@ -34,8 +31,7 @@ function getNativeNodeBinding(runtimePlatformArch) {
 
   throw new Error(
     `SeekDB native binding not found for ${runtimePlatformArch}. ` +
-      `Set SEEKDB_BINDINGS_PATH to a directory containing seekdb.node (and libseekdb.so/dylib), ` +
-      `or download the prebuilt binding from S3: ${S3_BINDINGS_BASE}<commit_sha>/seekdb-js-bindings-${runtimePlatformArch}.zip`
+      `Set SEEKDB_BINDINGS_PATH to a directory containing seekdb.node (and libseekdb.so/dylib).`
   );
 }
 
