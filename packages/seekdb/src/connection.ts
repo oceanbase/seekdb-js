@@ -53,9 +53,7 @@ export class Connection {
         if (this.config.queryTimeout != null) {
           try {
             const timeoutUs = this.config.queryTimeout * 1000;
-            await this.connection.query(
-              `SET ob_query_timeout = ${timeoutUs}`
-            );
+            await this.connection.query(`SET ob_query_timeout = ${timeoutUs}`);
           } catch {
             // Ignore if server does not support ob_query_timeout (e.g. plain MySQL)
           }
