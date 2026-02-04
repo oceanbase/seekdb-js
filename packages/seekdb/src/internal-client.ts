@@ -39,6 +39,7 @@ export class InternalClient implements IInternalClient {
       password,
       database: this.database,
       charset,
+      queryTimeout: args.queryTimeout,
     });
   }
 

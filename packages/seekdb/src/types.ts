@@ -178,6 +178,8 @@ export interface SeekdbClientArgs {
   user?: string;
   password?: string;
   charset?: string;
+  /** Optional OceanBase/seekdb query timeout in milliseconds. */
+  queryTimeout?: number;
 }
 
 export interface SeekdbAdminClientArgs {

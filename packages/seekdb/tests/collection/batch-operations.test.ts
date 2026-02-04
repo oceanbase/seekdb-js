@@ -12,7 +12,10 @@ describe("Server Mode - Batch Operations", () => {
     let client: SeekdbClient;
 
     beforeAll(async () => {
-      client = new SeekdbClient(TEST_CONFIG);
+      client = new SeekdbClient({
+        ...TEST_CONFIG,
+        queryTimeout: 60000,
+      });
     });
 
     afterAll(async () => {
