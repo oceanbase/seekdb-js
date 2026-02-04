@@ -134,7 +134,7 @@ describe("Client Creation and Collection Management", () => {
         constructor(config: any = {}) {
           this.config = config;
         }
-        name = "my_custom_model_creation";
+        name = "my_custom_model_create";
         dimension = 64;
         async generate(texts: string[]): Promise<number[][]> {
           // Returns 4-dimensional vectors
@@ -147,7 +147,7 @@ describe("Client Creation and Collection Management", () => {
           return new CustomModel(config);
         }
       }
-      registerEmbeddingFunction("my_custom_model_creation", CustomModel);
+      registerEmbeddingFunction("my_custom_model_create", CustomModel);
       await client.createCollection({
         name: testCollectionName,
         embeddingFunction: new CustomModel(),
