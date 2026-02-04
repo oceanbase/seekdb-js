@@ -68,6 +68,7 @@ jobs:
   # Server-mode tests (exclude embedded/; each job runs on its own runner so seekdb-docker cannot be shared across jobs)
   test-server:
     if: github.repository == 'oceanbase/seekdb-js'
+    name: Test server
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -166,4 +167,9 @@ jobs:
           SERVER_PASSWORD: ""
           SERVER_DATABASE: test
           SERVER_TENANT: sys
-        run: pnpm exec vitest run tests/embedded/
+        run: |
+          pnpm exec vitest run tests/embedded/ 2>&1 | tee /tmp/vitest.log
+          exit_code=$?
+          if [ $exit_code -ne 0 ]; then exit $exit_code; fi
+          grep -qE "[0-9]+ failed" /tmp/vitest.log && exit 1
+          exit 0
