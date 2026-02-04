@@ -150,15 +150,9 @@ jobs:
       - name: Build packages
         run: pnpm run build
 
-      - name: Setup Docker on macOS
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          brew install colima docker
-          colima start --vm-type=vz --cpu 2 --memory 4
-          docker context use colima
-
+      # macOS has no Docker; skip container and exclude mode-consistency (needs seekdb server)
       - name: Start seekdb container
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           docker run --name seekdb-server -p 2881:2881 -d oceanbase/seekdb:latest
@@ -175,7 +169,11 @@ jobs:
           SERVER_DATABASE: test
           SERVER_TENANT: sys
         run: |
-          pnpm exec vitest run tests/embedded/ 2>&1 | tee /tmp/vitest.log
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            pnpm exec vitest run tests/embedded/ 2>&1 | tee /tmp/vitest.log
+          else
+            pnpm exec vitest run tests/embedded/ --exclude '**/mode-consistency.test.ts' 2>&1 | tee /tmp/vitest.log
+          fi
           exit_code=$?
           if [ $exit_code -ne 0 ]; then exit $exit_code; fi
           grep -qE "[0-9]+ failed" /tmp/vitest.log && exit 1
