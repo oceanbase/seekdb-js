@@ -4,6 +4,10 @@
  */
 
 import type { EmbeddingFunction, EmbeddingConfig } from "../src/types.js";
+import {
+  registerEmbeddingFunction,
+  isEmbeddingFunctionRegistered,
+} from "../src/embedding-function.js";
 
 /**
  * Get test configuration based on test mode
@@ -129,6 +133,41 @@ function simpleHash(str: string): number {
 }
 
 /**
+ * Test default embedding function for testing
+ * Manually register a simple default embedding function to avoid module resolution issues with @seekdb/default-embed
+ */
+export class TestDefaultEmbeddingFunction implements EmbeddingFunction {
+  readonly name = "default-embed";
+
+  async generate(texts: string[]): Promise<number[][]> {
+    return texts.map(() =>
+      Array(384)
+        .fill(0)
+        .map(() => Math.random())
+    );
+  }
+
+  getConfig(): EmbeddingConfig {
+    return { dimension: 384 };
+  }
+
+  static buildFromConfig(): EmbeddingFunction {
+    return new TestDefaultEmbeddingFunction();
+  }
+}
+
+/**
+ * Register the test default embedding function
+ * Call this function at the top of test files that need the default embedding function
+ * This function is idempotent - it will skip registration if already registered
+ */
+export function registerTestDefaultEmbeddingFunction(): void {
+  if (!isEmbeddingFunctionRegistered("default-embed")) {
+    registerEmbeddingFunction("default-embed", TestDefaultEmbeddingFunction);
+  }
+}
+
+/**
  * Mock Embedding Function for testing
  * Supports configurable dimension and custom parameters
  */
@@ -150,7 +189,6 @@ export class MockEmbeddingFunction implements EmbeddingFunction {
   }
 
   async generate(texts: string[]): Promise<number[][]> {
-    // Generate mock embeddings based on dimension in config or default 3
     const dim = this.config.dimension || 3;
     return texts.map(() => Array(dim).fill(0.1));
   }

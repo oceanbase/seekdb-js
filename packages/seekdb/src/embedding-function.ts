@@ -6,6 +6,17 @@ const registry: Map<string, EmbeddingFunctionConstructor> =
   ((globalThis as any)[REGISTRY_KEY] = new Map());
 
 /**
+ * Check if an embedding function is already registered.
+ *
+ * @experimental This API is experimental and may change in future versions.
+ * @param name - The name of the embedding function
+ * @returns true if the embedding function is registered, false otherwise
+ */
+export const isEmbeddingFunctionRegistered = (name: string): boolean => {
+  return registry.has(name);
+};
+
+/**
  * Register a custom embedding function.
  *
  * @experimental This API is experimental and may change in future versions.
