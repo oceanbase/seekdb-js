@@ -1,6 +1,9 @@
 import { EmbeddingFunction, EmbeddingFunctionConstructor } from "./types.js";
 
-const registry = new Map<string, EmbeddingFunctionConstructor>();
+const REGISTRY_KEY = "seekdb:embeddingFunctionRegistry";
+const registry: Map<string, EmbeddingFunctionConstructor> =
+  (globalThis as any)[REGISTRY_KEY] ??
+  ((globalThis as any)[REGISTRY_KEY] = new Map());
 
 /**
  * Register a custom embedding function.
@@ -75,11 +78,10 @@ export async function getEmbeddingFunction(
 
   // If the model is not registered, try to register it automatically (for built-in models)
   if (!registry.has(name)) {
-    let ef: EmbeddingFunctionConstructor;
     try {
-      ef = await import(`@seekdb/${name}`);
+      await import(`@seekdb/${name}`);
     } catch (error: any) {
-      throw new Error(
+      console.warn(
         `Embedding function '${name}' is not registered. \n\n` +
           `--- For seekdb built-in embedding function ---\n` +
           `  1. Install: npm install @seekdb/${name}\n` +
@@ -90,10 +92,7 @@ export async function getEmbeddingFunction(
           `You can see more details in the README.md of the package.\n\n` +
           `Error: ${error instanceof Error ? error.message : String(error)}`
       );
-    }
-    // If the embedding function is not registered, register it
-    if (ef && !registry.has(name)) {
-      registry.set(name, ef);
+      return undefined as unknown as EmbeddingFunction;
     }
   }
   try {
