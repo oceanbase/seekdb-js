@@ -1,5 +1,12 @@
 # seekdb
 
+## 1.1.1
+
+### Patch Changes
+
+- Fix some problems
+  - @seekdb/default-embed@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes

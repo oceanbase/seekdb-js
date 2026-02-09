@@ -1,5 +1,13 @@
 # @seekdb/openai
 
+## 1.1.1
+
+### Patch Changes
+
+- Fix some problems
+- Updated dependencies
+  - seekdb@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes
