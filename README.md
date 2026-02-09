@@ -38,14 +38,14 @@ This is a monorepo containing:
 | Package      | Description                                                                                                 |
 | ------------ | ----------------------------------------------------------------------------------------------------------- |
 | `seekdb`     | Core SDK for seekdb operations                                                                              |
-| `embeddings` | Several Embedding functions we provided, including local default-embed、OpenAI embeding、ollama、jina. etc. |
+| `embeddings` | Several embedding functions we provide, including local default-embed, OpenAI embedding, Ollama, Jina, etc. |
 
 ## Installation
 
 > Before using the SDK, you need to deploy seekdb. Please refer to the [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/).
 
 ```bash
-npm install seekdb
+npm install seekdb @seekdb/default-embed
 ```
 
 ## Quick Start
@@ -65,7 +65,7 @@ const client = new SeekdbClient({
 // 2. Create collection
 const collection = await client.createCollection({ name: "my_collection" });
 
-// 3. Add data (auto-vectorized)
+// 3. Add data (auto-vectorized using @seekdb/default-embed)
 await collection.add({
   ids: ["1", "2"],
   documents: ["Hello world", "seekdb is fast"],
@@ -81,6 +81,8 @@ console.log("query results", results);
 ```
 
 ## Usage Guide
+
+> This section shows the most basic usage. For details, please refer to the [official SDK documentation](https://www.oceanbase.ai/docs/seekdb-js-get-started).
 
 ### Client Connection
 
@@ -100,15 +102,48 @@ const client = new SeekdbClient({
 
 ### Create Collection
 
+If you don't specify an embedding function, the default embedding function will be used for vectorization. Please install `@seekdb/default-embed`.
+
+```bash
+npm install @seekdb/default-embed
+```
+
 ```typescript
 const collection = await client.createCollection({
   name: "my_collection",
 });
 ```
 
+If you need to use a specific embedding function, you can install and use the embedding functions we provide, or implement your own. For details, please refer to the [official SDK documentation](https://www.oceanbase.ai/docs/seekdb-js-get-started).
+
+Take `@seekdb/qwen` as an example:
+
+```bash
+npm install @seekdb/qwen
+```
+
+```typescript
+import { QwenEmbeddingFunction } from "@seekdb/qwen";
+
+const qwenEF = new QwenEmbeddingFucntion();
+const collection = await client.createCollection({
+  name: "my_collection",
+  embeddingFunction: qwenEF,
+});
+```
+
+If you don't need an embedding function, set `embeddingFunction` to `null`.
+
+```typescript
+const collection = await client.createCollection({
+  name: "my_collection",
+  embeddingFunction: null,
+});
+```
+
 ### Add Data
 
-Supports automatic vectorization, no need to calculate vectors manually.
+The embedding function defined in `createCollection` is used automatically for vectorization. No need to set it again.
 
 ```typescript
 await collection.add({
@@ -118,9 +153,38 @@ await collection.add({
 });
 ```
 
+You can also pass a vector or an array of vectors directly.
+
+```typescript
+const qwenEF = new QwenEmbeddingFucntion();
+await collection.add({
+  ids: ["1", "2"],
+  documents: ["Hello world", "seekdb is fast"],
+  metadatas: [{ category: "test" }, { category: "db" }],
+  embeddings: [
+    [0.1, 0.2, 0.3],
+    [0.2, 0.3, 0.4],
+  ],
+});
+```
+
 ### Query Data
 
+**Get Data**
+
+The `get() `method is used to retrieve documents from a collection without performing vector similarity search.
+
+```typescript
+const results = await collection.get({
+  ids: ["1", "2"],
+});
+```
+
 **Semantic Search**
+
+The `query()` method is used to execute vector similarity search to find documents most similar to the query vector.
+
+The embedding function defined in `createCollection` is used automatically for vectorization. No need to set it again.
 
 ```typescript
 const results = await collection.query({
@@ -129,12 +193,41 @@ const results = await collection.query({
 });
 ```
 
+You can also pass a vector or an array of vectors directly.
+
+```typescript
+const results = await collection.query({
+  queryEmbeddings: [
+    [0.1, 0.2, 0.3],
+    [0.2, 0.3, 0.4],
+  ],
+  nResults: 5,
+});
+```
+
 **Hybrid Search (Keyword + Semantic)**
+
+The `hybridSearch()` combines full-text search and vector similarity search with ranking.
 
 ```typescript
 const hybridResults = await collection.hybridSearch({
   query: { whereDocument: { $contains: "seekdb" } },
   knn: { queryTexts: ["fast database"] },
+  nResults: 5,
+});
+```
+
+You can also pass a vector or an array of vectors directly.
+
+```typescript
+const hybridResults = await collection.hybridSearch({
+  query: { whereDocument: { $contains: "seekdb" } },
+  knn: {
+    queryEmbeddings: [
+      [0.1, 0.2, 0.3],
+      [0.2, 0.3, 0.4],
+    ],
+  },
   nResults: 5,
 });
 ```
@@ -149,31 +242,19 @@ For complete usage, please refer to the official documentation.
 
 Uses a local model (`Xenova/all-MiniLM-L6-v2`) by default. No API Key required. Suitable for quick development and testing.
 
-No configuration is needed to use the default model:
+No configuration is needed to use the default model.
 
-```typescript
-const collection = await client.createCollection({
-  name: "local_embed_collection",
-});
-```
-
-For manual import of the built-in model:
+First install the built-in model:
 
 ```bash
 npm install @seekdb/default-embed
 ```
 
+Then use it as-is; it will auto-vectorize:
+
 ```typescript
-import { DefaultEmbeddingFunction } from "@seekdb/default-embed";
-
-const defaultEmbed = new DefaultEmbeddingFunction({
-  // If you encounter download issues, try switching the region to 'intl', defaults to 'cn'
-  region: "cn",
-});
-
 const collection = await client.createCollection({
   name: "local_embed_collection",
-  embeddingFunction: defaultEmbed,
 });
 ```
 

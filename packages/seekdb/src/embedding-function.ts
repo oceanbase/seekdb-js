@@ -81,7 +81,12 @@ export async function getEmbeddingFunction(
     try {
       await import(`@seekdb/${name}`);
     } catch (error: any) {
-      console.warn(
+      throw new Error(`Embedding function '${name}' is not registered.`);
+    }
+  }
+  try {
+    if (!registry.has(name)) {
+      throw new Error(
         `Embedding function '${name}' is not registered. \n\n` +
           `--- For seekdb built-in embedding function ---\n` +
           `  1. Install: npm install @seekdb/${name}\n` +
@@ -89,17 +94,11 @@ export async function getEmbeddingFunction(
           `The package will automatically register itself upon import.\n\n` +
           `--- For custom embedding function ---\n` +
           `Please create your own embedding function class that implements the EmbeddingFunction interface. \n` +
-          `You can see more details in the README.md of the package.\n\n` +
-          `Error: ${error instanceof Error ? error.message : String(error)}`
+          `You can see more details in the README.md of the package.\n\n`
       );
-      return undefined as unknown as EmbeddingFunction;
     }
-  }
-  try {
     const Ctor = registry.get(name)!;
-    if (!registry.has(name)) {
-      throw new Error(`Embedding function '${name}' is not registered.`);
-    }
+
     if (Ctor.buildFromConfig) {
       return Ctor.buildFromConfig(finalConfig);
     }
