@@ -29,7 +29,7 @@
     "@seekdb/common": "workspace:*"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.713.0"
+    "@aws-sdk/client-bedrock-runtime": "^3.985.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

@@ -29,7 +29,7 @@
     "@seekdb/common": "workspace:*"
   },
   "dependencies": {
-    "@google-cloud/aiplatform": "^3.32.0"
+    "@google-cloud/aiplatform": "^6.4.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
