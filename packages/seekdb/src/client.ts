@@ -334,8 +334,16 @@ export class SeekdbClient {
 
   /**
    * List all collections
+   * @param config - The configuration for listing collections
+   * @param config.withEmbeddingFunction - Whether to include embedding function in the collection. Default is true.
+   * @returns A promise that resolves to an array of collections
    */
-  async listCollections(): Promise<Collection[]> {
+  async listCollections(
+    config: { withEmbeddingFunction?: boolean } = {
+      withEmbeddingFunction: true,
+    }
+  ): Promise<Collection[]> {
+    const { withEmbeddingFunction } = config;
     const collections: Collection[] = [];
     const collectionNames = new Set<string>();
 
@@ -346,6 +354,7 @@ export class SeekdbClient {
       try {
         const collection = await this.getCollection({
           name: metadata.collectionName,
+          embeddingFunction: !withEmbeddingFunction ? null : undefined,
         });
         collections.push(collection);
         collectionNames.add(metadata.collectionName);
@@ -405,6 +414,7 @@ export class SeekdbClient {
           // Fetch full collection details
           const collection = await this.getCollection({
             name: collectionName,
+            embeddingFunction: !withEmbeddingFunction ? null : undefined,
           });
           collections.push(collection);
         } catch (error) {
