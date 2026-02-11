@@ -232,16 +232,15 @@ importers:
 
   packages/seekdb:
     dependencies:
+      '@seekdb/default-embed':
+        specifier: ^1.1.1
+        version: 1.1.1(@seekdb/common@1.1.0)(seekdb@1.1.1)
       '@seekdb/js-bindings':
         specifier: workspace:*
         version: link:../bindings/pkgs/js-bindings
       mysql2:
         specifier: ^3.11.5
         version: 3.16.2
-    devDependencies:
-      '@seekdb/default-embed':
-        specifier: latest
-        version: 1.1.0(@seekdb/common@1.1.0)(seekdb@1.1.0(@seekdb/common@1.1.0))
 
 packages:
 
@@ -1166,11 +1165,11 @@ packages:
   '@seekdb/common@1.1.0':
     resolution: {integrity: sha512-KfVyp8TbqAZfa7+NjGl1rPgoygw/6G6wibxaFr4ZBebN1te9OocVc55LnaaL4x5uYeX0YKvq3vU2DtjxADQU7w==}
 
-  '@seekdb/default-embed@1.1.0':
-    resolution: {integrity: sha512-U8FqLBo6z8ll7iotvEQ5m39TrlbD1SJbuJMzYb508We6v/fTJEsBzmlTqSCsJeWcX8BmLdA+eJhPZDejoKnrKg==}
+  '@seekdb/default-embed@1.1.1':
+    resolution: {integrity: sha512-6NFiVeqN/OeYwhJ00KQY00Ct3fobh8yOwWXHzCy0mycVZJo8kLOlamLe1FGm6zvxmb6WlzMszByBWTU8a6xCXA==}
     peerDependencies:
       '@seekdb/common': 1.1.0
-      seekdb: 1.1.0
+      seekdb: 1.1.1
 
   '@smithy/abort-controller@4.2.8':
     resolution: {integrity: sha512-peuVfkYHAmS5ybKxWcfraK7WBBP0J+rkfUcbHJJKQ4ir3UAUNQI+Y4Vt/PqSzGqgloJ5O1dk7+WzNL8wcCSXbw==}
@@ -2609,9 +2608,14 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
-  seekdb@1.1.0:
-    resolution: {integrity: sha512-CsRn/3mHaJcMl0UnE5zN4X++iiOiMo7elSb7lM3FtWGFwFJofA3n3jQXfcKWIt1ySMwKn+tclM0kUimAi1aPow==}
+  seekdb@1.1.1:
+    resolution: {integrity: sha512-Wg9RLA1sCRGc3Bfo4/AENrgZ2Fzr6ZQUavj9mhgAIlN+xOz0a/VFIF/Fb2wbGyB6WTdXaJGDTQ3GPVaUnTPrGQ==}
     engines: {node: '>=20'}
+    peerDependencies:
+      '@seekdb/default-embed': ^1.1.1
+    peerDependenciesMeta:
+      '@seekdb/default-embed':
+        optional: true
 
   semver-compare@1.0.0:
     resolution: {integrity: sha512-YM3/ITh2MJ5MtzaM429anh+x2jiLVjqILF4m4oyQB18W7Ggea7BfqdH/wGMK7dDiMghv/6WG7znWMwUDzJiXow==}
@@ -4176,11 +4180,11 @@ snapshots:
 
   '@seekdb/common@1.1.0': {}
 
-  '@seekdb/default-embed@1.1.0(@seekdb/common@1.1.0)(seekdb@1.1.0(@seekdb/common@1.1.0))':
+  '@seekdb/default-embed@1.1.1(@seekdb/common@1.1.0)(seekdb@1.1.1)':
     dependencies:
       '@huggingface/transformers': 3.8.1
       '@seekdb/common': 1.1.0
-      seekdb: 1.1.0(@seekdb/common@1.1.0)
+      seekdb: 1.1.1(@seekdb/default-embed@1.1.1)
 
   '@smithy/abort-controller@4.2.8':
     dependencies:
@@ -5803,14 +5807,14 @@ snapshots:
 
   safer-buffer@2.1.2: {}
 
-  seekdb@1.1.0(@seekdb/common@1.1.0):
+  seekdb@1.1.1(@seekdb/default-embed@1.1.1):
     dependencies:
-      '@seekdb/default-embed': 1.1.0(@seekdb/common@1.1.0)(seekdb@1.1.0(@seekdb/common@1.1.0))
       mysql2: 3.16.2
       node-addon-api: 8.5.0
       node-gyp: 10.3.1
+    optionalDependencies:
+      '@seekdb/default-embed': 1.1.1(@seekdb/common@1.1.0)(seekdb@1.1.1)
     transitivePeerDependencies:
-      - '@seekdb/common'
       - supports-color
 
   semver-compare@1.0.0: {}

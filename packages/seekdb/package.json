@@ -1,6 +1,6 @@
 {
   "name": "seekdb",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A unified JavaScript/TypeScript SDK for seekdb that supports Server mode and OceanBase mode",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -46,8 +46,13 @@
     "mysql2": "^3.11.5",
     "@seekdb/js-bindings": "workspace:*"
   },
-  "devDependencies": {
-    "@seekdb/default-embed": "latest"
+  "peerDependencies": {
+    "@seekdb/default-embed": "^1.1.1"
+  },
+  "peerDependenciesMeta": {
+    "@seekdb/default-embed": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

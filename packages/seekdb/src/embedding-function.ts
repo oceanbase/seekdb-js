@@ -1,6 +1,9 @@
 import { EmbeddingFunction, EmbeddingFunctionConstructor } from "./types.js";
 
-const registry = new Map<string, EmbeddingFunctionConstructor>();
+const REGISTRY_KEY = "seekdb:embeddingFunctionRegistry";
+const registry: Map<string, EmbeddingFunctionConstructor> =
+  (globalThis as any)[REGISTRY_KEY] ??
+  ((globalThis as any)[REGISTRY_KEY] = new Map());
 
 /**
  * Check if an embedding function is already registered.
@@ -86,10 +89,14 @@ export async function getEmbeddingFunction(
 
   // If the model is not registered, try to register it automatically (for built-in models)
   if (!registry.has(name)) {
-    let ef: EmbeddingFunctionConstructor;
     try {
-      ef = await import(`@seekdb/${name}`);
+      await import(`@seekdb/${name}`);
     } catch (error: any) {
+      throw new Error(`Embedding function '${name}' is not registered.`);
+    }
+  }
+  try {
+    if (!registry.has(name)) {
       throw new Error(
         `Embedding function '${name}' is not registered. \n\n` +
           `--- For seekdb built-in embedding function ---\n` +
@@ -98,20 +105,11 @@ export async function getEmbeddingFunction(
           `The package will automatically register itself upon import.\n\n` +
           `--- For custom embedding function ---\n` +
           `Please create your own embedding function class that implements the EmbeddingFunction interface. \n` +
-          `You can see more details in the README.md of the package.\n\n` +
-          `Error: ${error instanceof Error ? error.message : String(error)}`
+          `You can see more details in the README.md of the package.\n\n`
       );
     }
-    // If the embedding function is not registered, register it
-    if (ef && !registry.has(name)) {
-      registry.set(name, ef);
-    }
-  }
-  try {
     const Ctor = registry.get(name)!;
-    if (!registry.has(name)) {
-      throw new Error(`Embedding function '${name}' is not registered.`);
-    }
+
     if (Ctor.buildFromConfig) {
       return Ctor.buildFromConfig(finalConfig);
     }

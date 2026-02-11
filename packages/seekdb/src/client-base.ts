@@ -339,8 +339,14 @@ export abstract class BaseSeekdbClient {
 
   /**
    * List all collections. Returns v2 collections from metadata table, then v1 (deduplicated).
+   * @param config.withEmbeddingFunction - If false, returned collections will not have embedding function loaded. Default true.
    */
-  async listCollections(): Promise<Collection[]> {
+  async listCollections(
+    config: { withEmbeddingFunction?: boolean } = {
+      withEmbeddingFunction: true,
+    }
+  ): Promise<Collection[]> {
+    const { withEmbeddingFunction } = config;
     const collections: Collection[] = [];
     const collectionNames = new Set<string>();
 
@@ -350,6 +356,7 @@ export abstract class BaseSeekdbClient {
       try {
         const collection = await this.getCollection({
           name: metadata.collectionName,
+          embeddingFunction: withEmbeddingFunction === false ? null : undefined,
         });
         collections.push(collection);
         collectionNames.add(metadata.collectionName);
@@ -371,7 +378,10 @@ export abstract class BaseSeekdbClient {
         if (!collectionName || collectionNames.has(collectionName)) continue;
 
         try {
-          const collection = await this.getCollection({ name: collectionName });
+          const collection = await this.getCollection({
+            name: collectionName,
+            embeddingFunction: withEmbeddingFunction === false ? null : undefined,
+          });
           collections.push(collection);
         } catch {
           continue;

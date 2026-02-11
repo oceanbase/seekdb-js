@@ -73,9 +73,16 @@ export class SeekdbClient {
 
   /**
    * List all collections
+   * @param config - The configuration for listing collections
+   * @param config.withEmbeddingFunction - Whether to include embedding function in the collection. Default is true.
+   * @returns A promise that resolves to an array of collections
    */
-  async listCollections(): Promise<Collection[]> {
-    return this._delegate.listCollections();
+  async listCollections(
+    config: { withEmbeddingFunction?: boolean } = {
+      withEmbeddingFunction: true,
+    }
+  ): Promise<Collection[]> {
+    return this._delegate.listCollections(config);
   }
 
   /**

@@ -266,6 +266,39 @@ describe("Client Creation and Collection Management", () => {
       }
     });
 
+    test("list_collections - without embedding function", async () => {
+      const testCollectionName1 = generateCollectionName("test_collection_1");
+      const testCollectionName2 = generateCollectionName("test_collection_2");
+
+      try {
+        await client.createCollection({
+          name: testCollectionName1,
+          configuration: { dimension: 384, distance: "cosine" },
+        });
+
+        await client.createCollection({
+          name: testCollectionName2,
+          configuration: { dimension: 384, distance: "cosine" },
+        });
+
+        const collections = await client.listCollections({
+          withEmbeddingFunction: false,
+        });
+        expect(Array.isArray(collections)).toBe(true);
+
+        const collectionNames = collections.map((c) => c.name);
+        expect(collectionNames).toContain(testCollectionName1);
+        expect(collectionNames).toContain(testCollectionName2);
+        expect(collections.every((c) => !c.embeddingFunction)).toBe(true);
+      } finally {
+        // Cleanup
+        try {
+          await client.deleteCollection(testCollectionName1);
+          await client.deleteCollection(testCollectionName2);
+        } catch (e) {}
+      }
+    });
+
     test("delete_collection - should delete the collection", async () => {
       const testCollectionName = generateCollectionName("test_collection_mgmt");
 

@@ -1,5 +1,12 @@
 # @seekdb/ollama
 
+## 1.1.1
+
+### Patch Changes
+
+- Updated dependencies
+  - seekdb@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes
