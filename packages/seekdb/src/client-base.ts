@@ -380,7 +380,8 @@ export abstract class BaseSeekdbClient {
         try {
           const collection = await this.getCollection({
             name: collectionName,
-            embeddingFunction: withEmbeddingFunction === false ? null : undefined,
+            embeddingFunction:
+              withEmbeddingFunction === false ? null : undefined,
           });
           collections.push(collection);
         } catch {
