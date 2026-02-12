@@ -1,8 +1,8 @@
 /**
- * Embedded mode - Factory functions (Client/AdminClient with path only)
- * Covers same scenarios as server factory-functions.test.ts for embedded mode
+ * Factory functions tests (Client/AdminClient)
+ * Lives under embedded/ because default path/host case requires native addon.
  */
-import { describe, test, expect, beforeAll, afterAll } from "vitest";
+import { describe, test, expect, beforeAll } from "vitest";
 import { Client, AdminClient } from "../../../src/factory.js";
 import { SeekdbClient } from "../../../src/client.js";
 import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
@@ -15,7 +15,7 @@ describe("Embedded Mode - Factory Functions", () => {
     await cleanupTestDb(TEST_FILE);
   });
 
-  describe("Client() Factory Function (embedded)", () => {
+  describe("Client() Factory Function", () => {
     test("creates embedded client with path parameter", async () => {
       const client = Client({
         path: TEST_DB_DIR,
@@ -40,15 +40,51 @@ describe("Embedded Mode - Factory Functions", () => {
       await client.close();
     });
 
-    test("with no path/host uses default embedded path and returns client", () => {
+    test("defaults to embedded mode when neither path nor host provided", async () => {
       const client = Client({} as any);
       expect(client).toBeDefined();
       expect(client instanceof SeekdbClient).toBe(true);
-      client.close();
+      await client.close();
+    });
+
+    test("creates server client with host parameter", async () => {
+      const client = Client({
+        host: "127.0.0.1",
+        port: 2881,
+        user: "root",
+        password: "",
+        database: "test",
+        tenant: "sys",
+      });
+
+      expect(client).toBeDefined();
+      expect(client instanceof SeekdbClient).toBe(true);
+
+      try {
+        await client.close();
+      } catch (error) {
+        // Ignore if server not available
+      }
+    });
+
+    test("creates server client with default values", async () => {
+      const client = Client({
+        host: "127.0.0.1",
+        database: "test",
+      });
+
+      expect(client).toBeDefined();
+      expect(client instanceof SeekdbClient).toBe(true);
+
+      try {
+        await client.close();
+      } catch (error) {
+        // Ignore if server not available
+      }
     });
   });
 
-  describe("AdminClient() Factory Function (embedded)", () => {
+  describe("AdminClient() Factory Function", () => {
     test("creates admin client with path parameter", async () => {
       const admin = AdminClient({
         path: TEST_DB_DIR,
@@ -59,9 +95,28 @@ describe("Embedded Mode - Factory Functions", () => {
 
       await admin.close();
     });
+
+    test("creates admin client with host parameter", async () => {
+      const admin = AdminClient({
+        host: "127.0.0.1",
+        port: 2881,
+        user: "root",
+        password: "",
+        tenant: "sys",
+      });
+
+      expect(admin).toBeDefined();
+      expect(admin instanceof SeekdbClient).toBe(true);
+
+      try {
+        await admin.close();
+      } catch (error) {
+        // Ignore if server not available
+      }
+    });
   });
 
-  describe("Factory Function Edge Cases (embedded)", () => {
+  describe("Factory Function Edge Cases", () => {
     test("Client() with both path and host prefers path (embedded mode)", async () => {
       const client = Client({
         path: TEST_DB_DIR,
@@ -74,6 +129,25 @@ describe("Embedded Mode - Factory Functions", () => {
       expect(client.isConnected()).toBe(false);
 
       await client.close();
+    });
+
+    test("Client() with custom charset", async () => {
+      const client = Client({
+        host: "127.0.0.1",
+        port: 2881,
+        user: "root",
+        password: "",
+        database: "test",
+        charset: "utf8mb4",
+      });
+
+      expect(client).toBeDefined();
+
+      try {
+        await client.close();
+      } catch (error) {
+        // Ignore if server not available
+      }
     });
   });
 });
