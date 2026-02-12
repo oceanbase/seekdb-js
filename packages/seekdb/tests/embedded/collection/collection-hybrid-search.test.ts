@@ -44,7 +44,7 @@ describe("Embedded Mode - Collection Hybrid Search Operations", () => {
   beforeAll(async () => {
     await cleanupTestDb("collection-hybrid-search.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     await client.close();
@@ -98,7 +98,7 @@ describe("Embedded Mode - Collection Hybrid Search Operations", () => {
       });
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
-    }, 60000);
+    });
 
     afterAll(async () => {
       try {

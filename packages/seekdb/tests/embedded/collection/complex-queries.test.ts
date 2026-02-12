@@ -18,7 +18,7 @@ describe("Embedded Mode - Complex Query Scenarios", () => {
     await cleanupTestDb("complex-queries.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
     collectionName = generateCollectionName("test_complex_queries");
-  }, 60000);
+  });
 
   afterAll(async () => {
     try {

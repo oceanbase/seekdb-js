@@ -16,7 +16,7 @@ describe("Embedded Mode - Collection DML Operations", () => {
   beforeAll(async () => {
     await cleanupTestDb("collection-dml.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     await client.close();
@@ -33,7 +33,7 @@ describe("Embedded Mode - Collection DML Operations", () => {
         configuration: { dimension: 3, distance: "cosine" },
         embeddingFunction: null,
       });
-    }, 60000);
+    });
 
     afterAll(async () => {
       try {
@@ -153,7 +153,7 @@ describe("Embedded Mode - Collection DML Operations", () => {
       expect(results.ids[0]).toBe(testId1);
       expect(results.documents![0]).toBe("This is test document 1");
       expect(results?.metadatas![0]?.category).toBe("test");
-    }, 60000);
+    });
 
     test("collection.add - add multiple items", async () => {
       const testIds = ["test_id_2", "test_id_3", "test_id_4"];
@@ -175,7 +175,7 @@ describe("Embedded Mode - Collection DML Operations", () => {
       // Verify using collection.get
       const results = await collection.get({ ids: testIds });
       expect(results.ids.length).toBe(3);
-    }, 60000);
+    });
 
     test("collection.update - update existing item", async () => {
       const testId1 = "test_id_1";

@@ -16,7 +16,7 @@ describe("Embedded Mode - Enhanced Hybrid Search", () => {
   beforeAll(async () => {
     await cleanupTestDb("hybrid-search-enhanced.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     try {

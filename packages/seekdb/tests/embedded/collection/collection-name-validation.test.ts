@@ -231,7 +231,7 @@ describe("Embedded Mode - Collection Name Validation", () => {
     beforeAll(async () => {
       await cleanupTestDb("collection-name-validation.test.ts");
       client = new SeekdbClient(TEST_CONFIG);
-    }, 60000);
+    });
 
     afterAll(async () => {
       await client.close();

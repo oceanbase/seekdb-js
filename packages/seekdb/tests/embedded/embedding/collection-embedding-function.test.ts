@@ -22,7 +22,7 @@ describe("Embedded Mode - Collection Embedding Function Tests", () => {
   beforeAll(async () => {
     await cleanupTestDb("collection-embedding-function.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     await client.close();
@@ -45,7 +45,7 @@ describe("Embedded Mode - Collection Embedding Function Tests", () => {
       expect(collection.embeddingFunction).toBeUndefined();
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    });
 
     test("createCollection with custom embedding function", async () => {
       const collectionName = generateCollectionName("test_custom_ef");
@@ -71,7 +71,7 @@ describe("Embedded Mode - Collection Embedding Function Tests", () => {
       expect(results.embeddings).toBeDefined();
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    });
 
     test("createCollection with embedding function and explicit dimension mismatch", async () => {
       const collectionName = generateCollectionName("test_ef_dim_mismatch");
@@ -99,7 +99,7 @@ describe("Embedded Mode - Collection Embedding Function Tests", () => {
       expect(collection.embeddingFunction).toBe(ef);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    });
   });
 
   describe("getOrCreateCollection tests", () => {
@@ -116,7 +116,7 @@ describe("Embedded Mode - Collection Embedding Function Tests", () => {
       expect(collection.dimension).toBe(3);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    });
   });
 
   describe("query with embedding function", () => {
@@ -142,6 +142,6 @@ describe("Embedded Mode - Collection Embedding Function Tests", () => {
       expect(results.ids[0].length).toBeGreaterThan(0);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    });
   });
 });

@@ -15,7 +15,7 @@ describe("Embedded Mode - Collection Get Operations", () => {
   beforeAll(async () => {
     await cleanupTestDb("collection-get.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     try {
@@ -64,7 +64,7 @@ describe("Embedded Mode - Collection Get Operations", () => {
           { category: "AI", score: 85, tag: "neural" },
         ],
       });
-    }, 60000);
+    });
 
     afterAll(async () => {
       try {

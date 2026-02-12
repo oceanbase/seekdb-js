@@ -56,7 +56,7 @@ describe("Embedded Mode - Official Example", () => {
     await cleanupTestDb("official-example.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
     collectionName = generateCollectionName("official_example");
-  }, 60000);
+  });
 
   afterAll(async () => {
     try {

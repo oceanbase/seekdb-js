@@ -19,7 +19,7 @@ describe("Embedded Mode - Batch Operations", () => {
       ...TEST_CONFIG,
       queryTimeout: 60000,
     });
-  }, 60000);
+  });
 
   afterAll(async () => {
     try {
@@ -69,7 +69,7 @@ describe("Embedded Mode - Batch Operations", () => {
       expect(count).toBeGreaterThanOrEqual(1);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    });
 
     test("get large batch of items", async () => {
       const collectionName = generateCollectionName("test_large_get");
@@ -98,7 +98,7 @@ describe("Embedded Mode - Batch Operations", () => {
       expect(results.embeddings!.length).toBe(batchSize);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    });
 
     test("query with large result set", async () => {
       const collectionName = generateCollectionName("test_large_query");
@@ -132,7 +132,7 @@ describe("Embedded Mode - Batch Operations", () => {
       expect(results.distances![0].length).toBeLessThanOrEqual(batchSize);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    });
 
     test("delete large batch of items", async () => {
       const collectionName = generateCollectionName("test_large_delete");
@@ -166,6 +166,6 @@ describe("Embedded Mode - Batch Operations", () => {
       expect(remainingResults.ids.length).toBe(remainingIds.length);
 
       await client.deleteCollection(collectionName);
-    }, 60000);
+    });
   });
 });

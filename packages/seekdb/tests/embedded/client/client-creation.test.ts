@@ -40,7 +40,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
 
     beforeAll(async () => {
       client = new SeekdbClient(TEST_CONFIG);
-    }, 60000);
+    });
 
     afterAll(async () => {
       await client.close();
@@ -67,7 +67,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
 
       // Cleanup
       await client.deleteCollection(testCollectionName);
-    }, 60000);
+    });
 
     test("get_collection - get the collection we just created", async () => {
       const testCollectionName = generateCollectionName("test_collection");
@@ -96,7 +96,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
 
       // Cleanup
       await client.deleteCollection(testCollectionName);
-    }, 60000);
+    });
 
     test("list_collections - list all collections", async () => {
       const collectionName1 = generateCollectionName("test_list_1");
@@ -127,7 +127,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
       // Cleanup
       await client.deleteCollection(collectionName1);
       await client.deleteCollection(collectionName2);
-    }, 60000);
+    });
 
     test("has_collection - check if collection exists", async () => {
       const collectionName = generateCollectionName("test_has");

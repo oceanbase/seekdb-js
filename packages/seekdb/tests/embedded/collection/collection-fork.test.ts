@@ -16,7 +16,7 @@ describe("Embedded Mode - Collection Fork Operations", () => {
   beforeAll(async () => {
     await cleanupTestDb("collection-fork.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     await client.close();

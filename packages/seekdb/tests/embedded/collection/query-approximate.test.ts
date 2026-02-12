@@ -16,7 +16,7 @@ describe("Embedded Mode - Query Approximate Parameter", () => {
   beforeAll(async () => {
     await cleanupTestDb("query-approximate.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     try {

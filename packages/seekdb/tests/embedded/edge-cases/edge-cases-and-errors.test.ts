@@ -18,7 +18,7 @@ describe("Embedded Mode - Edge Cases and Error Handling", () => {
     beforeAll(async () => {
       await cleanupTestDb("edge-cases-and-errors.test.ts");
       client = new SeekdbClient(TEST_CONFIG);
-    }, 60000);
+    });
 
     afterAll(async () => {
       try {
@@ -344,7 +344,7 @@ describe("Embedded Mode - Edge Cases and Error Handling", () => {
 
     beforeAll(async () => {
       client = new SeekdbClient(TEST_CONFIG);
-    }, 60000);
+    });
 
     afterAll(async () => {
       try {

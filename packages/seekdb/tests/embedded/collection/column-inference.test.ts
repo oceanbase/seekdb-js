@@ -16,7 +16,7 @@ describe("Embedded Mode - Column Name Inference", () => {
   beforeAll(async () => {
     await cleanupTestDb("column-inference.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     try {

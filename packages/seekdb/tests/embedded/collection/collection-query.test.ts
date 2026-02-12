@@ -18,7 +18,7 @@ describe("Embedded Mode - Collection Query Operations", () => {
   beforeAll(async () => {
     await cleanupTestDb("collection-query.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     await client.close();
@@ -60,7 +60,7 @@ describe("Embedded Mode - Collection Query Operations", () => {
           { category: "AI", score: 85, tag: "neural" },
         ],
       });
-    }, 60000);
+    });
 
     afterAll(async () => {
       try {
@@ -338,6 +338,6 @@ describe("Embedded Mode - Collection Query Operations", () => {
       expect(results.ids[0].length).toBeGreaterThan(0);
 
       await client.deleteCollection(collectionWithEF.name);
-    }, 60000);
+    });
   });
 });

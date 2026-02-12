@@ -21,7 +21,7 @@ describe("Embedded Mode - Default Embedding Function Tests", () => {
   beforeAll(async () => {
     await cleanupTestDb("default-embedding-function.test.ts");
     client = new SeekdbClient(TEST_CONFIG);
-  }, 60000);
+  });
 
   afterAll(async () => {
     await client.close();

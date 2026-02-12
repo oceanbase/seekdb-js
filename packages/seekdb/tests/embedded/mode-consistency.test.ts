@@ -24,7 +24,7 @@ describe("Mode Consistency Tests", () => {
         path: TEST_DB_DIR,
         database: "test",
       });
-    }, 60000);
+    });
 
     afterAll(async () => {
       try {
@@ -175,7 +175,7 @@ describe("Mode Consistency Tests", () => {
         path: TEST_DB_DIR,
         database: "test",
       });
-    }, 60000);
+    });
 
     afterAll(async () => {
       try {
@@ -331,7 +331,7 @@ describe("Mode Consistency Tests", () => {
         path: TEST_DB_DIR,
         database: "test",
       });
-    }, 60000);
+    });
 
     afterAll(async () => {
       try {
