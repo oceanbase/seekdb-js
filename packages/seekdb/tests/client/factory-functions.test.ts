@@ -45,10 +45,15 @@ describe("Factory Functions", () => {
       }
     });
 
-    test("throws error when neither path nor host provided", async () => {
-      await expect(async () => {
-        Client({} as any);
-      }).rejects.toThrow();
+    test("defaults to embedded mode when neither path nor host provided", async () => {
+      const client = Client({} as any);
+      expect(client).toBeDefined();
+      expect(client instanceof SeekdbClient).toBe(true);
+      try {
+        await client.close();
+      } catch (error) {
+        // Ignore if embedded not available
+      }
     });
   });
 
