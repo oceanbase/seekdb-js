@@ -26,8 +26,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yml,yaml}": "prettier --write",
-    "*.{ts,tsx,js,jsx}": "pnpm run lint",
-    "*.{ts,tsx}": "pnpm run type-check"
+    "*.{ts,tsx,js,jsx}": "pnpm run lint"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

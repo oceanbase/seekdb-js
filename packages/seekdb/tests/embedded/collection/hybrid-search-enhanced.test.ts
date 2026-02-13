@@ -191,7 +191,10 @@ describe("Embedded Mode - Enhanced Hybrid Search", () => {
           expect(results.ids).toBeDefined();
           expect(results.ids.length).toBeGreaterThanOrEqual(0);
         } catch (error: any) {
-          if (error.message?.includes("not supported") || error.message?.includes("Parse error")) {
+          if (
+            error.message?.includes("not supported") ||
+            error.message?.includes("Parse error")
+          ) {
             return;
           }
           throw error;
