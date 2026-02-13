@@ -65,9 +65,10 @@ jobs:
       - name: Build all packages
         run: pnpm run build
 
-  test:
+  # Server-mode tests (exclude embedded/; each job runs on its own runner so seekdb-docker cannot be shared across jobs)
+  test-server:
     if: github.repository == 'oceanbase/seekdb-js'
-    needs: [lint, build]
+    name: Test server
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -95,7 +96,8 @@ jobs:
           sleep 15
           docker logs seekdb-server
 
-      - name: Run tests
+      - name: Run server tests
+        working-directory: packages/seekdb
         env:
           SERVER_HOST: 127.0.0.1
           SERVER_PORT: 2881
@@ -103,4 +105,76 @@ jobs:
           SERVER_PASSWORD: ""
           SERVER_DATABASE: test
           SERVER_TENANT: sys
-        run: pnpm run test
+        run: pnpm exec vitest run --exclude 'tests/embedded/**'
+
+  # Embedded-mode tests on multiple platforms (requires native bindings build per OS; Docker per job)
+  test-embedded:
+    if: github.repository == 'oceanbase/seekdb-js'
+    name: Test embedded (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x64
+            runner: ubuntu-22.04
+          - platform: linux-arm64
+            runner: ubuntu-22.04-arm
+          - platform: darwin-arm64
+            runner: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build bindings
+        working-directory: packages/bindings
+        run: pnpm run build
+
+      - name: Build packages
+        run: pnpm run build
+
+      # macOS has no Docker; skip container and exclude mode-consistency (needs seekdb server)
+      - name: Start seekdb container
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          docker run --name seekdb-server -p 2881:2881 -d oceanbase/seekdb:latest
+          sleep 15
+          docker logs seekdb-server
+
+      - name: Run embedded tests
+        working-directory: packages/seekdb
+        env:
+          SERVER_HOST: 127.0.0.1
+          SERVER_PORT: 2881
+          SERVER_USER: root
+          SERVER_PASSWORD: ""
+          SERVER_DATABASE: test
+          SERVER_TENANT: sys
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            pnpm exec vitest run tests/embedded/ 2>&1 | tee /tmp/vitest.log
+          else
+            pnpm exec vitest run tests/embedded/ --exclude '**/mode-consistency.test.ts' 2>&1 | tee /tmp/vitest.log
+          fi
+          exit_code=$?
+          if [ $exit_code -ne 0 ]; then exit $exit_code; fi
+          grep -qE "[0-9]+ failed" /tmp/vitest.log && exit 1
+          exit 0
