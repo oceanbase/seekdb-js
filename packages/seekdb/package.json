@@ -43,7 +43,9 @@
     "node": ">=20"
   },
   "dependencies": {
-    "mysql2": "^3.11.5",
+    "mysql2": "^3.11.5"
+  },
+  "optionalDependencies": {
     "@seekdb/js-bindings": "workspace:*"
   },
   "peerDependencies": {

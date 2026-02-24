@@ -1,38 +1,54 @@
 const path = require("path");
+const { ensureBindingsDownloaded } = require("./download.js");
 
-const getRuntimePlatformArch = () => `${process.platform}-${process.arch}`;
-
-/**
- * Load native binding: from SEEKDB_BINDINGS_PATH, or from sibling dir (local dev build), or throw.
- * @throw Error if there isn't any available native binding for the current platform/arch.
- */
-function getNativeNodeBinding(runtimePlatformArch) {
-  // 1) Explicit path (e.g. user downloaded zip from S3 and set env)
-  const envPath = process.env.SEEKDB_BINDINGS_PATH;
-  if (envPath) {
-    const nodePath = path.join(envPath, "seekdb.node");
-    try {
-      return require(nodePath);
-    } catch (err) {
-      throw new Error(
-        `SeekDB native binding: SEEKDB_BINDINGS_PATH is set but failed to load ${nodePath}: ${err.message}. ` +
-          `Ensure the directory contains seekdb.node (and libseekdb.so/dylib).`
-      );
-    }
-  }
-
-  // 2) Same dir (local dev: build outputs seekdb.node into pkgs/js-bindings)
-  const sameDirPath = path.join(__dirname, "seekdb.node");
+/** Sync load from same dir (npm package / local build). Returns null if not found. */
+function getNativeNodeBindingSync() {
   try {
-    return require(sameDirPath);
+    return require(path.join(__dirname, "seekdb.node"));
   } catch {
-    // Fall through to error
+    return null;
   }
-
-  throw new Error(
-    `SeekDB native binding not found for ${runtimePlatformArch}. ` +
-      `Set SEEKDB_BINDINGS_PATH to a directory containing seekdb.node (and libseekdb.so/dylib).`
-  );
 }
 
-module.exports = getNativeNodeBinding(getRuntimePlatformArch());
+let _cachedBinding = null;
+let _loadPromise = null;
+
+/** Async load: try sync, else on-demand download then load from cache. Dedupes concurrent calls. */
+async function getNativeBindingAsync() {
+  if (_cachedBinding) return _cachedBinding;
+  try {
+    const sync = getNativeNodeBindingSync();
+    if (sync) {
+      _cachedBinding = sync;
+      return sync;
+    }
+  } catch (_) {
+    // Sync load failed; fall back to download
+  }
+  if (_loadPromise) return _loadPromise;
+  _loadPromise = (async () => {
+    try {
+      const cacheDir = await ensureBindingsDownloaded();
+      _cachedBinding = require(path.join(cacheDir, "seekdb.node"));
+      return _cachedBinding;
+    } catch (err) {
+      _loadPromise = null;
+      throw err;
+    }
+  })();
+  return _loadPromise;
+}
+
+const syncBinding = getNativeNodeBindingSync();
+
+if (syncBinding) {
+  // Bindings available: export them directly; async helper returns same instance
+  _cachedBinding = syncBinding;
+  module.exports = syncBinding;
+  module.exports.getNativeBindingAsync = () => Promise.resolve(syncBinding);
+} else {
+  // Bindings not available: export only async API (on-demand download when called)
+  module.exports = {
+    getNativeBindingAsync,
+  };
+}

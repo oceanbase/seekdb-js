@@ -33,7 +33,7 @@ For complete usage, please refer to the official documentation.
 npm install seekdb @seekdb/default-embed
 ```
 
-- **Embedded mode**: No server deployment required; use locally after install. Depends on native addon `@seekdb/js-bindings` (included in the package). Data is stored under the `path` you provide (e.g. `./seekdb.db`).
+- **Embedded mode**: No server required; use locally. Native addon is loaded on first use (optional dependency or on-demand download). Data is stored under the `path` you provide (e.g. `./seekdb.db`).
 - **Server mode**: Deploy seekdb or OceanBase first; see [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/).
 
 ## Quick Start

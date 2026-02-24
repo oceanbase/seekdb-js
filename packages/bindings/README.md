@@ -12,8 +12,8 @@ The native addon is structured in three layers:
    - Provides low-level bindings for database operations
 
 2. **JavaScript Wrapper** (`pkgs/js-bindings/seekdb.js`)
-   - Loads native `.node` from `SEEKDB_BINDINGS_PATH` or from S3-downloaded zip; local dev can use sibling dirs after build
-   - Supports Linux (x64/arm64) and macOS (arm64 only). **Native bindings are not published to npm**; they are built by CI and hosted on S3.
+   - Loads native `.node` from same dir (npm package / local build) or on-demand download (Node fetch + adm-zip)
+   - Supports Linux (x64/arm64) and macOS (arm64 only). **Native bindings are not on npm**; built by CI and hosted on S3.
 
 3. **TypeScript API Layer** (`../seekdb/src/client-embedded.ts`)
    - High-level TypeScript API
@@ -22,19 +22,14 @@ The native addon is structured in three layers:
 
 ## Distribution (S3, not npm)
 
-Native bindings are **not** published to npm. They are built by [`.github/workflows/build-js-bindings.yml`](../../.github/workflows/build-js-bindings.yml) and uploaded to S3:
+Native bindings are **not** published to npm. They are built by [`.github/workflows/build-js-bindings.yml`](../../.github/workflows/build-js-bindings.yml) and uploaded to S3. Each set of artifacts lives in a directory that contains `seekdb-js-bindings-<platform>.zip` for each platform (e.g. linux-x64, linux-arm64, darwin-arm64).
 
-- **Base path**: `s3://oceanbase-seekdb-builds/js-bindings/all_commits/<commit_sha>/`
-- **Zips**: `seekdb-js-bindings-linux-x64.zip`, `seekdb-js-bindings-linux-arm64.zip`, `seekdb-js-bindings-darwin-arm64.zip`
-- **HTTPS**: `https://oceanbase-seekdb-builds.s3.<region>.amazonaws.com/js-bindings/all_commits/<commit_sha>/seekdb-js-bindings-<platform>.zip`
+**Usage**: When embedded mode is first used, the loader uses same-dir `seekdb.node` (npm package or local build) or downloads bindings on demand. Optional env:
 
-**Usage**: Download the zip for your platform, extract it to a directory, and set the environment variable:
+- `SEEKDB_BINDINGS_BASE_URL` – URL of the directory that contains the zip files (parent of `seekdb-js-bindings-<platform>.zip`). Defaults to a built-in URL.
+- `SEEKDB_BINDINGS_CACHE_DIR` – cache directory for the downloaded zip to avoid repeated downloads (default: `~/.seekdb/bindings`). The zip is stored here and extracted for loading; subsequent runs reuse the cached zip.
 
-```bash
-export SEEKDB_BINDINGS_PATH=/path/to/extracted/dir   # dir must contain seekdb.node, libseekdb.so/dylib; macOS may also need libs/ for runtime deps
-```
-
-The loader package **`pkgs/js-bindings`** is the only package in the repo; it resolves the native addon from `SEEKDB_BINDINGS_PATH` or, for local development, from the same directory (`pkgs/js-bindings/seekdb.node`) after a local build.
+The loader **`pkgs/js-bindings`** resolves the native addon from the same directory (`seekdb.node`) or via on-demand download.
 
 ## Building (CI / local dev)
 
@@ -87,7 +82,7 @@ Note: C API types (`SeekdbHandle`, `SeekdbResult`, `SeekdbRow`) from seekdb.h us
 
 ### Package Structure
 
-- **`@seekdb/js-bindings`** (only package in repo) – Loader that loads the native addon from `SEEKDB_BINDINGS_PATH` or from sibling build output dirs. Native binaries for each platform are built by CI and hosted on S3 (not npm); users download the zip and set `SEEKDB_BINDINGS_PATH`.
+- **`@seekdb/js-bindings`** – Loader: same-dir `seekdb.node` or on-demand download (cached under `SEEKDB_BINDINGS_CACHE_DIR`). Binaries are built by CI and hosted on S3 (not npm).
 
 ### TODO
 
