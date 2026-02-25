@@ -29,7 +29,7 @@
     "@seekdb/common": "workspace:*"
   },
   "dependencies": {
-    "voyageai": "^0.0.3"
+    "voyageai": "^0.1.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
