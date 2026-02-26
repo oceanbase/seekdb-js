@@ -18,7 +18,7 @@
     "node-addon-api": "^8.3.0"
   },
   "devDependencies": {
-    "node-gyp": "^10.3.1",
-    "rimraf": "^5.0.10"
+    "node-gyp": "^12.2.0",
+    "rimraf": "^6.1.3"
   }
 }
