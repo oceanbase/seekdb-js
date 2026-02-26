@@ -1,0 +1,23 @@
+{
+  "name": "@seekdb/js-bindings",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "main": "./seekdb.js",
+  "types": "./seekdb.d.ts",
+  "exports": {
+    ".": {
+      "types": "./seekdb.d.ts",
+      "default": "./seekdb.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oceanbase/seekdb-js.git"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

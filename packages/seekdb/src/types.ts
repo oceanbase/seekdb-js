@@ -2,8 +2,8 @@
  * Type definitions for seekdb SDK
  */
 
-import { SeekdbClient } from "./client.js";
-import type { InternalClient } from "./internal-client.js";
+import type { RowDataPacket } from "mysql2/promise";
+import type { SeekdbClient } from "./client.js";
 
 // ==================== Basic Types ====================
 
@@ -91,6 +91,15 @@ export interface QueryResult<TMeta extends Metadata = Metadata> {
 
 export type DistanceMetric = "l2" | "cosine" | "inner_product";
 
+/**
+ * Internal client interface - implemented by both InternalClient and InternalEmbeddedClient
+ */
+export interface IInternalClient {
+  isConnected(): boolean;
+  execute(sql: string, params?: unknown[]): Promise<RowDataPacket[] | null>;
+  close(): Promise<void>;
+}
+
 export interface CollectionContext {
   name: string;
   collectionId?: string;
@@ -104,9 +113,9 @@ export interface CollectionConfig {
   distance: DistanceMetric;
   embeddingFunction?: EmbeddingFunction;
   metadata?: Metadata;
-  client: SeekdbClient;
-  internalClient: InternalClient;
   collectionId?: string; // v2 format collection ID
+  client?: SeekdbClient;
+  internalClient: IInternalClient;
 }
 
 export interface HNSWConfiguration {
@@ -161,17 +170,21 @@ export type ConfigurationParam = HNSWConfiguration | Configuration;
 // ==================== Client Configuration ====================
 
 export interface SeekdbClientArgs {
-  host: string;
+  path?: string; // For embedded mode
+  host?: string; // For remote server mode
   port?: number;
   tenant?: string;
   database?: string;
   user?: string;
   password?: string;
   charset?: string;
+  /** Optional OceanBase/seekdb query timeout in milliseconds. */
+  queryTimeout?: number;
 }
 
 export interface SeekdbAdminClientArgs {
-  host: string;
+  path?: string; // For embedded mode
+  host?: string; // For remote server mode
   port?: number;
   tenant?: string;
   user?: string;

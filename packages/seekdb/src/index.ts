@@ -3,13 +3,16 @@
  */
 
 export { SeekdbClient } from "./client.js";
-export { SeekdbAdminClient } from "./admin-client.js";
+export { SeekdbAdminClient } from "./client-admin.js";
 export { Collection } from "./collection.js";
 export { Database, OBDatabase } from "./database.js";
 export {
   registerEmbeddingFunction,
   getEmbeddingFunction,
 } from "./embedding-function.js";
+
+// Admin client factory (returns SeekdbClient for admin operations)
+export { AdminClient } from "./factory.js";
 
 export * from "./errors.js";
 export * from "./types.js";

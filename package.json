@@ -10,16 +10,23 @@
     "lint": "pnpm -r run lint",
     "type-check": "pnpm -r run type-check",
     "prettier": "prettier --write .",
+    "prepare": "husky",
     "publish:all": "node scripts/publish.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
     "@types/node": "^22.19.7",
     "dotenv": "^16.6.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
     "prettier": "^3.8.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^2.1.9"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md,yml,yaml}": "prettier --write",
+    "*.{ts,tsx,js,jsx}": "pnpm run lint"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",

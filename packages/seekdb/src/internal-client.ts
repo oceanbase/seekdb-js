@@ -9,13 +9,20 @@ import {
   DEFAULT_CHARSET,
 } from "./utils.js";
 
-export class InternalClient {
+import type { IInternalClient } from "./types.js";
+
+export class InternalClient implements IInternalClient {
   private readonly connectionManager: Connection;
   public readonly tenant: string;
   public readonly database: string;
 
   constructor(args: SeekdbClientArgs) {
     const host = args.host;
+    if (!host) {
+      throw new Error(
+        "InternalClient requires host parameter. For embedded mode, use SeekdbEmbeddedClient directly."
+      );
+    }
     const port = args.port ?? DEFAULT_PORT;
     this.tenant = args.tenant ?? DEFAULT_TENANT;
     this.database = args.database ?? DEFAULT_DATABASE;
@@ -32,6 +39,7 @@ export class InternalClient {
       password,
       database: this.database,
       charset,
+      queryTimeout: args.queryTimeout,
     });
   }
 
