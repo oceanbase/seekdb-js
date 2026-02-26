@@ -95,22 +95,18 @@ export abstract class BaseSeekdbClient {
     const { hnsw = {}, embeddingFunction: vectorEmbeddingFunction } =
       vectorIndex ?? {};
 
+    // Single source for EF: schema.vectorIndex first, then options.embeddingFunction; undefined → default
+    let ef = vectorEmbeddingFunction ?? embeddingFunction;
+    if (ef === undefined) ef = await getEmbeddingFunction();
+
     let distance = hnsw.distance ?? DEFAULT_DISTANCE_METRIC;
     let dimension = hnsw.dimension;
-    let ef = vectorEmbeddingFunction;
 
-    // Handle embedding function: undefined means use default, null means no EF
-    if (ef === undefined) {
-      ef = await getEmbeddingFunction();
-    }
-
-    // If embedding function exists, try to get dimension
+    // Resolve dimension from EF when present (property or generate)
     if (ef !== null) {
-      // Priority 1: Read dimension property (avoid model initialization)
       if ("dimension" in ef && typeof ef.dimension === "number") {
         dimension = ef.dimension;
       } else {
-        // Priority 2: Call generate to calculate dimension
         const testEmbeddings = await ef.generate(["seekdb"]);
         dimension = testEmbeddings[0]?.length;
         if (!dimension) {
@@ -121,9 +117,8 @@ export abstract class BaseSeekdbClient {
       }
     }
 
-    // Determine final dimension based on configuration and embedding function
-    // configuration=null: MUST have embedding function to infer dimension
-    if (ef === null || dimension === undefined) {
+    // Require dimension only when configuration was explicitly null (no config at all)
+    if (configuration === null && ef === null && dimension === undefined) {
       throw new SeekdbValueError(
         "Cannot create collection: configuration is explicitly set to null and " +
           "embedding_function is also null. Cannot determine dimension without either a configuration " +
@@ -132,24 +127,24 @@ export abstract class BaseSeekdbClient {
           "  2. Provide an embeddingFunction to calculate dimension automatically, or\n" +
           "  3. Do not set configuration=null (use default configuration)."
       );
-    } else if (hnsw?.dimension !== undefined) {
-      // configuration has explicit dimension
-      if (dimension !== undefined && hnsw.dimension !== dimension) {
-        throw new SeekdbValueError(
-          `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${dimension})`
-        );
-      }
-    } else {
-      // configuration has no dimension: use dimension or default
-      dimension = dimension ?? DEFAULT_VECTOR_DIMENSION;
     }
+    if (
+      hnsw?.dimension !== undefined &&
+      dimension !== undefined &&
+      hnsw.dimension !== dimension
+    ) {
+      throw new SeekdbValueError(
+        `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${dimension})`
+      );
+    }
+    dimension = dimension ?? DEFAULT_VECTOR_DIMENSION;
 
     if (schemaResolved.vectorIndex) {
       schemaResolved.vectorIndex.hnsw = { dimension, distance };
       schemaResolved.vectorIndex.embeddingFunction = ef;
     }
 
-    // Insert metadata and get collection_id
+    // Insert metadata and get collection_id (schema is single source of truth: includes vectorIndex.hnsw + embeddingFunction)
     const collectionId = await insertCollectionMetadata(this._internal, name, {
       schema: schemaResolved.toMetadataJson(),
     });

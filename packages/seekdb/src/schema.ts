@@ -66,6 +66,17 @@ export class VectorIndexConfig {
     const { hnsw, embeddingFunction } = options;
     this.hnsw = hnsw;
     this.embeddingFunction = embeddingFunction;
+
+    // Only validate: if both set, they must match (dimension is resolved in createCollection)
+    if (
+      embeddingFunction?.dimension !== undefined &&
+      this.hnsw?.dimension !== undefined &&
+      this.hnsw.dimension !== embeddingFunction.dimension
+    ) {
+      throw new SeekdbValueError(
+        `Embedding function dimension (${embeddingFunction.dimension}) does not match hnsw dimension (${this.hnsw.dimension})`
+      );
+    }
   }
 
   toMetadataJson(): any {
@@ -177,9 +188,12 @@ export class Schema {
     configuration: ConfigurationParam | null | undefined,
     embeddingFunction?: EmbeddingFunction | null
   ): Schema {
-    if (configuration === null || !configuration) {
-      // Explicit null keeps the legacy behavior: dimension must be inferred from EF.
-      return Schema.default();
+    if (configuration === null || configuration === undefined) {
+      const schema = Schema.default();
+      // Always pass second param so embeddingFunction applies when config is absent (#1);
+      // explicit null yields VectorIndexConfig({ embeddingFunction: null }) (#2)
+      schema.vectorIndex = new VectorIndexConfig({ embeddingFunction });
+      return schema;
     }
 
     let hnsw: HNSWConfiguration | undefined;

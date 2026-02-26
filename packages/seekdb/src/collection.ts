@@ -63,8 +63,10 @@ export class Collection {
     const { vectorIndex, sparseVectorIndex } = this.schema ?? {};
     this.dimension = vectorIndex?.hnsw?.dimension ?? 0;
     this.distance = vectorIndex?.hnsw?.distance ?? "l2";
-    this.embeddingFunction = vectorIndex?.embeddingFunction;
-    this.sparseEmbeddingFunction = sparseVectorIndex?.embeddingFunction;
+    // Normalize null to undefined so "no embedding function" is consistently undefined
+    this.embeddingFunction = vectorIndex?.embeddingFunction ?? undefined;
+    this.sparseEmbeddingFunction =
+      sparseVectorIndex?.embeddingFunction ?? undefined;
     this.metadata = config.metadata;
     this.collectionId = config.collectionId;
     this.client = config.client;
@@ -262,6 +264,9 @@ export class Collection {
 
     // Normalize to arrays
     const idsArray = Array.isArray(ids) ? ids : [ids];
+    if (idsArray.length === 0) {
+      throw new SeekdbValueError("ids cannot be empty");
+    }
     let embeddingsArray = embeddings
       ? Array.isArray(embeddings[0])
         ? (embeddings as number[][])
