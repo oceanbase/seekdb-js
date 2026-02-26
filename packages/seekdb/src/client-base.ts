@@ -12,7 +12,6 @@ import {
   DEFAULT_DISTANCE_METRIC,
   DEFAULT_VECTOR_DIMENSION,
   COLLECTION_V1_PREFIX,
-  extractDistance,
   queryTableNames,
   extractTableNamesFromResult,
   validateCollectionName,
@@ -21,27 +20,22 @@ import {
   CollectionFieldNames,
 } from "./utils.js";
 import { SeekdbValueError, InvalidCollectionError } from "./errors.js";
-import {
-  getEmbeddingFunction,
-  supportsPersistence,
-} from "./embedding-function.js";
+import { getEmbeddingFunction } from "./embedding-function.js";
 import {
   insertCollectionMetadata,
   getCollectionMetadata,
   deleteCollectionMetadata,
   listCollectionMetadata,
+  CollectionMetadata,
 } from "./metadata-manager.js";
 import type {
   CreateCollectionOptions,
   GetCollectionOptions,
   IInternalClient,
   DistanceMetric,
-  HNSWConfiguration,
-  Configuration,
-  FulltextAnalyzerConfig,
-  EmbeddingFunction,
   Metadata,
 } from "./types.js";
+import { FullTextIndexConfig, Schema, VectorIndexConfig } from "./schema.js";
 
 /**
  * Base class for seekdb clients
@@ -77,39 +71,46 @@ export abstract class BaseSeekdbClient {
   async createCollection(
     options: CreateCollectionOptions
   ): Promise<Collection> {
-    const { name, configuration, embeddingFunction } = options;
+    const { name, schema, configuration, embeddingFunction } = options;
 
+    // Validate collection name
     validateCollectionName(name);
 
-    if (await this.hasCollection(name)) {
-      throw new SeekdbValueError(`Collection already exists: ${name}`);
+    // resolve from configuration and schema
+    let schemaResolved = new Schema();
+    // Keep legacy behavior when schema is omitted.
+    if (schema === undefined)
+      schemaResolved = Schema.fromLegacy(configuration, embeddingFunction);
+    else {
+      // When user provides partial schema, fill missing indexes with defaults.
+      schemaResolved.createIndex(
+        schema.fulltextIndex ?? new FullTextIndexConfig()
+      );
+      schemaResolved.createIndex(schema.vectorIndex ?? new VectorIndexConfig());
+      if (schema.sparseVectorIndex)
+        schemaResolved.createIndex(schema.sparseVectorIndex);
     }
 
-    let ef = embeddingFunction;
-    let hnsw: HNSWConfiguration | undefined;
-    let fulltextConfig: FulltextAnalyzerConfig | undefined;
+    const { vectorIndex } = schemaResolved;
+    const { hnsw = {}, embeddingFunction: vectorEmbeddingFunction } =
+      vectorIndex ?? {};
 
-    if (configuration) {
-      if ("hnsw" in configuration || "fulltextConfig" in configuration) {
-        const config = configuration as Configuration;
-        hnsw = config.hnsw;
-        fulltextConfig = config.fulltextConfig;
-      } else {
-        hnsw = configuration as HNSWConfiguration;
-      }
-    }
+    let distance = hnsw.distance ?? DEFAULT_DISTANCE_METRIC;
+    let dimension = hnsw.dimension;
+    let ef = vectorEmbeddingFunction;
 
-    let distance = hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
-    let dimension: number | undefined = undefined;
-
+    // Handle embedding function: undefined means use default, null means no EF
     if (ef === undefined) {
       ef = await getEmbeddingFunction();
     }
 
+    // If embedding function exists, try to get dimension
     if (ef !== null) {
+      // Priority 1: Read dimension property (avoid model initialization)
       if ("dimension" in ef && typeof ef.dimension === "number") {
         dimension = ef.dimension;
       } else {
+        // Priority 2: Call generate to calculate dimension
         const testEmbeddings = await ef.generate(["seekdb"]);
         dimension = testEmbeddings[0]?.length;
         if (!dimension) {
@@ -120,56 +121,54 @@ export abstract class BaseSeekdbClient {
       }
     }
 
-    if (configuration === null) {
-      if (ef === null || dimension === undefined) {
-        throw new SeekdbValueError(
-          "Cannot create collection: configuration is explicitly set to null and " +
-            "embedding_function is also null. Cannot determine dimension without either a configuration " +
-            "or an embedding function."
-        );
-      }
-      dimension = dimension;
+    // Determine final dimension based on configuration and embedding function
+    // configuration=null: MUST have embedding function to infer dimension
+    if (ef === null || dimension === undefined) {
+      throw new SeekdbValueError(
+        "Cannot create collection: configuration is explicitly set to null and " +
+          "embedding_function is also null. Cannot determine dimension without either a configuration " +
+          "or an embedding function. Please either:\n" +
+          "  1. Provide a configuration with dimension specified (e.g., { dimension: 128, distance: 'cosine' }), or\n" +
+          "  2. Provide an embeddingFunction to calculate dimension automatically, or\n" +
+          "  3. Do not set configuration=null (use default configuration)."
+      );
     } else if (hnsw?.dimension !== undefined) {
+      // configuration has explicit dimension
       if (dimension !== undefined && hnsw.dimension !== dimension) {
         throw new SeekdbValueError(
           `Configuration dimension (${hnsw.dimension}) does not match embedding function dimension (${dimension})`
         );
       }
-      dimension = hnsw.dimension;
     } else {
+      // configuration has no dimension: use dimension or default
       dimension = dimension ?? DEFAULT_VECTOR_DIMENSION;
     }
 
-    let embeddingFunctionMetadata:
-      | { name: string; properties: any }
-      | undefined;
-    if (supportsPersistence(ef)) {
-      embeddingFunctionMetadata = { name: ef.name, properties: ef.getConfig() };
+    if (schemaResolved.vectorIndex) {
+      schemaResolved.vectorIndex.hnsw = { dimension, distance };
+      schemaResolved.vectorIndex.embeddingFunction = ef;
     }
 
+    // Insert metadata and get collection_id
     const collectionId = await insertCollectionMetadata(this._internal, name, {
-      configuration: {
-        hnsw: { dimension, distance },
-        fulltextConfig,
-      },
-      embeddingFunction: embeddingFunctionMetadata,
+      schema: schemaResolved.toMetadataJson(),
     });
 
+    // Create table using SQLBuilder with collection_id (v2 format)
     const sql = SQLBuilder.buildCreateTable(
       name,
-      dimension,
-      distance,
+      schemaResolved,
       undefined,
-      collectionId,
-      fulltextConfig
+      collectionId
     );
 
     try {
       await this._internal.execute(sql);
     } catch (error) {
+      // If table creation fails, try to clean up metadata
       try {
         await deleteCollectionMetadata(this._internal, name);
-      } catch {
+      } catch (cleanupError) {
         // Ignore cleanup errors
       }
       throw error;
@@ -177,9 +176,7 @@ export abstract class BaseSeekdbClient {
 
     return new Collection({
       name,
-      dimension,
-      distance,
-      embeddingFunction: ef ?? undefined,
+      schema: schemaResolved,
       internalClient: this._internal,
       client: this._facade as any,
       collectionId,
@@ -205,30 +202,39 @@ export abstract class BaseSeekdbClient {
   }
 
   /**
-   * Get an existing collection. Tries v2 (metadata table) first, then v1 (table-only).
+   * Get an existing collection
+   *
+   * Metadata deserialization logic:
+   * 1. If metadata has schema, use schema as the base configuration
+   * 2. If no schema in metadata, use legacy configuration (embeddingFunctionMeta, configuration)
+   * 3. If embeddingFunction is provided in getCollection options, override the schema's embeddingFunction
    */
   async getCollection(options: GetCollectionOptions): Promise<Collection> {
-    const { name, embeddingFunction } = options;
+    const { name, embeddingFunction: customEmbeddingFunction } = options;
 
-    validateCollectionName(name);
-
-    let dimension: number;
-    let distance: DistanceMetric;
+    // Variables to store collection info
     let collectionId: string | undefined;
-    let embeddingFunctionConfig: { name: string; properties: any } | undefined;
-    let collectionMetadata: Metadata | undefined;
 
+    // Try v2 format first (check metadata table)
     const metadata = await getCollectionMetadata(this._internal, name);
+    let schemaResolved: Schema | undefined;
+    let embeddingFunctionConfig:
+      | CollectionMetadata["settings"]["embeddingFunction"]
+      | undefined;
+    let configurationMeta: CollectionMetadata["settings"]["configuration"];
 
     if (metadata) {
+      // v2 collection found - extract from metadata
       const {
         collectionId: cId,
         settings: {
           embeddingFunction: embeddingFunctionMeta,
           configuration,
+          schema: schemaJson,
         } = {},
       } = metadata;
 
+      // Verify table exists
       const sql = SQLBuilder.buildShowTable(name, cId);
       const result = await this._internal.execute(sql);
 
@@ -238,20 +244,16 @@ export abstract class BaseSeekdbClient {
         );
       }
 
-      let hnsw: HNSWConfiguration | undefined;
-      if (configuration) {
-        if ("hnsw" in configuration) {
-          hnsw = (configuration as Configuration).hnsw;
-        } else {
-          hnsw = configuration as HNSWConfiguration;
-        }
+      // Priority: if schemaJson exists, use it; otherwise use legacy configuration
+      if (schemaJson) {
+        schemaResolved = await Schema.fromJSON(schemaJson);
       }
 
-      dimension = hnsw?.dimension ?? DEFAULT_VECTOR_DIMENSION;
-      distance = hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
       collectionId = cId;
       embeddingFunctionConfig = embeddingFunctionMeta;
+      configurationMeta = configuration;
     } else {
+      // Fallback to v1 format - extract from table schema
       const sql = SQLBuilder.buildShowTable(name);
       const result = await this._internal.execute(sql);
 
@@ -259,6 +261,7 @@ export abstract class BaseSeekdbClient {
         throw new InvalidCollectionError(`Collection not found: ${name}`);
       }
 
+      // Get table schema to extract dimension and distance
       const descSql = SQLBuilder.buildDescribeTable(name);
       const schema = await this._internal.execute(descSql);
 
@@ -268,6 +271,7 @@ export abstract class BaseSeekdbClient {
         );
       }
 
+      // Parse embedding field to get dimension
       const embeddingField = schema.find(
         (row: any) => row.Field === CollectionFieldNames.EMBEDDING
       );
@@ -277,60 +281,77 @@ export abstract class BaseSeekdbClient {
         );
       }
 
-      const match = (embeddingField as any).Type?.match?.(/VECTOR\((\d+)\)/i);
+      // Parse VECTOR(dimension) format
+      const match = embeddingField.Type.match(/VECTOR\((\d+)\)/i);
       if (!match) {
         throw new InvalidCollectionError(
-          `Invalid embedding type: ${(embeddingField as any).Type}`
+          `Invalid embedding type: ${embeddingField.Type}`
         );
       }
 
-      dimension = parseInt(match[1], 10);
-      distance = DEFAULT_DISTANCE_METRIC;
+      const dimension = parseInt(match[1], 10);
 
+      // Extract distance from CREATE TABLE statement
+      let distance = DEFAULT_DISTANCE_METRIC;
       try {
         const createTableSql = SQLBuilder.buildShowCreateTable(name);
         const createTableResult = await this._internal.execute(createTableSql);
 
         if (createTableResult && createTableResult.length > 0) {
           const createStmt =
-            (createTableResult[0] as any)["Create Table"] ||
-            (createTableResult[0] as any)["create table"] ||
-            "";
+            (createTableResult[0] as any)["Create Table"] || "";
+          // Match: with(distance=value, ...) where value can be l2, cosine, inner_product, or ip
           const distanceMatch = createStmt.match(
             /with\s*\([^)]*distance\s*=\s*['"]?(\w+)['"]?/i
           );
           if (distanceMatch) {
-            const parsed = distanceMatch[1].toLowerCase();
+            const parsedDistance = distanceMatch[1].toLowerCase();
             if (
-              parsed === "l2" ||
-              parsed === "cosine" ||
-              parsed === "inner_product" ||
-              parsed === "ip"
+              parsedDistance === "l2" ||
+              parsedDistance === "cosine" ||
+              parsedDistance === "inner_product" ||
+              parsedDistance === "ip"
             ) {
-              distance = (
-                parsed === "ip" ? "inner_product" : parsed
-              ) as DistanceMetric;
+              distance = parsedDistance as DistanceMetric;
             }
           }
-          collectionMetadata =
-            BaseSeekdbClient.extractMetadataFromComment(createStmt);
         }
-      } catch {
-        // Use default distance
+      } catch (error) {
+        // If extraction fails, use default distance
+      }
+
+      configurationMeta = {
+        hnsw: { dimension, distance: distance as DistanceMetric },
+      };
+    }
+
+    // Ensure schemaResolved is defined at this point
+    if (!schemaResolved) {
+      schemaResolved = Schema.fromLegacy(configurationMeta, undefined);
+    }
+
+    // Resolve embedding function with priority
+    if (customEmbeddingFunction !== undefined) {
+      // customEmbeddingFunction overrides everything
+      if (schemaResolved.vectorIndex) {
+        schemaResolved.vectorIndex.embeddingFunction =
+          customEmbeddingFunction === null ? null : customEmbeddingFunction;
+      }
+    } else if (!schemaResolved.vectorIndex?.embeddingFunction) {
+      //  no embedding function in schema, try to get default
+      // Note: schema.vectorIndex.embeddingFunction is not undefined (already from fromJSON or schema), skip
+      const ef = await resolveEmbeddingFunction(
+        embeddingFunctionConfig,
+        undefined
+      );
+      if (schemaResolved.vectorIndex) {
+        schemaResolved.vectorIndex.embeddingFunction = ef;
       }
     }
 
-    const ef = await resolveEmbeddingFunction(
-      embeddingFunctionConfig,
-      embeddingFunction
-    );
-
     return new Collection({
       name,
-      dimension,
-      distance,
-      embeddingFunction: ef,
-      metadata: collectionMetadata,
+      schema: schemaResolved,
       internalClient: this._internal,
       client: this._facade as any,
       collectionId,

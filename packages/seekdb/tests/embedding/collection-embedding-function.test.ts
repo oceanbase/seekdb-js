@@ -9,7 +9,6 @@ import {
   TEST_CONFIG,
   generateCollectionName,
   Simple3DEmbeddingFunction,
-  registerTestDefaultEmbeddingFunction,
 } from "../test-utils.js";
 import {
   registerEmbeddingFunction,
@@ -17,9 +16,6 @@ import {
   supportsPersistence,
 } from "../../src/embedding-function.js";
 import type { EmbeddingFunction } from "../../src/types.js";
-
-// Register test default embedding function before any tests run
-registerTestDefaultEmbeddingFunction();
 
 describe("Collection Embedding Function Tests", () => {
   let client: SeekdbClient;

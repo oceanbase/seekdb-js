@@ -4,6 +4,9 @@
 
 import type { RowDataPacket } from "mysql2/promise";
 import type { SeekdbClient } from "./client.js";
+import type { Key } from "./key.js";
+import type { Schema } from "./schema.js";
+export { Key, K } from "./key.js";
 
 // ==================== Basic Types ====================
 
@@ -21,6 +24,12 @@ export type Metadata = Record<string, MetadataValue>;
 
 export type EmbeddingDocuments = string | string[];
 export type Embeddings = number[][] | number[];
+export type SparseVector = Record<number, number>;
+export type SparseVectors = SparseVector[];
+
+export type ColumnKey = "embedding" | "sparseEmbedding";
+export type QueryKey = ColumnKey | Key;
+export type SourceKey = Key | string | null;
 
 // ==================== Where Filter Types ====================
 
@@ -109,12 +118,13 @@ export interface CollectionContext {
 
 export interface CollectionConfig {
   name: string;
-  dimension: number;
-  distance: DistanceMetric;
+  schema?: Schema;
+  dimension?: number;
+  distance?: DistanceMetric;
   embeddingFunction?: EmbeddingFunction;
   metadata?: Metadata;
   collectionId?: string; // v2 format collection ID
-  client?: SeekdbClient;
+  client: SeekdbClient;
   internalClient: IInternalClient;
 }
 
@@ -148,16 +158,18 @@ export interface IkProperties {
   ik_mode?: "smart" | "max_word";
 }
 
-export type FulltextProperties =
-  | SpaceProperties
-  | NgramProperties
-  | Ngram2Properties
-  | BengProperties
-  | IkProperties;
-
-export interface FulltextAnalyzerConfig {
-  analyzer?: FulltextAnalyzer;
-  properties?: FulltextProperties;
+export interface FulltextAnalyzerPropertiesMap {
+  space: SpaceProperties;
+  ngram: NgramProperties;
+  ngram2: Ngram2Properties;
+  beng: BengProperties;
+  ik: IkProperties;
+}
+export interface FulltextAnalyzerConfig<
+  T extends FulltextAnalyzer = FulltextAnalyzer,
+> {
+  analyzer?: T;
+  properties?: FulltextAnalyzerPropertiesMap[T];
 }
 
 export interface Configuration {
@@ -196,12 +208,14 @@ export interface SeekdbAdminClientArgs {
 
 export interface CreateCollectionOptions {
   name: string;
+  schema?: Schema;
   configuration?: ConfigurationParam | null;
   embeddingFunction?: EmbeddingFunction | null;
 }
 
 export interface GetCollectionOptions {
   name: string;
+  // 即将废弃
   embeddingFunction?: EmbeddingFunction | null;
 }
 
@@ -243,8 +257,12 @@ export interface GetOptions {
   include?: readonly ("documents" | "metadatas" | "embeddings")[];
 }
 
+export type DenseQueryEmbeddings = number[] | number[][];
+export type SparseQueryEmbeddings = SparseVector | SparseVector[];
+
 export interface QueryOptions {
-  queryEmbeddings?: number[] | number[][];
+  queryKey?: QueryKey;
+  queryEmbeddings?: DenseQueryEmbeddings | SparseQueryEmbeddings;
   queryTexts?: string | string[];
   nResults?: number;
   where?: Where;
@@ -307,8 +325,20 @@ export interface EmbeddingFunction {
   dimension?: number;
 }
 
+export interface SparseEmbeddingFunction {
+  readonly name: string;
+  generate(texts: string[]): Promise<SparseVectors>;
+  getConfig(): EmbeddingConfig;
+  dispose?(): Promise<void>;
+}
+
 export interface EmbeddingFunctionConstructor {
   new (config: EmbeddingConfig): EmbeddingFunction;
   buildFromConfig(config: EmbeddingConfig): EmbeddingFunction;
   getModelDimensions?: () => Record<string, number>;
+}
+
+export interface SparseEmbeddingFunctionConstructor {
+  new (config: EmbeddingConfig): SparseEmbeddingFunction;
+  buildFromConfig(config: EmbeddingConfig): SparseEmbeddingFunction;
 }

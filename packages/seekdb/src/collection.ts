@@ -2,15 +2,12 @@
  * Collection class - represents a collection of documents with vector embeddings
  */
 
-import type { IInternalClient } from "./types.js";
 import { SQLBuilder } from "./sql-builder.js";
 import { SeekdbValueError } from "./errors.js";
 import {
   CollectionFieldNames,
   CollectionNames,
-  normalizeValue,
-  parseEmbeddingBinary,
-  parseEmbeddingBinaryString,
+  isSparseVector,
 } from "./utils.js";
 import { FilterBuilder, SearchFilterCondition } from "./filters.js";
 import {
@@ -19,43 +16,55 @@ import {
   getCollectionMetadata,
   insertCollectionMetadata,
 } from "./metadata-manager.js";
-import type {
-  EmbeddingFunction,
-  Metadata,
-  AddOptions,
-  UpdateOptions,
-  UpsertOptions,
-  DeleteOptions,
-  GetOptions,
-  QueryOptions,
-  HybridSearchOptions,
-  GetResult,
-  QueryResult,
-  DistanceMetric,
-  CollectionConfig,
-  CollectionContext,
-  ForkOptions,
+import {
+  type EmbeddingFunction,
+  type SparseEmbeddingFunction,
+  type Metadata,
+  type AddOptions,
+  type UpdateOptions,
+  type UpsertOptions,
+  type DeleteOptions,
+  type GetOptions,
+  type QueryOptions,
+  type HybridSearchOptions,
+  type GetResult,
+  type QueryResult,
+  type DistanceMetric,
+  type CollectionConfig,
+  type CollectionContext,
+  type ForkOptions,
+  type QueryKey,
+  type SparseVector,
+  Key,
+  IInternalClient,
 } from "./types.js";
-import type { SeekdbClient } from "./client.js";
+import { SeekdbClient } from "./client.js";
+import { Schema } from "./schema.js";
 
 /**
  * Collection - manages a collection of documents with embeddings
  */
 export class Collection {
   readonly name: string;
+  readonly schema?: Schema;
   readonly dimension: number;
   readonly distance: DistanceMetric;
-  readonly embeddingFunction?: EmbeddingFunction;
+  readonly embeddingFunction?: EmbeddingFunction | null;
+  readonly sparseEmbeddingFunction?: SparseEmbeddingFunction | null;
   readonly metadata?: Metadata;
   readonly collectionId?: string; // v2 format collection ID
-  readonly client?: SeekdbClient;
+  readonly client: SeekdbClient;
   #client: IInternalClient;
 
   constructor(config: CollectionConfig) {
     this.name = config.name;
-    this.dimension = config.dimension;
-    this.distance = config.distance;
-    this.embeddingFunction = config.embeddingFunction;
+    this.schema = config.schema;
+
+    const { vectorIndex, sparseVectorIndex } = this.schema ?? {};
+    this.dimension = vectorIndex?.hnsw?.dimension ?? 0;
+    this.distance = vectorIndex?.hnsw?.distance ?? "l2";
+    this.embeddingFunction = vectorIndex?.embeddingFunction;
+    this.sparseEmbeddingFunction = sparseVectorIndex?.embeddingFunction;
     this.metadata = config.metadata;
     this.collectionId = config.collectionId;
     this.client = config.client;
@@ -83,6 +92,102 @@ export class Collection {
     };
   }
 
+  private normalizeQueryKey(
+    queryKey?: QueryKey
+  ): "embedding" | "sparseEmbedding" | undefined {
+    if (!queryKey) return undefined;
+    if (typeof queryKey === "string") return queryKey;
+    if (queryKey instanceof Key) {
+      if (queryKey.name === "#embedding") return "embedding";
+      if (queryKey.name === "sparseEmbedding") return "sparseEmbedding";
+    }
+    return undefined;
+  }
+
+  private normalizeSourceKey(sourceKey: unknown): string | null {
+    if (sourceKey == null) return null;
+    if (typeof sourceKey === "string") return sourceKey;
+    if (sourceKey instanceof Key) return sourceKey.name;
+    return String(sourceKey);
+  }
+
+  private resolveSourceText(
+    sourceKey: unknown,
+    document: string | null | undefined,
+    metadata: Metadata | null | undefined
+  ): string | null {
+    const key = this.normalizeSourceKey(sourceKey);
+    if (!key) return null;
+
+    if (key === "#document" || key === "document") {
+      return document ?? null;
+    }
+
+    if (key.startsWith("metadata.")) {
+      const path = key.slice("metadata.".length).split(".").filter(Boolean);
+      let cur: any = metadata ?? null;
+      for (const seg of path) {
+        if (!cur || typeof cur !== "object") return null;
+        cur = cur[seg];
+      }
+      return typeof cur === "string" ? cur : null;
+    }
+
+    return null;
+  }
+
+  /**
+   * Generate sparse embeddings from documents/metadata
+   * @private
+   */
+  private async generateSparseEmbeddings(
+    ids: string[],
+    documentsArray?: (string | null)[],
+    metadatasArray?: (Metadata | null)[],
+    clearOnNull: boolean = false
+  ): Promise<(SparseVector | null)[] | undefined> {
+    const sparseConfig = this.schema?.sparseVectorIndex;
+    const { sourceKey, embeddingFunction: sparseEmbeddingFunction } =
+      sparseConfig ?? {};
+
+    if (!sparseEmbeddingFunction) {
+      return undefined;
+    }
+
+    const texts: (string | null)[] = ids.map((_, i) =>
+      this.resolveSourceText(
+        sourceKey,
+        documentsArray?.[i] ?? null,
+        metadatasArray?.[i] ?? null
+      )
+    );
+
+    const idx: number[] = [];
+    const toGen: string[] = [];
+
+    const sparseEmbeddingsArray: (SparseVector | null)[] | undefined =
+      Array.from({ length: texts.length }, () => null);
+
+    for (let i = 0; i < texts.length; i++) {
+      if (texts[i]) {
+        idx.push(i);
+        toGen.push(texts[i] as string);
+      } else if (clearOnNull) {
+        // Source field is present but not a string -> clear sparse embedding.
+        sparseEmbeddingsArray[i] = null;
+      }
+    }
+
+    if (toGen.length > 0) {
+      const generated = await sparseEmbeddingFunction.generate(toGen);
+      for (let i = 0; i < generated.length; i++) {
+        sparseEmbeddingsArray[idx[i]] = generated[i] ?? null;
+      }
+    }
+
+    return sparseEmbeddingsArray;
+  }
+
   /**
    * Validate dynamic SQL query to prevent SQL injection
    * This is used specifically for hybrid search where SQL is returned from stored procedure
@@ -106,9 +211,7 @@ export class Collection {
     const upperSql = cleanSql.toUpperCase();
 
     // Must start with SELECT
-    // For hybrid search, DBMS_HYBRID_SEARCH.GET_SQL might return empty or invalid SQL
-    // if the feature is not supported, so we allow empty SQL to pass through
-    if (upperSql.length > 0 && !upperSql.startsWith("SELECT")) {
+    if (!upperSql.startsWith("SELECT")) {
       throw new SeekdbValueError("Invalid SQL query: must start with SELECT");
     }
 
@@ -192,6 +295,12 @@ export class Collection {
       );
     }
 
+    const sparseEmbeddingsArray = await this.generateSparseEmbeddings(
+      idsArray,
+      documentsArray,
+      metadatasArray
+    );
+
     // Validate dimension of all embeddings
     if (embeddingsArray.length > 0) {
       const dimension = this.dimension;
@@ -204,14 +313,11 @@ export class Collection {
       }
     }
 
-    if (idsArray.length === 0) {
-      throw new SeekdbValueError("ids cannot be empty");
-    }
-
     const { sql, params } = SQLBuilder.buildInsert(this.context, {
       ids: idsArray,
       documents: documentsArray ?? undefined,
       embeddings: embeddingsArray,
+      sparseEmbeddings: sparseEmbeddingsArray ?? undefined,
       metadatas: metadatasArray ?? undefined,
     });
 
@@ -266,12 +372,39 @@ export class Collection {
       throw new SeekdbValueError("Length mismatch: embeddings vs ids");
     }
 
+    let sparseUpdates: (SparseVector | null | undefined)[] | undefined;
+    const sparseConfig = this.schema?.sparseVectorIndex;
+    const { sourceKey, embeddingFunction: sparseEmbeddingFunction } =
+      sparseConfig ?? {};
+    if (sparseEmbeddingFunction) {
+      const sourceKeyName = this.normalizeSourceKey(sourceKey);
+      const canComputeFromDocument =
+        sourceKeyName === "#document" || sourceKeyName === "document";
+      const canComputeFromMetadata =
+        typeof sourceKeyName === "string" &&
+        sourceKeyName.startsWith("metadata.");
+
+      const shouldCompute =
+        (canComputeFromDocument && Boolean(documentsArray)) ||
+        (canComputeFromMetadata && Boolean(metadatasArray));
+
+      if (shouldCompute) {
+        sparseUpdates = await this.generateSparseEmbeddings(
+          idsArray,
+          documentsArray,
+          metadatasArray,
+          true // clearOnNull for update
+        );
+      }
+    }
+
     // Update each item
     for (let i = 0; i < idsArray.length; i++) {
       const id = idsArray[i];
       const updates: {
         document?: string;
         embedding?: number[];
+        sparseEmbedding?: SparseVector | null;
         metadata?: Metadata;
       } = {};
 
@@ -283,6 +416,9 @@ export class Collection {
       }
       if (embeddingsArray && embeddingsArray[i]) {
         updates.embedding = embeddingsArray[i];
+      }
+      if (sparseUpdates && sparseUpdates[i] !== undefined) {
+        updates.sparseEmbedding = sparseUpdates[i] as SparseVector | null;
       }
 
       if (Object.keys(updates).length === 0) {
@@ -352,6 +488,7 @@ export class Collection {
         const updates: {
           document?: string;
           embedding?: number[];
+          sparseEmbedding?: SparseVector | null;
           metadata?: Metadata;
         } = {};
 
@@ -363,6 +500,36 @@ export class Collection {
         }
         if (vec !== undefined) {
           updates.embedding = vec;
+        }
+
+        const sparseConfig = this.schema?.sparseVectorIndex;
+        const { sourceKey, embeddingFunction: sparseEmbeddingFunction } =
+          sparseConfig ?? {};
+        if (sparseEmbeddingFunction) {
+          const sourceKeyName = this.normalizeSourceKey(sourceKey);
+          const fromDocument =
+            sourceKeyName === "#document" || sourceKeyName === "document";
+          const fromMetadata =
+            typeof sourceKeyName === "string" &&
+            sourceKeyName.startsWith("metadata.");
+          const shouldCompute =
+            (fromDocument && doc !== undefined) ||
+            (fromMetadata && meta !== undefined);
+
+          if (shouldCompute) {
+            const text = this.resolveSourceText(
+              sourceKey,
+              doc ?? null,
+              meta ?? null
+            );
+            if (text) {
+              const generated = await sparseEmbeddingFunction.generate([text]);
+              updates.sparseEmbedding =
+                (generated[0] as SparseVector | undefined) ?? null;
+            } else {
+              updates.sparseEmbedding = null;
+            }
+          }
         }
 
         if (Object.keys(updates).length > 0) {
@@ -446,27 +613,10 @@ export class Collection {
 
     if (rows) {
       for (const row of rows) {
-        if (!row[CollectionFieldNames.ID]) {
-          throw new Error(
-            `ID field '${CollectionFieldNames.ID}' not found in row. Available keys: ${Object.keys(row).join(", ")}`
-          );
-        }
-        // Normalize values
-        const idValue = normalizeValue(row[CollectionFieldNames.ID]);
-        const idString =
-          idValue !== null && idValue !== undefined ? String(idValue) : null;
-        if (idString !== null) {
-          resultIds.push(idString);
-        }
+        resultIds.push(row[CollectionFieldNames.ID].toString());
 
         if (!include || include.includes("documents")) {
-          const docValue = normalizeValue(row[CollectionFieldNames.DOCUMENT]);
-          // Preserve null for null document (match server; round-trip add({ documents: [null] }) -> get() -> null)
-          resultDocuments.push(
-            docValue !== null && docValue !== undefined
-              ? String(docValue)
-              : (null as any)
-          );
+          resultDocuments.push(row[CollectionFieldNames.DOCUMENT]);
         }
 
         if (!include || include.includes("metadatas")) {
@@ -507,6 +657,7 @@ export class Collection {
     options: QueryOptions
   ): Promise<QueryResult<TMeta>> {
     let {
+      queryKey,
       queryEmbeddings,
       queryTexts,
       nResults = 10,
@@ -517,19 +668,52 @@ export class Collection {
       approximate = true,
     } = options;
 
-    // Handle embedding generation
-    if (queryEmbeddings) {
-      // Query embeddings provided, use them directly without embedding
-    } else if (queryTexts) {
-      if (this.embeddingFunction) {
-        const textsArray = Array.isArray(queryTexts)
-          ? queryTexts
-          : [queryTexts];
-        queryEmbeddings = await this.embeddingFunction.generate(textsArray);
+    const normalizedQueryKey = this.normalizeQueryKey(queryKey);
+
+    let column: "embedding" | "sparse_embedding" =
+      CollectionFieldNames.EMBEDDING;
+    let denseVectors: number[][] | undefined;
+    let sparseVectors: SparseVector[] | undefined;
+
+    if (queryEmbeddings !== undefined) {
+      if (isSparseVector(queryEmbeddings)) {
+        column = CollectionFieldNames.SPARSE_EMBEDDING;
+        sparseVectors = [queryEmbeddings];
+      } else if (
+        Array.isArray(queryEmbeddings) &&
+        queryEmbeddings.length > 0 &&
+        !Array.isArray(queryEmbeddings[0]) &&
+        isSparseVector(queryEmbeddings[0])
+      ) {
+        column = CollectionFieldNames.SPARSE_EMBEDDING;
+        sparseVectors = queryEmbeddings as SparseVector[];
       } else {
-        throw new SeekdbValueError(
-          "queryTexts provided but no queryEmbeddings and no embedding function"
-        );
+        const qe = queryEmbeddings as any;
+        denseVectors = Array.isArray(qe[0])
+          ? (qe as number[][])
+          : ([qe] as number[][]);
+      }
+    } else if (queryTexts) {
+      const textsArray = Array.isArray(queryTexts) ? queryTexts : [queryTexts];
+      const key = normalizedQueryKey ?? "embedding";
+      if (key === "sparseEmbedding") {
+        if (!this.schema?.sparseVectorIndex?.embeddingFunction) {
+          throw new SeekdbValueError(
+            "queryTexts with sparseEmbedding requires sparseEmbeddingFunction"
+          );
+        }
+        column = CollectionFieldNames.SPARSE_EMBEDDING;
+        sparseVectors =
+          await this.schema?.sparseVectorIndex?.embeddingFunction.generate(
+            textsArray
+          );
+      } else {
+        if (!this.embeddingFunction) {
+          throw new SeekdbValueError(
+            "queryTexts provided but no queryEmbeddings and no embedding function"
+          );
+        }
+        denseVectors = await this.embeddingFunction.generate(textsArray);
       }
     } else {
       throw new SeekdbValueError(
@@ -537,23 +721,23 @@ export class Collection {
       );
     }
 
-    // Normalize to 2D array
-    const embeddingsArray = Array.isArray(queryEmbeddings[0])
-      ? (queryEmbeddings as number[][])
-      : [queryEmbeddings as number[]];
+    const queryVectors: (number[] | SparseVector)[] =
+      column === CollectionFieldNames.SPARSE_EMBEDDING
+        ? (sparseVectors ?? [])
+        : (denseVectors ?? []);
 
     const allIds: string[][] = [];
     const allDocuments: (string | null)[][] = [];
     const allMetadatas: (TMeta | null)[][] = [];
-    const allEmbeddings: (number[] | null)[][] = [];
+    const allEmbeddings: number[][][] = [];
     const allDistances: number[][] = [];
 
     // Query for each vector
-    for (const queryVector of embeddingsArray) {
+    for (const queryVector of queryVectors) {
       // Build vector query SQL using SQLBuilder
       const { sql, params } = SQLBuilder.buildVectorQuery(
         this.context,
-        queryVector,
+        queryVector as any,
         nResults,
         {
           where,
@@ -561,6 +745,7 @@ export class Collection {
           include: include as string[] | undefined,
           distance: distance ?? this.distance,
           approximate,
+          column,
         }
       );
 
@@ -569,32 +754,15 @@ export class Collection {
       const queryIds: string[] = [];
       const queryDocuments: (string | null)[] = [];
       const queryMetadatas: (TMeta | null)[] = [];
-      const queryEmbeddings: (number[] | null)[] = [];
+      const queryEmbeddings: number[][] = [];
       const queryDistances: number[] = [];
 
-      if (rows && rows.length > 0) {
+      if (rows) {
         for (const row of rows) {
-          if (!row[CollectionFieldNames.ID]) {
-            // Row missing ID field, skip it
-            continue;
-          }
-          const idValue = row[CollectionFieldNames.ID];
-          const idValueNormalized = normalizeValue(idValue);
-          const idString =
-            idValueNormalized !== null && idValueNormalized !== undefined
-              ? String(idValueNormalized)
-              : null;
-          if (idString !== null) {
-            queryIds.push(idString);
-          }
+          queryIds.push(row[CollectionFieldNames.ID].toString());
 
           if (!include || include.includes("documents")) {
-            const docValue = normalizeValue(row[CollectionFieldNames.DOCUMENT]);
-            queryDocuments.push(
-              docValue !== null && docValue !== undefined
-                ? String(docValue)
-                : null
-            );
+            queryDocuments.push(row[CollectionFieldNames.DOCUMENT] || null);
           }
 
           if (!include || include.includes("metadatas")) {
@@ -793,67 +961,28 @@ export class Collection {
 
     // Get SQL query from DBMS_HYBRID_SEARCH.GET_SQL
     const getSqlQuery = SQLBuilder.buildHybridSearchGetSql(tableName);
-    let getSqlResult;
-    try {
-      getSqlResult = await this.#client.execute(getSqlQuery);
-    } catch (error: any) {
-      // If DBMS_HYBRID_SEARCH is not supported, throw error so test can handle it
-      const errorMsg = error.message || "";
-      if (
-        errorMsg.includes("SQL syntax") ||
-        errorMsg.includes("DBMS_HYBRID_SEARCH") ||
-        errorMsg.includes("Unknown database function") ||
-        errorMsg.includes("function") ||
-        errorMsg.includes("syntax")
-      ) {
-        throw new SeekdbValueError(
-          `DBMS_HYBRID_SEARCH is not supported: ${errorMsg}`
-        );
-      }
-      throw error;
-    }
+    const getSqlResult = await this.#client.execute(getSqlQuery);
 
     if (
       !getSqlResult ||
       getSqlResult.length === 0 ||
       !getSqlResult[0].query_sql
     ) {
-      throw new SeekdbValueError(
-        "DBMS_HYBRID_SEARCH.GET_SQL returned no result"
-      );
+      return {
+        ids: [[]],
+        distances: [[]],
+        metadatas: [[]],
+        documents: [[]],
+        embeddings: [[]],
+      };
     }
 
     // Execute the returned SQL query with security validation
-    let querySql = getSqlResult[0].query_sql;
-
-    // Normalize querySql using generic normalization
-    let normalizedSql = normalizeValue(querySql);
-
-    // Convert to string and clean up
-    if (typeof normalizedSql === "string") {
-      querySql = normalizedSql.trim().replace(/^['"]|['"]$/g, "");
-    } else {
-      querySql = String(normalizedSql)
-        .trim()
-        .replace(/^['"]|['"]$/g, "");
-    }
+    const querySql = getSqlResult[0].query_sql
+      .trim()
+      .replace(/^['"]|['"]$/g, "");
 
     // Security check: Validate the SQL query before execution
-    // If querySql is empty or invalid, it means DBMS_HYBRID_SEARCH is not supported
-    if (!querySql || querySql.length === 0) {
-      throw new SeekdbValueError(
-        "DBMS_HYBRID_SEARCH.GET_SQL returned empty SQL (feature not supported)"
-      );
-    }
-
-    // If SQL doesn't start with SELECT, it means DBMS_HYBRID_SEARCH is not supported
-    const upperSql = querySql.toUpperCase().trim();
-    if (!upperSql.startsWith("SELECT")) {
-      throw new SeekdbValueError(
-        `DBMS_HYBRID_SEARCH.GET_SQL returned invalid SQL: ${querySql.substring(0, 100)} (feature not supported)`
-      );
-    }
-
     this.validateDynamicSql(querySql);
 
     const resultRows = await this.#client.execute(querySql);
@@ -862,7 +991,7 @@ export class Collection {
     const ids: string[] = [];
     const documents: (string | null)[] = [];
     const metadatas: (TMeta | null)[] = [];
-    const embeddings: (number[] | null)[] = [];
+    const embeddings: number[][] = [];
     const distances: number[] = [];
 
     if (resultRows) {
@@ -925,11 +1054,6 @@ export class Collection {
   async fork(options: ForkOptions): Promise<Collection> {
     const { name: targetName } = options;
 
-    if (!this.client) {
-      throw new SeekdbValueError(
-        "Collection fork requires a client reference; this collection was created without one."
-      );
-    }
     if (await this.client.hasCollection(targetName)) {
       throw new SeekdbValueError(
         `Collection '${targetName}' already exists. Please use a different name.`
@@ -988,9 +1112,7 @@ export class Collection {
 
     return new Collection({
       name: targetName,
-      dimension: this.dimension,
-      distance: this.distance,
-      embeddingFunction: this.embeddingFunction,
+      schema: this.schema,
       client: this.client,
       internalClient: this.#client,
       collectionId: targetCollectionId,

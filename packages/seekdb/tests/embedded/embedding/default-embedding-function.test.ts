@@ -4,14 +4,8 @@
  */
 import { describe, test, expect, beforeAll, afterAll } from "vitest";
 import { SeekdbClient } from "../../../src/client.js";
-import {
-  generateCollectionName,
-  registerTestDefaultEmbeddingFunction,
-} from "../../test-utils.js";
+import { generateCollectionName } from "../../test-utils.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
-
-// Register test default embedding function before any tests run
-registerTestDefaultEmbeddingFunction();
 
 const TEST_CONFIG = getEmbeddedTestConfig("default-embedding-function.test.ts");
 

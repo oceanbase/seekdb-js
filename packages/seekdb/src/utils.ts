@@ -3,8 +3,16 @@
  */
 
 import { SeekdbValueError } from "./errors.js";
-import type { Metadata, EmbeddingFunction, EmbeddingConfig } from "./types.js";
-import { getEmbeddingFunction } from "./embedding-function.js";
+import type {
+  Metadata,
+  EmbeddingFunction,
+  EmbeddingConfig,
+  SparseEmbeddingFunction,
+} from "./types.js";
+import {
+  getEmbeddingFunction,
+  getSparseEmbeddingFunction,
+} from "./embedding-function.js";
 
 /**
  * Normalize input to array
@@ -159,6 +167,25 @@ export function vectorToSqlString(vector: number[]): string {
   return JSON.stringify(vector);
 }
 
+export function isSparseVector(
+  value: unknown
+): value is Record<number, number> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (!/^\d+$/.test(k)) return false;
+    if (typeof v !== "number" || !Number.isFinite(v)) return false;
+  }
+  return true;
+}
+
+export function serializeSparseVector(vector: Record<number, number>): string {
+  const entries = Object.entries(vector as Record<string, number>)
+    .map(([k, v]) => [Number(k), v] as const)
+    .sort((a, b) => a[0] - b[0]);
+  const body = entries.map(([k, v]) => `${k}:${v}`).join(",");
+  return `{${body}}`;
+}
+
 /**
  * Collection name utilities
  */
@@ -227,6 +254,7 @@ export class CollectionFieldNames {
   static readonly DOCUMENT = "document";
   static readonly METADATA = "metadata";
   static readonly EMBEDDING = "embedding";
+  static readonly SPARSE_EMBEDDING = "sparse_embedding";
 }
 
 /**
@@ -777,4 +805,35 @@ export async function resolveEmbeddingFunction(
 
   // Default - use default embedding function
   return await getEmbeddingFunction();
+}
+
+/**
+ * Resolve sparse embedding function from metadata or props.
+ *
+ * Priority:
+ * 1. If customSparseEmbeddingFunction is explicitly null, return undefined
+ * 2. If customSparseEmbeddingFunction is provided (not undefined), use it
+ * 3. If sparseEmbeddingFunctionMetadata exists, restore from config
+ * 4. Otherwise return undefined (no default sparse embedding function)
+ */
+export async function resolveSparseEmbeddingFunction(
+  sparseEmbeddingFunctionMetadata?: {
+    name: string;
+    properties: EmbeddingConfig;
+  },
+  customSparseEmbeddingFunction?: SparseEmbeddingFunction | null
+): Promise<SparseEmbeddingFunction | undefined> {
+  if (customSparseEmbeddingFunction === null) {
+    return undefined;
+  }
+  if (customSparseEmbeddingFunction !== undefined) {
+    return customSparseEmbeddingFunction;
+  }
+  if (sparseEmbeddingFunctionMetadata) {
+    return await getSparseEmbeddingFunction(
+      sparseEmbeddingFunctionMetadata.name,
+      sparseEmbeddingFunctionMetadata.properties
+    );
+  }
+  return undefined;
 }
