@@ -1,0 +1,21 @@
+{
+  "name": "seekdb-drizzle-example",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "tsx index.ts",
+    "db:generate": "drizzle-kit generate",
+    "start:embedded": "tsx index-embedded.ts"
+  },
+  "dependencies": {
+    "seekdb": "workspace:*",
+    "@seekdb/default-embed": "workspace:*",
+    "drizzle-orm": "^0.36.0",
+    "mysql2": "^3.11.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.28.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.0.0"
+  }
+}

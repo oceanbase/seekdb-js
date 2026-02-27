@@ -173,6 +173,7 @@ export interface SeekdbClientArgs {
   path?: string; // For embedded mode
   host?: string; // For remote server mode
   port?: number;
+  /** For OceanBase server mode only: tenant name (e.g. `"sys"`). Omit for seekdb server. */
   tenant?: string;
   database?: string;
   user?: string;
@@ -186,6 +187,7 @@ export interface SeekdbAdminClientArgs {
   path?: string; // For embedded mode
   host?: string; // For remote server mode
   port?: number;
+  /** For OceanBase server mode only: tenant name (e.g. `"sys"`). Omit for seekdb server. */
   tenant?: string;
   user?: string;
   password?: string;

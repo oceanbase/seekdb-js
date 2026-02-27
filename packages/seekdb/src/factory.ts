@@ -6,12 +6,7 @@
 import { SeekdbClient } from "./client.js";
 import { SeekdbAdminClient } from "./client-admin.js";
 import type { SeekdbClientArgs, SeekdbAdminClientArgs } from "./types.js";
-import {
-  DEFAULT_TENANT,
-  DEFAULT_DATABASE,
-  DEFAULT_PORT,
-  DEFAULT_USER,
-} from "./utils.js";
+import { DEFAULT_DATABASE, DEFAULT_PORT, DEFAULT_USER } from "./utils.js";
 import * as path from "node:path";
 
 /**
@@ -51,13 +46,12 @@ function _createServerClient(
     const finalPort = port ?? DEFAULT_PORT;
     const finalUser = user ?? DEFAULT_USER;
     const finalPassword = _resolvePassword(password);
-    const finalTenant = tenant ?? DEFAULT_TENANT;
 
-    // For remote server mode, we need to ensure host is provided
+    // Only pass tenant when explicitly set (OceanBase); seekdb server uses internal default in InternalClient
     return new SeekdbClient({
       host,
       port: finalPort,
-      tenant: finalTenant,
+      ...(tenant !== undefined && { tenant }),
       database: database ?? DEFAULT_DATABASE,
       user: finalUser,
       password: finalPassword,
@@ -104,15 +98,11 @@ function _createServerClient(
  * // Embedded mode (default path: current working directory)
  * const client = SeekdbClient({ database: "db1" });
  *
- * // Remote server mode
- * const client = Client({
- *   host: "localhost",
- *   port: 2881,
- *   tenant: "sys",
- *   database: "db1",
- *   user: "root",
- *   password: "pass"
- * });
+ * // Remote server mode (seekdb)
+ * const client = Client({ host: "localhost", port: 2881, database: "db1", user: "root", password: "pass" });
+ *
+ * // OceanBase: pass tenant
+ * const client = Client({ host: "localhost", port: 2881, tenant: "sys", database: "db1", user: "root", password: "pass" });
  * ```
  */
 export function Client(args: SeekdbClientArgs = {}): SeekdbClient {

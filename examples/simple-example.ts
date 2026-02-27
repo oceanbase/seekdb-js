@@ -31,7 +31,7 @@ async function main() {
   //   database: "test",
   //   user: "root",
   //   password: "",
-  //   // for OceanBase, set tenant to "sys"
+  //   // For OceanBase: add tenant: "sys" or your tenant.
   //   // tenant: "sys",
   // });
 

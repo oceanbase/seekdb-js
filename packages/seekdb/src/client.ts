@@ -137,4 +137,14 @@ export class SeekdbClient {
   ): Promise<Database[]> {
     return this._delegate.listDatabases(limit, offset, tenant);
   }
+
+  /**
+   * Execute raw SQL (current database / session).
+   */
+  async execute(
+    sql: string,
+    params?: unknown[]
+  ): Promise<import("mysql2/promise").RowDataPacket[] | null> {
+    return this._delegate.execute(sql, params);
+  }
 }
