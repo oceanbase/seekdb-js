@@ -1,5 +1,6 @@
 /**
  * Embedded mode - Admin database management (createDatabase, getDatabase, listDatabases, deleteDatabase).
+ * Same scenario as tests/client/admin-database.test.ts for Server mode.
  * Explicit createDatabase only; connect does NOT auto-create.
  * Also verifies same path, multiple databases (collections isolated per database).
  */

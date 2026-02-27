@@ -68,6 +68,17 @@ export abstract class BaseSeekdbClient {
    */
   abstract close(): Promise<void>;
 
+  /**
+   * Execute raw SQL (current database / session).
+   * Supported in both embedded and server mode.
+   */
+  async execute(
+    sql: string,
+    params?: unknown[]
+  ): Promise<import("mysql2/promise").RowDataPacket[] | null> {
+    return this._internal.execute(sql, params);
+  }
+
   // ==================== Collection Management ====================
 
   /**
