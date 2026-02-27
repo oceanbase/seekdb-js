@@ -106,8 +106,12 @@ class SeekdbQueryable implements SqlDriverAdapter {
       options: { usePhantomQuery: true },
       queryRaw: (q) => this.queryRaw(q),
       executeRaw: (q) => this.executeRaw(q),
-      commit: () => client.execute("COMMIT"),
-      rollback: () => client.execute("ROLLBACK"),
+      commit: async () => {
+        await client.execute("COMMIT");
+      },
+      rollback: async () => {
+        await client.execute("ROLLBACK");
+      },
     };
   }
 

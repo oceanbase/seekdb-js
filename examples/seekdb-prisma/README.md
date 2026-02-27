@@ -3,7 +3,7 @@
 Vector/hybrid search with seekdb-js and type-safe relational tables with Prisma.
 
 - **Server mode** (`pnpm start`): same database, two connections (SeekdbClient + PrismaClient via `DATABASE_URL`).
-- **Embedded mode** (`pnpm run start:embedded`): use [@seekdb/prisma-adapter](https://www.npmjs.com/package/@seekdb/prisma-adapter) so Prisma runs SQL via `client.execute()` — no MySQL server.
+- **Embedded mode** (`pnpm run start:embedded`): use [@seekdb/prisma-adapter](https://www.npmjs.com/package/@seekdb/prisma-adapter) so Prisma runs SQL via `client.execute()`.
 
 ## Prerequisites
 

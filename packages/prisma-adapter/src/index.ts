@@ -1,6 +1,6 @@
 /**
  * Prisma driver adapter for seekdb Embedded.
- * Use Prisma with seekdb in-process (no MySQL server required).
+ * Use Prisma with seekdb Embedded.
  *
  * @example
  * ```ts

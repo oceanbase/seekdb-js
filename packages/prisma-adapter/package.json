@@ -1,7 +1,7 @@
 {
   "name": "@seekdb/prisma-adapter",
   "version": "0.1.0",
-  "description": "Prisma driver adapter for seekdb Embedded — use Prisma with seekdb in-process (no MySQL server)",
+  "description": "Prisma driver adapter for seekdb Embedded — use Prisma with seekdb Embedded",
   "keywords": [
     "seekdb",
     "prisma",

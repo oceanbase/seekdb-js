@@ -39,9 +39,40 @@ npm install seekdb @seekdb/default-embed
 ```
 
 - **Embedded mode**: No server required; use locally. Native addon is loaded on first use (optional dependency or on-demand download). Data is stored under the `path` you provide (e.g. `./seekdb.db`).
-- **Server mode**: Deploy seekdb or OceanBase first; see [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/).
+- **Server mode**: Deploy seekdb or OceanBase first; see [official deployment documentation](https://www.oceanbase.ai/docs/deploy-overview/). OceanBase is compatible with seekdb (its distributed, multi-tenant, etc. version); seekdb-js supports OceanBase in server mode—use the same API and pass `tenant` when connecting to OceanBase (see [OceanBase mode](#oceanbase-mode-server-with-tenant) below).
 
 ## Quick Start
+
+**Embedded mode** (local file, no server):
+
+```typescript
+import { SeekdbClient } from "seekdb";
+
+// 1. Connect
+const client = new SeekdbClient({
+  path: "./seekdb.db",
+  database: "test",
+});
+
+// 2. Create collection
+const collection = await client.createCollection({ name: "my_collection" });
+
+// 3. Add data (auto-vectorized using @seekdb/default-embed)
+await collection.add({
+  ids: ["1", "2"],
+  documents: ["Hello world", "seekdb is fast"],
+});
+
+// 4. Search
+const results = await collection.query({
+  queryTexts: "Hello",
+  nResults: 5,
+});
+
+console.log("query results", results);
+```
+
+**Server mode** (connect to a deployed seekdb):
 
 ```typescript
 import { SeekdbClient } from "seekdb";
@@ -79,7 +110,18 @@ console.log("query results", results);
 
 ### Client Connection
 
-**Server mode**:
+**Embedded mode**:
+
+```typescript
+import { SeekdbClient } from "seekdb";
+
+const client = new SeekdbClient({
+  path: "./seekdb.db",
+  database: "test",
+});
+```
+
+**Server mode** (seekdb):
 
 ```typescript
 import { SeekdbClient } from "seekdb";
@@ -90,19 +132,19 @@ const client = new SeekdbClient({
   user: "root",
   password: "",
   database: "test",
-  // Required for OceanBase mode
-  // tenant: "sys",
 });
 ```
 
-**Embedded mode**:
+**OceanBase mode** (server with tenant): OceanBase is compatible with seekdb (distributed, multi-tenant, etc.). Use the same server-mode connection; when the backend is OceanBase, pass `tenant` (e.g. `"sys"` or your tenant name):
 
 ```typescript
-import { SeekdbClient } from "seekdb";
-
 const client = new SeekdbClient({
-  path: "./seekdb.db",
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
   database: "test",
+  tenant: "sys", // or your OceanBase tenant
 });
 ```
 
@@ -547,7 +589,20 @@ await prisma.$disconnect();
 
 Use `AdminClient()` for database management. It returns a `SeekdbClient` instance. In **embedded mode** you only pass `path`; no database name is required.
 
-**Server mode**:
+**Embedded mode** (local database file):
+
+```typescript
+import { AdminClient } from "seekdb";
+
+const admin = AdminClient({ path: "./seekdb.db" });
+await admin.createDatabase("new_database");
+const databases = await admin.listDatabases();
+const db = await admin.getDatabase("new_database");
+await admin.deleteDatabase("new_database");
+await admin.close();
+```
+
+**Server mode** (seekdb):
 
 ```typescript
 import { AdminClient } from "seekdb";
@@ -557,8 +612,6 @@ const admin = AdminClient({
   port: 2881,
   user: "root",
   password: "",
-  // Required for OceanBase mode
-  // tenant: "sys"
 });
 
 await admin.createDatabase("new_database");
@@ -568,12 +621,17 @@ await admin.deleteDatabase("new_database");
 await admin.close();
 ```
 
-**Embedded mode** (no server):
+**OceanBase mode** (server mode with tenant): add `tenant` (e.g. `"sys"` or your tenant name) to the config:
 
 ```typescript
-import { AdminClient } from "seekdb";
+const admin = AdminClient({
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
+  tenant: "sys", // or your OceanBase tenant
+});
 
-const admin = AdminClient({ path: "./seekdb.db" });
 await admin.createDatabase("new_database");
 const databases = await admin.listDatabases();
 const db = await admin.getDatabase("new_database");

@@ -1,6 +1,6 @@
 # @seekdb/prisma-adapter
 
-Prisma driver adapter for **seekdb Embedded**. Use Prisma ORM with seekdb in-process — no MySQL server required.
+Prisma driver adapter for **seekdb Embedded**. Use Prisma with seekdb Embedded.
 
 - **Provider**: `mysql` (seekdb is MySQL-compatible)
 - **Use case**: Vector/hybrid search with seekdb Collection API + type-safe relational tables with Prisma, all in one embedded database file.

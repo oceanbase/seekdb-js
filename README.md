@@ -36,11 +36,26 @@ For complete usage, please refer to the official documentation.
 
 This is a monorepo containing:
 
-| Package                  | Description                                                                                                 |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `seekdb`                 | Core SDK for seekdb operations                                                                              |
-| `@seekdb/prisma-adapter` | Prisma driver adapter for seekdb Embedded (use Prisma ORM with no MySQL server)                             |
-| `embeddings`             | Several embedding functions we provide, including local default-embed, OpenAI embedding, Ollama, Jina, etc. |
+| Package                        | Description                                                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| **Core**                       |                                                                                                                 |
+| `seekdb`                       | Core SDK for seekdb (Embedded + Server mode), collections, vector/hybrid search, raw SQL via `client.execute()` |
+| `@seekdb/js-bindings`          | Native addon for Embedded mode; optional dependency of `seekdb`, can be loaded on demand                        |
+| **Integrations**               |                                                                                                                 |
+| `@seekdb/prisma-adapter`       | Prisma driver adapter for seekdb Embedded (use Prisma with seekdb Embedded)                                     |
+| **Embedding packages**         |                                                                                                                 |
+| `@seekdb/default-embed`        | Default local embedding (e.g. Xenova/all-MiniLM-L6-v2), no API key; recommended for getting started             |
+| `@seekdb/ollama`               | Ollama local embedding                                                                                          |
+| `@seekdb/sentence-transformer` | Sentence Transformer local models                                                                               |
+| `@seekdb/openai`               | OpenAI embedding API                                                                                            |
+| `@seekdb/qwen`                 | Alibaba DashScope / Qwen embedding API                                                                          |
+| `@seekdb/jina`                 | Jina AI embedding API                                                                                           |
+| `@seekdb/cohere`               | Cohere embedding API                                                                                            |
+| `@seekdb/voyageai`             | Voyage AI embedding API                                                                                         |
+| `@seekdb/amazon-bedrock`       | AWS Bedrock embedding                                                                                           |
+| `@seekdb/google-vertex`        | Google Vertex AI embedding                                                                                      |
+| `@seekdb/siliconflow`          | SiliconFlow embedding API                                                                                       |
+| `@seekdb/tencent-hunyuan`      | Tencent Hunyuan embedding API                                                                                   |
 
 ## Installation
 
@@ -60,10 +75,37 @@ The SDK supports two modes; the constructor arguments to `SeekdbClient` determin
 | **Embedded** | `path` (database directory path)              | Runs locally with no separate seekdb server; data is stored under the given path (e.g. `./seekdb.db`). Requires native addon `@seekdb/js-bindings`. |
 | **Server**   | `host` (and `port`, `user`, `password`, etc.) | Connects to a remote seekdb or OceanBase instance.                                                                                                  |
 
+**OceanBase and seekdb**: OceanBase is compatible with seekdb and can be understood as its distributed, multi-tenant, etc. version. seekdb-js therefore supports **OceanBase server mode** with the same API: use the same `SeekdbClient` / `AdminClient` and connection parameters; when connecting to OceanBase, additionally pass `tenant` (e.g. `"sys"` or your tenant name). See [OceanBase mode](#oceanbase-mode-server-mode-with-tenant) below.
+
 - **SeekdbClient**: Pass `path` for embedded mode, or `host` (and port, user, password, etc.) for server mode.
 - **AdminClient()**: For admin operations only; pass `path` for embedded or `host` for server. In embedded mode you do not specify a database name.
 
 ## Quick Start
+
+**Embedded mode** (local file, no server):
+
+```typescript
+import { SeekdbClient } from "seekdb";
+
+// 1. Connect
+const client = new SeekdbClient({
+  path: "./seekdb.db",
+  database: "test",
+});
+
+// 2. Create collection
+const collection = await client.createCollection({ name: "my_collection" });
+
+// 3. Add data (auto-vectorized using @seekdb/default-embed)
+await collection.add({
+  ids: ["1", "2"],
+  documents: ["Hello world", "seekdb is fast"],
+});
+
+// 4. Search
+const results = await collection.query({ queryTexts: "Hello", nResults: 5 });
+console.log("query results", results);
+```
 
 **Server mode** (connect to a deployed seekdb):
 
@@ -93,38 +135,24 @@ const results = await collection.query({ queryTexts: "Hello", nResults: 5 });
 console.log("query results", results);
 ```
 
-**Embedded mode** (local file, no server):
-
-```typescript
-import { SeekdbClient } from "seekdb";
-
-// 1. Connect
-const client = new SeekdbClient({
-  path: "./seekdb.db",
-  database: "test",
-});
-
-// 2. Create collection
-const collection = await client.createCollection({ name: "my_collection" });
-
-// 3. Add data (auto-vectorized using @seekdb/default-embed)
-await collection.add({
-  ids: ["1", "2"],
-  documents: ["Hello world", "seekdb is fast"],
-});
-
-// 4. Search
-const results = await collection.query({ queryTexts: "Hello", nResults: 5 });
-console.log("query results", results);
-```
-
 ## Usage Guide
 
 > This section shows the most basic usage. For details, please refer to the [official SDK documentation](https://www.oceanbase.ai/docs/seekdb-js-get-started).
 
 ### Client Connection
 
-**Server mode** (seekdb / OceanBase):
+**Embedded mode** (local database file):
+
+```typescript
+import { SeekdbClient } from "seekdb";
+
+const client = new SeekdbClient({
+  path: "./seekdb.db", // database file path
+  database: "test",
+});
+```
+
+**Server mode**:
 
 ```typescript
 import { SeekdbClient } from "seekdb";
@@ -135,19 +163,19 @@ const client = new SeekdbClient({
   user: "root",
   password: "",
   database: "test",
-  // Required for OceanBase mode
-  // tenant: "sys",
 });
 ```
 
-**Embedded mode** (local database file):
+**OceanBase mode** (server mode with tenant): OceanBase is compatible with seekdb (distributed, multi-tenant, etc.). Use the same server-mode connection; when the backend is OceanBase, pass `tenant` (e.g. `"sys"` or your tenant name):
 
 ```typescript
-import { SeekdbClient } from "seekdb";
-
 const client = new SeekdbClient({
-  path: "./seekdb.db", // database file path
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
   database: "test",
+  tenant: "sys", // or your OceanBase tenant
 });
 ```
 
@@ -444,6 +472,19 @@ const collection = await client.createCollection({
 
 Use `AdminClient()` for database management. It returns a `SeekdbClient` instance. In **embedded mode** you only pass `path`; no database name is required.
 
+**Embedded mode** (local database file):
+
+```typescript
+import { AdminClient } from "seekdb";
+
+const admin = AdminClient({ path: "./seekdb.db" });
+await admin.createDatabase("new_database");
+const databases = await admin.listDatabases();
+const db = await admin.getDatabase("new_database");
+await admin.deleteDatabase("new_database");
+await admin.close();
+```
+
 **Server mode**:
 
 ```typescript
@@ -454,7 +495,6 @@ const admin = AdminClient({
   port: 2881,
   user: "root",
   password: "",
-  // OceanBase mode requires tenant: "sys"
 });
 
 await admin.createDatabase("new_database");
@@ -464,12 +504,17 @@ await admin.deleteDatabase("new_database");
 await admin.close();
 ```
 
-**Embedded mode** (no server):
+**OceanBase mode** (server mode with tenant): add `tenant` (e.g. `"sys"` or your tenant name) to the config:
 
 ```typescript
-import { AdminClient } from "seekdb";
+const admin = AdminClient({
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
+  tenant: "sys", // or your OceanBase tenant
+});
 
-const admin = AdminClient({ path: "./seekdb.db" });
 await admin.createDatabase("new_database");
 const databases = await admin.listDatabases();
 const db = await admin.getDatabase("new_database");
