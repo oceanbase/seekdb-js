@@ -36,10 +36,11 @@ For complete usage, please refer to the official documentation.
 
 This is a monorepo containing:
 
-| Package      | Description                                                                                                 |
-| ------------ | ----------------------------------------------------------------------------------------------------------- |
-| `seekdb`     | Core SDK for seekdb operations                                                                              |
-| `embeddings` | Several embedding functions we provide, including local default-embed, OpenAI embedding, Ollama, Jina, etc. |
+| Package                  | Description                                                                                                 |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `seekdb`                 | Core SDK for seekdb operations                                                                              |
+| `@seekdb/prisma-adapter` | Prisma driver adapter for seekdb Embedded (use Prisma ORM with no MySQL server)                             |
+| `embeddings`             | Several embedding functions we provide, including local default-embed, OpenAI embedding, Ollama, Jina, etc. |
 
 ## Installation
 
@@ -175,7 +176,7 @@ npm install @seekdb/qwen
 ```typescript
 import { QwenEmbeddingFunction } from "@seekdb/qwen";
 
-const qwenEF = new QwenEmbeddingFucntion();
+const qwenEF = new QwenEmbeddingFunction();
 const collection = await client.createCollection({
   name: "my_collection",
   embeddingFunction: qwenEF,
@@ -206,7 +207,7 @@ await collection.add({
 You can also pass a vector or an array of vectors directly.
 
 ```typescript
-const qwenEF = new QwenEmbeddingFucntion();
+const qwenEF = new QwenEmbeddingFunction();
 await collection.add({
   ids: ["1", "2"],
   documents: ["Hello world", "seekdb is fast"],
@@ -480,11 +481,18 @@ await admin.close();
 
 Check out the [examples](./examples) directory for complete usage examples:
 
+**Basic examples** (root `examples/`):
+
 - [simple-example.ts](./examples/simple-example.ts) - Basic usage
 - [complete-example.ts](./examples/complete-example.ts) - All features
 - [hybrid-search-example.ts](./examples/hybrid-search-example.ts) - Hybrid search
 
-To run the examples, please refer to the [Run Examples](./DEVELOP.md#run-examples) section.
+**ORM integration** (vector + relational tables):
+
+- [seekdb-drizzle](./examples/seekdb-drizzle) - Drizzle ORM (Server: same DB two connections; Embedded: mysql-proxy)
+- [seekdb-prisma](./examples/seekdb-prisma) - Prisma ORM (Server: DATABASE_URL; Embedded: [@seekdb/prisma-adapter](https://www.npmjs.com/package/@seekdb/prisma-adapter))
+
+To run the examples, see [Run Examples](./DEVELOP.md#run-examples) in the development guide.
 
 ## Development
 

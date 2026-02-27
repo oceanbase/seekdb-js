@@ -1,0 +1,22 @@
+{
+  "name": "seekdb-prisma-example",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "tsx index.ts",
+    "start:embedded": "tsx index-embedded.ts",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push"
+  },
+  "dependencies": {
+    "seekdb": "workspace:*",
+    "@seekdb/prisma-adapter": "workspace:*",
+    "@seekdb/default-embed": "workspace:*",
+    "@prisma/client": "^6.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.0.0"
+  }
+}

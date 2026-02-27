@@ -19,10 +19,13 @@ For complete usage, please refer to the official documentation.
 [Quick Start](#quick-start)<br/>
 [Usage Guide](#usage-guide)<br/>
 [Execute raw SQL](#execute-raw-sql)<br/>
+[Vector search + relational tables](#vector-search--relational-tables)<br/>
+[Integration with ORM](#integration-with-orm)<br/>
 [Database Management](#database-management)<br/>
 
 ## Why seekdb?
 
+- **MySQL compatible** - seekdb is MySQL-compatible (Server and Embedded). Use standard MySQL SQL with `client.execute()`; the same SQL and schema work in both modes.
 - **Auto Vectorization** - Automatic embedding generation, no manual vector calculation needed
 - **Semantic Search** - Vector-based similarity search for natural language queries
 - **Hybrid Search** - Combine keyword matching with semantic search
@@ -128,7 +131,7 @@ npm install @seekdb/qwen
 ```typescript
 import { QwenEmbeddingFunction } from "@seekdb/qwen";
 
-const qwenEF = new QwenEmbeddingFucntion();
+const qwenEF = new QwenEmbeddingFunction();
 const collection = await client.createCollection({
   name: "my_collection",
   embeddingFunction: qwenEF,
@@ -159,7 +162,7 @@ await collection.add({
 You can also pass a vector or an array of vectors directly.
 
 ```typescript
-const qwenEF = new QwenEmbeddingFucntion();
+const qwenEF = new QwenEmbeddingFunction();
 await collection.add({
   ids: ["1", "2"],
   documents: ["Hello world", "seekdb is fast"],
@@ -405,6 +408,140 @@ const rows2 = await client.execute(
   [5]
 );
 ```
+
+### Vector search + relational tables
+
+You can combine vector (or hybrid) search with relational tables: run `collection.query()` or `collection.hybridSearch()` to get `ids`, then query your relational table by those ids. For type-safe relational queries, prefer an ORM (see [Integration with ORM](#integration-with-orm)); here is a raw-SQL recipe.
+
+**Recipe**
+
+1. Get ids (and optional metadata) from vector/hybrid search.
+2. Query the relational table with `client.execute()`. For `WHERE id IN (...)` with MySQL/mysql2, use parameterized placeholders to avoid SQL injection: one `?` per id and pass the ids array as params.
+
+**Example (TypeScript)** — hybrid search, then fetch users by id and merge:
+
+```typescript
+const client = new SeekdbClient({
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
+  database: "test",
+});
+const collection = await client.getCollection({ name: "my_collection" });
+
+// 1. Hybrid search → get ids
+const hybridResult = await collection.hybridSearch({
+  query: { whereDocument: { $contains: "seekdb" } },
+  knn: { queryTexts: ["fast database"] },
+  nResults: 5,
+});
+const ids = hybridResult.ids?.flat().filter(Boolean) ?? []; // e.g. string[]
+
+// 2. Query relational table by ids (parameterized)
+type UserRow = { id: string; name: string };
+let users: UserRow[] = [];
+if (ids.length > 0) {
+  const placeholders = ids.map(() => "?").join(",");
+  const rows = await client.execute(
+    `SELECT id, name FROM users WHERE id IN (${placeholders})`,
+    ids
+  );
+  users = (rows ?? []) as UserRow[];
+}
+
+// 3. Merge: e.g. map ids to (vector result + user row)
+const merged = ids.map((id) => ({
+  id,
+  user: users.find((u) => u.id === id) ?? null,
+}));
+```
+
+**Transactions**: There is no explicit transaction API on the client. For transactions that span both vector and relational operations, use a separate mysql2 connection (same DB config) and run `beginTransaction()` / `commit()` / `rollback()` on that connection (see [Integration with ORM](#integration-with-orm)).
+
+### Integration with ORM
+
+Use seekdb-js for vector/full-text/hybrid search and an ORM (Drizzle or Prisma) for type-safe relational tables. seekdb is **MySQL-compatible** in both Server and Embedded mode. **Drizzle**: in Server mode create a mysql2 connection with the same DB config and pass it to `drizzle-orm/mysql2` (same database, two connections); in **Embedded mode** use `drizzle-orm/mysql-proxy` with a callback that calls `client.execute()` and maps to `{ rows }` (see `examples/seekdb-drizzle/index-embedded.ts`). **Prisma**: in Server mode use DATABASE_URL (same database, two connections); in **Embedded mode** use the [@seekdb/prisma-adapter](https://www.npmjs.com/package/@seekdb/prisma-adapter) so Prisma runs SQL via `client.execute()` (see `examples/seekdb-prisma/index-embedded.ts`).
+
+#### With Drizzle (Server: same DB two connections; Embedded: mysql-proxy)
+
+**Server mode**: Create a mysql2 connection with the same host/port/user/password/database as SeekdbClient and pass it to Drizzle (same database, two connections):
+
+```typescript
+import { createConnection } from "mysql2/promise";
+import { SeekdbClient } from "seekdb";
+import { drizzle } from "drizzle-orm/mysql2";
+import { inArray } from "drizzle-orm";
+import { users } from "./schema"; // your relational table (mysqlTable), no vector tables
+
+const dbConfig = {
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
+  database: "test",
+};
+
+const client = new SeekdbClient(dbConfig);
+const conn = await createConnection(dbConfig);
+const db = drizzle(conn);
+
+const collection = await client.getCollection({ name: "docs" });
+const result = await collection.hybridSearch({
+  query: { whereDocument: { $contains: "seekdb" } },
+  knn: { queryTexts: ["database"] },
+  nResults: 5,
+});
+const ids = result.ids?.flat().filter(Boolean) ?? [];
+
+const usersList = await db.select().from(users).where(inArray(users.id, ids));
+
+// when done: await conn.end(); await client.close();
+```
+
+**Embedded mode**: Use Drizzle's mysql-proxy driver with a callback that runs SQL via `client.execute()` and maps results to `{ rows }`. See `examples/seekdb-drizzle/index-embedded.ts` for a full runnable sample.
+
+- Schema: define only **relational tables** with `mysqlTable`; vector tables are managed by seekdb Collection.
+- See `examples/seekdb-drizzle/` for a runnable sample.
+
+#### With Prisma (same database, two connections)
+
+Use **same database, two connections**: one SeekdbClient, one PrismaClient (via `DATABASE_URL`). Vector search with seekdb, then query relational by ids with Prisma.
+
+```typescript
+import { SeekdbClient } from "seekdb";
+import { PrismaClient } from "@prisma/client";
+
+const client = new SeekdbClient({
+  host: "127.0.0.1",
+  port: 2881,
+  user: "root",
+  password: "",
+  database: "test",
+});
+
+const prisma = new PrismaClient(); // uses DATABASE_URL="mysql://root:@127.0.0.1:2881/test"
+
+const collection = await client.getCollection({ name: "docs" });
+const result = await collection.hybridSearch({
+  query: { whereDocument: { $contains: "seekdb" } },
+  knn: { queryTexts: ["database"] },
+  nResults: 5,
+});
+const ids = result.ids?.flat().filter(Boolean) ?? [];
+
+const users = await prisma.user.findMany({
+  where: { id: { in: ids } },
+});
+
+// merge vector results with users as needed
+await client.close();
+await prisma.$disconnect();
+```
+
+- Set `DATABASE_URL` to the same host/port/user/password/database as SeekdbClient (e.g. `mysql://user:password@host:port/database`). For OceanBase tenant, see your Prisma/MySQL docs.
+- **Embedded mode**: use the [@seekdb/prisma-adapter](https://www.npmjs.com/package/@seekdb/prisma-adapter) and `PrismaClient({ adapter })` so Prisma runs SQL via `client.execute()`; run `pnpm run start:embedded` in `examples/seekdb-prisma/`.
+- See `examples/seekdb-prisma/` for runnable samples (Server and Embedded).
 
 ### Database Management
 
