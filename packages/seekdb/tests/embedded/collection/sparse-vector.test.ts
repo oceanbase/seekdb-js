@@ -16,7 +16,10 @@ import {
 } from "../../../src/schema.js";
 import { K } from "../../../src/key.js";
 import { SeekdbValueError } from "../../../src/errors.js";
-import { registerSparseEmbeddingFunction } from "../../../src/embedding-function.js";
+import {
+  registerEmbeddingFunction,
+  registerSparseEmbeddingFunction,
+} from "../../../src/embedding-function.js";
 import { generateCollectionName } from "../../test-utils.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
 import type {
@@ -31,11 +34,10 @@ const TEST_FILE = "sparse-vector.test.ts";
 const TEST_CONFIG = getEmbeddedTestConfig(TEST_FILE);
 
 // ==================== Test Fixtures ====================
-const SPARSE_EF_NAME = "test-sparse-client";
 const DENSE_DIM = 3;
 
 class ClientTestSparseEF implements SparseEmbeddingFunction {
-  readonly name = SPARSE_EF_NAME;
+  readonly name = "test-sparse-client";
   async generate(texts: string[]): Promise<SparseVector[]> {
     return texts.map((t) => {
       const v: SparseVector = {};
@@ -69,7 +71,11 @@ class ClientTestDenseEF implements EmbeddingFunction {
 }
 
 try {
-  registerSparseEmbeddingFunction(SPARSE_EF_NAME, ClientTestSparseEF as any);
+  registerSparseEmbeddingFunction(
+    "test-sparse-client",
+    ClientTestSparseEF as any
+  );
+  registerEmbeddingFunction("test-dense-client", ClientTestDenseEF as any);
 } catch {
   /* already registered */
 }
@@ -79,7 +85,7 @@ try {
  * Maps each character code in the first 5 chars to a weight.
  */
 class TestSparseEmbeddingFunction implements SparseEmbeddingFunction {
-  readonly name = SPARSE_EF_NAME;
+  readonly name = "test-sparse";
 
   async generate(texts: string[]): Promise<SparseVector[]> {
     return texts.map((text) => {
@@ -110,7 +116,7 @@ class TestSparseEmbeddingFunction implements SparseEmbeddingFunction {
 
 /** Deterministic 3-dim dense embedding function for tests. */
 class TestDenseEmbeddingFunction implements EmbeddingFunction {
-  readonly name = "test-dense-3d";
+  readonly name = "test-dense";
   readonly dimension = DENSE_DIM;
 
   async generate(texts: string[]): Promise<number[][]> {
@@ -131,8 +137,9 @@ class TestDenseEmbeddingFunction implements EmbeddingFunction {
 
 // Register once (guard against multiple hot-reloads in watch mode)
 try {
+  registerEmbeddingFunction("test-dense", TestDenseEmbeddingFunction as any);
   registerSparseEmbeddingFunction(
-    SPARSE_EF_NAME,
+    "test-sparse",
     TestSparseEmbeddingFunction as any
   );
 } catch {
@@ -228,7 +235,8 @@ describe("Embedded - Sparse Vector Index", () => {
 
     beforeAll(async () => {
       collectionName = generateCollectionName("sparse_add_doc");
-      await client.createCollection({
+
+      const col = await client.createCollection({
         name: collectionName,
         schema: makeSparseSchema(K.DOCUMENT),
       });
@@ -249,7 +257,6 @@ describe("Embedded - Sparse Vector Index", () => {
         documents: ["machine learning algorithms", "vector database search"],
         metadatas: [{ category: "ml" }, { category: "db" }],
       });
-
       const result = await collection.get({ ids: ["doc1", "doc2"] });
       expect(result.ids).toHaveLength(2);
       expect(result.ids).toContain("doc1");
@@ -262,7 +269,6 @@ describe("Embedded - Sparse Vector Index", () => {
         ids: "single_doc",
         documents: "neural network deep learning",
       });
-
       const result = await collection.get({ ids: ["single_doc"] });
       expect(result.ids).toHaveLength(1);
     });
@@ -408,7 +414,7 @@ describe("Embedded - Sparse Vector Index", () => {
       const noEfSchema = new Schema()
         .createIndex(
           new VectorIndexConfig({
-            hnsw: { dimension: DENSE_DIM, distance: "l2" },
+            hnsw: { distance: "l2" },
           })
         )
         .createIndex(new FullTextIndexConfig())
@@ -512,7 +518,7 @@ describe("Embedded - Sparse Vector Index", () => {
 
     test("getCollection() restores sparseEmbeddingFunction by name from registry", async () => {
       const collection = await client.getCollection({ name: collectionName });
-      expect(collection.sparseEmbeddingFunction?.name).toBe(SPARSE_EF_NAME);
+      expect(collection.sparseEmbeddingFunction?.name).toBe("test-sparse");
     });
 
     test("getCollection() can add and query after restoration", async () => {

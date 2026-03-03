@@ -6,8 +6,11 @@ import type {
   FulltextAnalyzerConfig,
   FulltextAnalyzerPropertiesMap,
   HNSWConfiguration,
+  HnswParams,
   SourceKey,
   SparseEmbeddingFunction,
+  SparseVectorIndexConfigOptions,
+  VectorIndexConfigOptions,
 } from "./types.js";
 import { Key } from "./key.js";
 import {
@@ -17,22 +20,16 @@ import {
   supportsSparsePersistence,
 } from "./embedding-function.js";
 import { SeekdbValueError } from "./errors.js";
+import {
+  validateHnsw,
+  validateSparseIndex,
+  validateFulltextProperties,
+} from "./validation.js";
 
 const DEFAULT_FULLTEXT_ANALYZER: FulltextAnalyzer = "ik";
 
-export interface HnswParams {
-  dimension?: number;
-  distance?: DistanceMetric;
-  // Future extension:
-  // m?: number;
-  // efConstruction?: number;
-  // efSearch?: number;
-  // type?: "hnsw" | "sq" | "bq";
-  // lib?: "vsag";
-}
-
 export class FullTextIndexConfig {
-  readonly type = "FullTextIndexConfig";
+  readonly _type = "FullTextIndexConfig";
   public readonly analyzer: FulltextAnalyzer;
   public readonly properties?: FulltextAnalyzerPropertiesMap[FulltextAnalyzer];
 
@@ -42,6 +39,10 @@ export class FullTextIndexConfig {
   ) {
     this.analyzer = analyzer ?? DEFAULT_FULLTEXT_ANALYZER;
     this.properties = properties ?? {};
+    validateFulltextProperties(
+      this.analyzer,
+      this.properties as Record<string, unknown>
+    );
   }
 
   toMetadataJson(): any {
@@ -52,13 +53,8 @@ export class FullTextIndexConfig {
   }
 }
 
-export interface VectorIndexConfigOptions {
-  hnsw?: HnswParams;
-  embeddingFunction?: EmbeddingFunction | null;
-}
-
 export class VectorIndexConfig {
-  readonly type = "VectorIndexConfig";
+  readonly _type = "VectorIndexConfig";
   hnsw?: HnswParams;
   embeddingFunction?: EmbeddingFunction | null;
 
@@ -66,6 +62,8 @@ export class VectorIndexConfig {
     const { hnsw, embeddingFunction } = options;
     this.hnsw = hnsw;
     this.embeddingFunction = embeddingFunction;
+
+    if (hnsw) validateHnsw(hnsw);
 
     // Only validate: if both set, they must match (dimension is resolved in createCollection)
     if (
@@ -92,26 +90,57 @@ export class VectorIndexConfig {
   }
 }
 
-export interface SparseVectorIndexConfigOptions {
-  sourceKey: SourceKey;
-  embeddingFunction?: SparseEmbeddingFunction | null;
-}
-
 export class SparseVectorIndexConfig {
-  readonly type = "SparseVectorIndexConfig";
+  readonly _type = "SparseVectorIndexConfig";
+  readonly distance?: "inner_product";
+  readonly type?: "sindi";
+  readonly lib?: "vsag";
   readonly sourceKey: SourceKey;
   readonly embeddingFunction?: SparseEmbeddingFunction | null;
+  readonly prune?: boolean;
+  readonly refine?: boolean;
+  readonly drop_ratio_build?: number;
+  readonly drop_ratio_search?: number;
+  readonly refine_k?: number;
 
   constructor(options: SparseVectorIndexConfigOptions) {
-    const { sourceKey, embeddingFunction } = options;
+    const {
+      sourceKey,
+      distance,
+      type,
+      lib,
+      embeddingFunction,
+      prune,
+      refine,
+      drop_ratio_build,
+      drop_ratio_search,
+      refine_k,
+    } = options;
     if (!sourceKey) throw new SeekdbValueError("sourceKey is required");
+    validateSparseIndex(options);
     this.sourceKey = sourceKey;
+    this.distance = distance;
+    this.type = type;
+    this.lib = lib;
     this.embeddingFunction = embeddingFunction;
+    this.prune = prune;
+    this.refine = refine;
+    this.drop_ratio_build = drop_ratio_build;
+    this.drop_ratio_search = drop_ratio_search;
+    this.refine_k = refine_k;
   }
 
   toMetadataJson(): any {
     return {
       sourceKey: resolveSourceKeyName(this.sourceKey),
+      distance: this.distance,
+      type: this.type,
+      lib: this.lib,
+      prune: this.prune,
+      refine: this.refine,
+      drop_ratio_build: this.drop_ratio_build,
+      drop_ratio_search: this.drop_ratio_search,
+      refine_k: this.refine_k,
       embeddingFunction: supportsSparsePersistence(this.embeddingFunction)
         ? {
             name: this.embeddingFunction.name,

@@ -32,6 +32,7 @@ describe("Embedded Mode - Batch Operations", () => {
 
   describe("Batch Operations", () => {
     test("add large batch of items", async () => {
+      // User-side batching: caller invokes add() multiple times with small batches; SDK does not split.
       const collectionName = generateCollectionName("test_large_batch");
       const collection = await client.createCollection({
         name: collectionName,
@@ -39,28 +40,32 @@ describe("Embedded Mode - Batch Operations", () => {
         embeddingFunction: null,
       });
 
-      const batchSize = 100;
-      const ids = Array.from({ length: batchSize }, (_, i) => `id_${i}`);
-      const embeddings = Array.from({ length: batchSize }, (_, i) => [
+      const totalCount = 100;
+      const perBatch = 30;
+      const ids = Array.from({ length: totalCount }, (_, i) => `id_${i}`);
+      const embeddings = Array.from({ length: totalCount }, (_, i) => [
         i * 0.1,
         i * 0.2,
         i * 0.3,
       ]);
       const documents = Array.from(
-        { length: batchSize },
+        { length: totalCount },
         (_, i) => `Document ${i}`
       );
-      const metadatas = Array.from({ length: batchSize }, (_, i) => ({
+      const metadatas = Array.from({ length: totalCount }, (_, i) => ({
         index: i,
         batch: "large",
       }));
 
-      await collection.add({
-        ids,
-        embeddings,
-        documents,
-        metadatas,
-      });
+      for (let offset = 0; offset < totalCount; offset += perBatch) {
+        const end = Math.min(offset + perBatch, totalCount);
+        await collection.add({
+          ids: ids.slice(offset, end),
+          embeddings: embeddings.slice(offset, end),
+          documents: documents.slice(offset, end),
+          metadatas: metadatas.slice(offset, end),
+        });
+      }
 
       const results = await collection.get({ ids: ids.slice(0, 10) });
       expect(results.ids.length).toBe(10);

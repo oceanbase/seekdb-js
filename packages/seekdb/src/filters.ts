@@ -7,30 +7,13 @@
  * - Document filters: $contains, $regex
  */
 
-import type { Where, WhereDocument } from "./types.js";
+import type {
+  FilterResult,
+  SearchFilterCondition,
+  Where,
+  WhereDocument,
+} from "./types.js";
 import { CollectionFieldNames } from "./utils.js";
-
-/**
- * Result of building a filter
- * Returns SQL WHERE clause and parameters for parameterized queries
- */
-export interface FilterResult {
-  clause: string;
-  params: unknown[];
-}
-
-/**
- * Filter condition for hybrid search
- */
-export interface SearchFilterCondition {
-  term?: Record<string, { value: any }>;
-  range?: Record<string, Record<string, any>>;
-  bool?: {
-    must?: SearchFilterCondition[];
-    should?: SearchFilterCondition[];
-    must_not?: SearchFilterCondition[];
-  };
-}
 
 /**
  * FilterBuilder class for building SQL WHERE clauses from filter dictionaries

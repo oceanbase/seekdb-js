@@ -508,7 +508,7 @@ describe("Embedded Mode - Collection Query Operations", () => {
         schema: new Schema()
           .createIndex(
             new VectorIndexConfig({
-              hnsw: { dimension: DENSE_DIM_QUERY, distance: "l2" },
+              hnsw: { distance: "l2" },
             })
           )
           .createIndex(new FullTextIndexConfig())

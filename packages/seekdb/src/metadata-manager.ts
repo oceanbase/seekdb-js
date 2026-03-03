@@ -2,32 +2,7 @@
  * Metadata Manager - Manages the sdk_collections metadata table
  * This table stores collection metadata for v2 collections
  */
-
-import { Schema } from "./schema.js";
-
-import type {
-  EmbeddingConfig,
-  CreateCollectionOptions,
-  IInternalClient,
-} from "./types.js";
-
-export type CollectionVersion = "v2";
-export interface CollectionMetadata {
-  collectionId: string;
-  collectionName: string;
-  settings: {
-    configuration?: CreateCollectionOptions["configuration"];
-    version?: CollectionVersion;
-    embeddingFunction?: {
-      name: string;
-      properties: EmbeddingConfig;
-    };
-    schema?: Schema;
-    [key: string]: any;
-  };
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import type { IInternalClient, CollectionMetadata } from "./types.js";
 
 export const METADATA_TABLE_NAME = "sdk_collections";
 

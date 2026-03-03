@@ -33,9 +33,6 @@ export type SourceKey = Key | string | null;
 
 // ==================== Where Filter Types ====================
 
-/**
- * Comparison operators for metadata filtering
- */
 export interface WhereOperator<T = MetadataValue> {
   $eq?: T;
   $ne?: T;
@@ -109,6 +106,11 @@ export interface IInternalClient {
   close(): Promise<void>;
 }
 
+export interface SQLResult {
+  sql: string;
+  params: unknown[];
+}
+
 export interface CollectionContext {
   name: string;
   collectionId?: string;
@@ -128,9 +130,74 @@ export interface CollectionConfig {
   internalClient: IInternalClient;
 }
 
+/**
+ * Result of building a filter
+ * Returns SQL WHERE clause and parameters for parameterized queries
+ */
+export interface FilterResult {
+  clause: string;
+  params: unknown[];
+}
+
+export interface SearchFilterCondition {
+  term?: Record<string, { value: any }>;
+  range?: Record<string, Record<string, any>>;
+  bool?: {
+    must?: SearchFilterCondition[];
+    should?: SearchFilterCondition[];
+    must_not?: SearchFilterCondition[];
+  };
+}
+
+export interface ConnectionConfig {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database?: string;
+  charset: string;
+  /** Optional OceanBase/seekdb query timeout in milliseconds (e.g. 60000 = 60s). */
+  queryTimeout?: number;
+}
+
+// ==================== Index Configuration ====================
+
 export interface HNSWConfiguration {
   dimension: number;
   distance?: DistanceMetric;
+}
+
+export interface HnswParams {
+  dimension?: number;
+  distance?: DistanceMetric;
+  type?: "hnsw" | "hnsw_sq" | "hnsw_bq";
+  lib?: "vsag";
+  m?: number;
+  ef_construction?: number;
+  ef_search?: number;
+  extra_info_max_size?: number;
+  refine_k?: number; // hnsw_bq only, ignored otherwise
+  refine_type?: "sq8" | "fp32"; // hnsw_bq only, ignored otherwise
+  bq_bits_query?: 0 | 4 | 32; // hnsw_bq only, ignored otherwise
+  bq_use_fht?: boolean; // hnsw_bq only, ignored otherwise
+}
+
+export interface VectorIndexConfigOptions {
+  hnsw?: HnswParams;
+  embeddingFunction?: EmbeddingFunction | null;
+}
+
+export interface SparseVectorIndexConfigOptions {
+  sourceKey: SourceKey;
+  distance?: "inner_product";
+  type?: "sindi";
+  lib?: "vsag";
+  embeddingFunction?: SparseEmbeddingFunction | null;
+  prune?: boolean;
+  refine?: boolean;
+  drop_ratio_build?: number;
+  drop_ratio_search?: number;
+  refine_k?: number;
 }
 
 export type FulltextAnalyzer = "space" | "ngram" | "ngram2" | "beng" | "ik";
@@ -215,7 +282,7 @@ export interface CreateCollectionOptions {
 
 export interface GetCollectionOptions {
   name: string;
-  // 即将废弃
+  // @deprecated
   embeddingFunction?: EmbeddingFunction | null;
 }
 
@@ -269,9 +336,6 @@ export interface QueryOptions {
   whereDocument?: WhereDocument;
   include?: readonly ("documents" | "metadatas" | "embeddings" | "distances")[];
   distance?: DistanceMetric;
-  /**
-   * Defaults to true.
-   */
   approximate?: boolean;
 }
 
@@ -344,4 +408,33 @@ export interface SparseEmbeddingFunctionConstructor {
   new (config: EmbeddingConfig): SparseEmbeddingFunction;
   buildFromConfig(config: EmbeddingConfig): SparseEmbeddingFunction;
   validateConfig?(config: EmbeddingConfig): void;
+}
+
+// ==================== Collection Metadata ====================
+
+export interface KeyFactory {
+  (name: string): Key;
+  ID: Key;
+  DOCUMENT: Key;
+  EMBEDDING: Key;
+  METADATA: Key;
+  SPARSE_EMBEDDING: Key;
+}
+
+export type CollectionVersion = "v2";
+export interface CollectionMetadata {
+  collectionId: string;
+  collectionName: string;
+  settings: {
+    configuration?: CreateCollectionOptions["configuration"];
+    version?: CollectionVersion;
+    embeddingFunction?: {
+      name: string;
+      properties: EmbeddingConfig;
+    };
+    schema?: Schema;
+    [key: string]: any;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
 }

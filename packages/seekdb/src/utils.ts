@@ -9,6 +9,7 @@ import type {
   EmbeddingConfig,
   SparseEmbeddingFunction,
 } from "./types.js";
+import { DistanceMetric } from "./types.js";
 import {
   getEmbeddingFunction,
   getSparseEmbeddingFunction,
@@ -758,7 +759,7 @@ export async function queryTableNames(
  * Default constants
  */
 export const DEFAULT_VECTOR_DIMENSION = 384;
-export const DEFAULT_DISTANCE_METRIC = "cosine";
+export const DEFAULT_DISTANCE_METRIC: DistanceMetric = "cosine";
 export const DEFAULT_TENANT = "sys"; // seekdb Server default tenant
 export const DEFAULT_DATABASE = "test";
 /** Built-in database for admin operations (createDatabase, listDatabases, getDatabase, deleteDatabase). Used internally by embedded client. */

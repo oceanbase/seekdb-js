@@ -43,7 +43,7 @@ async function main() {
   // The embedding function will automatically convert documents to embeddings
 
   // Default embedding function is used if no embedding function is provided
-  const collection = await client.createCollection({
+  const collection = await client.getOrCreateCollection({
     name: COLLECTION_NAME,
   });
 
@@ -108,15 +108,11 @@ async function main() {
     console.log(`  Distance: ${results.distances?.[0]?.[i]?.toFixed(4)}`);
     console.log(`  Document: ${results.documents?.[0]?.[i]}`);
     console.log(`  Metadata: ${JSON.stringify(results.metadatas?.[0]?.[i])}`);
-    if (results.metadatas) {
-      console.log(`  Metadata: ${JSON.stringify(results.metadatas[0][i])}`);
-    }
   }
 
   // ==================== Step 6: Cleanup ====================
   await client.deleteCollection(COLLECTION_NAME);
   console.log(`\nCleaned up collection '${COLLECTION_NAME}'`);
-
   await client.close();
 }
 

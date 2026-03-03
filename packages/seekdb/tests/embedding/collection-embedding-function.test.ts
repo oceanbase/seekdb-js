@@ -16,6 +16,7 @@ import {
   supportsPersistence,
 } from "../../src/embedding-function.js";
 import type { EmbeddingFunction } from "../../src/types.js";
+import { Schema, VectorIndexConfig } from "../../src/schema.js";
 
 describe("Collection Embedding Function Tests", () => {
   let client: SeekdbClient;
@@ -63,6 +64,26 @@ describe("Collection Embedding Function Tests", () => {
 
       await client.deleteCollection(collectionName);
     }, 120000); // 2 minutes timeout for creating the collection
+
+    test("createCollection with schema.vectorIndex.embeddingFunction=null does not use default embedding function", async () => {
+      const collectionName = generateCollectionName("test_schema_ef_null");
+      const collection = await client.createCollection({
+        name: collectionName,
+        schema: new Schema({
+          vectorIndex: new VectorIndexConfig({
+            embeddingFunction: null,
+            hnsw: { dimension: 3, distance: "cosine" },
+          }),
+        }),
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.embeddingFunction).toBeUndefined();
+      expect(collection.embeddingFunction?.name).not.toBe("default-embed");
+      expect(collection.dimension).toBe(3);
+
+      await client.deleteCollection(collectionName);
+    });
 
     test("createCollection with embeddingFunction=null and explicit configuration", async () => {
       const collectionName = generateCollectionName("test_explicit_none");
@@ -286,6 +307,87 @@ describe("Collection Embedding Function Tests", () => {
     });
   });
 
+  describe("createCollection parameter priority (schema > configuration > embeddingFunction)", () => {
+    test("when schema.vectorIndex.hnsw and configuration and embeddingFunction all set, schema wins for dimension and distance", async () => {
+      const collectionName = generateCollectionName("test_priority_hnsw");
+      const collection = await client.createCollection({
+        name: collectionName,
+        schema: new Schema({
+          vectorIndex: new VectorIndexConfig({
+            hnsw: { dimension: 3, distance: "cosine" },
+          }),
+        }),
+        configuration: { dimension: 128, distance: "l2" },
+        embeddingFunction: Simple3DEmbeddingFunction(),
+      });
+
+      expect(collection.dimension).toBe(3);
+      expect(collection.distance).toBe("cosine");
+      await client.deleteCollection(collectionName);
+    });
+
+    test("when schema.vectorIndex.embeddingFunction is null, options.embeddingFunction is ignored", async () => {
+      const collectionName = generateCollectionName("test_priority_ef_null");
+      const collection = await client.createCollection({
+        name: collectionName,
+        schema: new Schema({
+          vectorIndex: new VectorIndexConfig({
+            embeddingFunction: null,
+            hnsw: { dimension: 3, distance: "cosine" },
+          }),
+        }),
+        embeddingFunction: Simple3DEmbeddingFunction(),
+      });
+
+      expect(collection.embeddingFunction).toBeUndefined();
+      expect(collection.dimension).toBe(3);
+      await client.deleteCollection(collectionName);
+    });
+
+    test("when schema.vectorIndex.embeddingFunction and options.embeddingFunction both set, schema EF wins", async () => {
+      const collectionName = generateCollectionName("test_priority_ef_schema");
+      const schemaEF = Simple3DEmbeddingFunction();
+      const optionsEF = Simple3DEmbeddingFunction();
+      const collection = await client.createCollection({
+        name: collectionName,
+        schema: new Schema({
+          vectorIndex: new VectorIndexConfig({
+            embeddingFunction: schemaEF,
+            hnsw: { dimension: 3, distance: "cosine" },
+          }),
+        }),
+        embeddingFunction: optionsEF,
+      });
+
+      expect(collection.embeddingFunction).toBe(schemaEF);
+      expect(collection.embeddingFunction).not.toBe(optionsEF);
+      expect(collection.dimension).toBe(3);
+      await client.deleteCollection(collectionName);
+    });
+
+    test("schema dimension 5 and embeddingFunction null overrides configuration and options.embeddingFunction", async () => {
+      const collectionName = generateCollectionName(
+        "test_priority_schema_dim_no_ef"
+      );
+      const collection = await client.createCollection({
+        name: collectionName,
+        schema: new Schema({
+          vectorIndex: new VectorIndexConfig({
+            embeddingFunction: null,
+            hnsw: { dimension: 5, distance: "l2" },
+          }),
+        }),
+        configuration: { dimension: 3, distance: "cosine" },
+        embeddingFunction: Simple3DEmbeddingFunction(),
+      });
+
+      expect(collection.dimension).toBe(5);
+      expect(collection.distance).toBe("l2");
+      expect(collection.embeddingFunction).toBeUndefined();
+      await client.deleteCollection(collectionName);
+    });
+  });
+
   describe("getOrCreateCollection tests", () => {
     test("getOrCreateCollection creating new collection", async () => {
       const collectionName = generateCollectionName("test_get_or_create_new");
@@ -360,6 +462,28 @@ describe("Collection Embedding Function Tests", () => {
       expect(collection.dimension).toBe(3);
 
       console.log(`   Collection dimension: ${collection.dimension}`);
+
+      await client.deleteCollection(collectionName);
+    });
+
+    test("getOrCreateCollection with schema.vectorIndex.embeddingFunction=null does not use default embedding function", async () => {
+      const collectionName = generateCollectionName(
+        "test_get_or_create_schema_ef_null"
+      );
+      const collection = await client.getOrCreateCollection({
+        name: collectionName,
+        schema: new Schema({
+          vectorIndex: new VectorIndexConfig({
+            embeddingFunction: null,
+            hnsw: { dimension: 3, distance: "cosine" },
+          }),
+        }),
+      });
+
+      expect(collection).toBeDefined();
+      expect(collection.embeddingFunction).toBeUndefined();
+      expect(collection.embeddingFunction?.name).not.toBe("default-embed");
+      expect(collection.dimension).toBe(3);
 
       await client.deleteCollection(collectionName);
     });

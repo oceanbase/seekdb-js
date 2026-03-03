@@ -84,4 +84,47 @@ describe("Bm25EmbeddingFunction", () => {
       ef.validateConfigUpdate?.({ token_max_length: 64, unknown: true })
     ).toThrow(SeekdbValueError);
   });
+
+  it("should return empty array for empty input", async () => {
+    const ef = new Bm25EmbeddingFunction();
+    const result = await ef.generate([]);
+    expect(result).toEqual([]);
+  });
+
+  it("should return empty sparse vector for empty string", async () => {
+    const ef = new Bm25EmbeddingFunction();
+    const result = await ef.generate([""]);
+    expect(result).toEqual([{}]);
+  });
+
+  it("should increase tf weight when token is repeated", async () => {
+    const ef = new Bm25EmbeddingFunction();
+    const [single] = await ef.generate(["machine"]);
+    const [repeated] = await ef.generate(["machine machine machine"]);
+    const singleWeight = Object.values(single)[0];
+    const repeatedWeight = Object.values(repeated)[0];
+    expect(repeatedWeight).toBeGreaterThan(singleWeight!);
+  });
+
+  it("should reject invalid config via static validateConfig", () => {
+    expect(() => Bm25EmbeddingFunction.validateConfig({ k: -1 })).toThrow(
+      SeekdbValueError
+    );
+    expect(() => Bm25EmbeddingFunction.validateConfig({ b: 2 })).toThrow(
+      SeekdbValueError
+    );
+    expect(() =>
+      Bm25EmbeddingFunction.validateConfig({ avg_doc_length: 0 })
+    ).toThrow(SeekdbValueError);
+    expect(() =>
+      Bm25EmbeddingFunction.validateConfig({ token_max_length: -1 })
+    ).toThrow(SeekdbValueError);
+  });
+
+  it("should allow valid optional config via static validateConfig", () => {
+    expect(() =>
+      Bm25EmbeddingFunction.validateConfig({ k: 1.5, b: 0.5 })
+    ).not.toThrow();
+    expect(() => Bm25EmbeddingFunction.validateConfig({})).not.toThrow();
+  });
 });

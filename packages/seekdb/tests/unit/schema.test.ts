@@ -97,7 +97,7 @@ describe("FullTextIndexConfig", () => {
   test("defaults to ik analyzer", () => {
     const cfg = new FullTextIndexConfig();
     expect(cfg.analyzer).toBe("ik");
-    expect(cfg.type).toBe("FullTextIndexConfig");
+    expect(cfg._type).toBe("FullTextIndexConfig");
   });
 
   test("accepts other analyzers", () => {
@@ -119,6 +119,43 @@ describe("FullTextIndexConfig", () => {
     expect(json.analyzer).toBe("ik");
     expect(json.properties).toEqual({});
   });
+
+  test("throws for invalid space analyzer property", () => {
+    expect(
+      () => new FullTextIndexConfig("space", { min_token_size: 0 } as any)
+    ).toThrow(SeekdbValueError);
+    expect(
+      () => new FullTextIndexConfig("space", { max_token_size: 9 } as any)
+    ).toThrow(SeekdbValueError);
+  });
+
+  test("throws for invalid ngram analyzer property", () => {
+    expect(
+      () => new FullTextIndexConfig("ngram", { ngram_token_size: 0 } as any)
+    ).toThrow(SeekdbValueError);
+    expect(
+      () => new FullTextIndexConfig("ngram", { ngram_token_size: 11 } as any)
+    ).toThrow(SeekdbValueError);
+  });
+
+  test("throws for invalid ik_mode", () => {
+    expect(
+      () => new FullTextIndexConfig("ik", { ik_mode: "invalid" } as any)
+    ).toThrow(SeekdbValueError);
+  });
+
+  test("passes for valid properties", () => {
+    expect(
+      () =>
+        new FullTextIndexConfig("space", {
+          min_token_size: 2,
+          max_token_size: 20,
+        } as any)
+    ).not.toThrow();
+    expect(
+      () => new FullTextIndexConfig("ik", { ik_mode: "smart" } as any)
+    ).not.toThrow();
+  });
 });
 
 // ==================== VectorIndexConfig ====================
@@ -128,7 +165,7 @@ describe("VectorIndexConfig", () => {
     const cfg = new VectorIndexConfig();
     expect(cfg.hnsw).toBeUndefined();
     expect(cfg.embeddingFunction).toBeUndefined();
-    expect(cfg.type).toBe("VectorIndexConfig");
+    expect(cfg._type).toBe("VectorIndexConfig");
   });
 
   test("stores hnsw dimension and distance", () => {
@@ -194,6 +231,74 @@ describe("VectorIndexConfig", () => {
     const json = cfg.toMetadataJson();
     expect(json.embeddingFunction).toBeUndefined();
   });
+
+  test("stores new hnsw fields: type, lib, m, ef_construction, ef_search, extra_info_max_size", () => {
+    const cfg = new VectorIndexConfig({
+      hnsw: {
+        type: "hnsw_sq",
+        lib: "vsag",
+        m: 32,
+        ef_construction: 400,
+        ef_search: 64,
+        extra_info_max_size: 512,
+      },
+    });
+    expect(cfg.hnsw?.type).toBe("hnsw_sq");
+    expect(cfg.hnsw?.lib).toBe("vsag");
+    expect(cfg.hnsw?.m).toBe(32);
+    expect(cfg.hnsw?.ef_construction).toBe(400);
+    expect(cfg.hnsw?.ef_search).toBe(64);
+    expect(cfg.hnsw?.extra_info_max_size).toBe(512);
+  });
+
+  test("throws for invalid hnsw type", () => {
+    expect(
+      () => new VectorIndexConfig({ hnsw: { type: "invalid" as any } })
+    ).toThrow(SeekdbValueError);
+  });
+
+  test("throws for out-of-range hnsw m", () => {
+    expect(() => new VectorIndexConfig({ hnsw: { m: 4 } })).toThrow(
+      SeekdbValueError
+    );
+    expect(() => new VectorIndexConfig({ hnsw: { m: 129 } })).toThrow(
+      SeekdbValueError
+    );
+  });
+
+  test("throws for out-of-range hnsw ef_construction", () => {
+    expect(
+      () => new VectorIndexConfig({ hnsw: { ef_construction: 4 } })
+    ).toThrow(SeekdbValueError);
+    expect(
+      () => new VectorIndexConfig({ hnsw: { ef_construction: 1001 } })
+    ).toThrow(SeekdbValueError);
+  });
+
+  test("throws when BQ-only field is set on non-hnsw_bq type", () => {
+    expect(
+      () => new VectorIndexConfig({ hnsw: { type: "hnsw", refine_k: 10 } })
+    ).toThrow(SeekdbValueError);
+    expect(
+      () =>
+        new VectorIndexConfig({ hnsw: { type: "hnsw_sq", bq_use_fht: true } })
+    ).toThrow(SeekdbValueError);
+  });
+
+  test("passes for valid hnsw_bq params", () => {
+    expect(
+      () =>
+        new VectorIndexConfig({
+          hnsw: {
+            type: "hnsw_bq",
+            refine_k: 10,
+            refine_type: "fp32",
+            bq_bits_query: 4,
+            bq_use_fht: true,
+          },
+        })
+    ).not.toThrow();
+  });
 });
 
 // ==================== SparseVectorIndexConfig ====================
@@ -214,7 +319,7 @@ describe("SparseVectorIndexConfig", () => {
   test("accepts K.DOCUMENT as sourceKey", () => {
     const cfg = new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT });
     expect(cfg.sourceKey).toBe(K.DOCUMENT);
-    expect(cfg.type).toBe("SparseVectorIndexConfig");
+    expect(cfg._type).toBe("SparseVectorIndexConfig");
   });
 
   test("accepts K.SPARSE_EMBEDDING is a valid Key", () => {
@@ -261,6 +366,109 @@ describe("SparseVectorIndexConfig", () => {
   test("allows no embeddingFunction (undefined)", () => {
     const cfg = new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT });
     expect(cfg.embeddingFunction).toBeUndefined();
+  });
+
+  test("stores optional tuning params", () => {
+    const cfg = new SparseVectorIndexConfig({
+      sourceKey: K.DOCUMENT,
+      prune: true,
+      refine: false,
+      drop_ratio_build: 0.1,
+      drop_ratio_search: 0.2,
+      refine_k: 5,
+    });
+    expect(cfg.prune).toBe(true);
+    expect(cfg.refine).toBe(false);
+    expect(cfg.drop_ratio_build).toBe(0.1);
+    expect(cfg.drop_ratio_search).toBe(0.2);
+    expect(cfg.refine_k).toBe(5);
+  });
+
+  test("toMetadataJson serializes all optional tuning params", () => {
+    const cfg = new SparseVectorIndexConfig({
+      sourceKey: K.DOCUMENT,
+      prune: true,
+      refine: false,
+      drop_ratio_build: 0.1,
+      drop_ratio_search: 0.2,
+      refine_k: 5,
+    });
+    const json = cfg.toMetadataJson();
+    expect(json.prune).toBe(true);
+    expect(json.refine).toBe(false);
+    expect(json.drop_ratio_build).toBe(0.1);
+    expect(json.drop_ratio_search).toBe(0.2);
+    expect(json.refine_k).toBe(5);
+  });
+
+  test("toMetadataJson omits undefined tuning params", () => {
+    const cfg = new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT });
+    const json = cfg.toMetadataJson();
+    expect(json.prune).toBeUndefined();
+    expect(json.refine).toBeUndefined();
+    expect(json.drop_ratio_build).toBeUndefined();
+    expect(json.drop_ratio_search).toBeUndefined();
+    expect(json.refine_k).toBeUndefined();
+  });
+
+  test("throws for out-of-range drop_ratio_build", () => {
+    expect(
+      () =>
+        new SparseVectorIndexConfig({
+          sourceKey: K.DOCUMENT,
+          drop_ratio_build: -0.1,
+        })
+    ).toThrow(SeekdbValueError);
+    expect(
+      () =>
+        new SparseVectorIndexConfig({
+          sourceKey: K.DOCUMENT,
+          drop_ratio_build: 1.0,
+        })
+    ).toThrow(SeekdbValueError);
+  });
+
+  test("throws for out-of-range drop_ratio_search", () => {
+    expect(
+      () =>
+        new SparseVectorIndexConfig({
+          sourceKey: K.DOCUMENT,
+          drop_ratio_search: -0.1,
+        })
+    ).toThrow(SeekdbValueError);
+    expect(
+      () =>
+        new SparseVectorIndexConfig({
+          sourceKey: K.DOCUMENT,
+          drop_ratio_search: 1.0,
+        })
+    ).toThrow(SeekdbValueError);
+  });
+
+  test("throws for out-of-range refine_k", () => {
+    expect(
+      () => new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT, refine_k: 0 })
+    ).toThrow(SeekdbValueError);
+    expect(
+      () =>
+        new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT, refine_k: 1001 })
+    ).toThrow(SeekdbValueError);
+  });
+
+  test("passes for boundary values of drop_ratio and refine_k", () => {
+    expect(
+      () =>
+        new SparseVectorIndexConfig({
+          sourceKey: K.DOCUMENT,
+          drop_ratio_build: 0,
+          drop_ratio_search: 0.9,
+          refine_k: 1,
+        })
+    ).not.toThrow();
+    expect(
+      () =>
+        new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT, refine_k: 1000 })
+    ).not.toThrow();
   });
 });
 

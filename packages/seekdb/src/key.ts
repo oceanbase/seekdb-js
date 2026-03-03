@@ -2,6 +2,8 @@
  * Key utilities
  */
 
+import { KeyFactory } from "./types.js";
+
 export class Key {
   public static readonly ID = new Key("#id");
   public static readonly DOCUMENT = new Key("#document");
@@ -10,15 +12,6 @@ export class Key {
   public static readonly SPARSE_EMBEDDING = new Key("#sparseEmbedding");
 
   constructor(public readonly name: string) {}
-}
-
-export interface KeyFactory {
-  (name: string): Key;
-  ID: Key;
-  DOCUMENT: Key;
-  EMBEDDING: Key;
-  METADATA: Key;
-  SPARSE_EMBEDDING: Key;
 }
 
 const createKeyFactory = (): KeyFactory => {

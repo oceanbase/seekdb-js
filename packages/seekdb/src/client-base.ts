@@ -26,7 +26,6 @@ import {
   getCollectionMetadata,
   deleteCollectionMetadata,
   listCollectionMetadata,
-  CollectionMetadata,
 } from "./metadata-manager.js";
 import type {
   CreateCollectionOptions,
@@ -34,6 +33,7 @@ import type {
   IInternalClient,
   DistanceMetric,
   Metadata,
+  CollectionMetadata,
 } from "./types.js";
 import { FullTextIndexConfig, Schema, VectorIndexConfig } from "./schema.js";
 
@@ -95,8 +95,14 @@ export abstract class BaseSeekdbClient {
     const { hnsw = {}, embeddingFunction: vectorEmbeddingFunction } =
       vectorIndex ?? {};
 
-    // Single source for EF: schema.vectorIndex first, then options.embeddingFunction; undefined → default
-    let ef = vectorEmbeddingFunction ?? embeddingFunction;
+    // Single source for EF: schema.vectorIndex first, then options.embeddingFunction; undefined → default.
+    let ef;
+    if (vectorEmbeddingFunction === null) {
+      ef = null;
+    } else {
+      ef = vectorEmbeddingFunction ?? embeddingFunction;
+    }
+
     if (ef === undefined) ef = await getEmbeddingFunction();
 
     let distance = hnsw.distance ?? DEFAULT_DISTANCE_METRIC;

@@ -7,11 +7,11 @@ import { SeekdbValueError } from "./errors.js";
 import {
   CollectionFieldNames,
   CollectionNames,
+  DEFAULT_DISTANCE_METRIC,
   isSparseVector,
 } from "./utils.js";
-import { FilterBuilder, SearchFilterCondition } from "./filters.js";
+import { FilterBuilder } from "./filters.js";
 import {
-  CollectionMetadata,
   deleteCollectionMetadata,
   getCollectionMetadata,
   insertCollectionMetadata,
@@ -37,6 +37,8 @@ import {
   type SparseVector,
   Key,
   IInternalClient,
+  CollectionMetadata,
+  SearchFilterCondition,
 } from "./types.js";
 import { SeekdbClient } from "./client.js";
 import { Schema } from "./schema.js";
@@ -62,7 +64,7 @@ export class Collection {
 
     const { vectorIndex, sparseVectorIndex } = this.schema ?? {};
     this.dimension = vectorIndex?.hnsw?.dimension ?? 0;
-    this.distance = vectorIndex?.hnsw?.distance ?? "l2";
+    this.distance = vectorIndex?.hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
     // Normalize null to undefined so "no embedding function" is consistently undefined
     this.embeddingFunction = vectorIndex?.embeddingFunction ?? undefined;
     this.sparseEmbeddingFunction =
@@ -783,7 +785,7 @@ export class Collection {
             );
           }
 
-          queryDistances.push(row.distance);
+          queryDistances.push(Number(row.distance));
         }
       }
 
