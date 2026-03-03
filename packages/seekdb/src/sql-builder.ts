@@ -56,7 +56,7 @@ export class SQLBuilder {
       ${CollectionFieldNames.METADATA} JSON,
       ${fulltextClause ? `FULLTEXT INDEX idx_fts (${CollectionFieldNames.DOCUMENT}) ${fulltextClause},` : ""}
       VECTOR INDEX idx_vec (${CollectionFieldNames.EMBEDDING}) WITH(distance=${vectorIndex?.hnsw?.distance}, type=hnsw, lib=vsag)
-      ${withSparseEmbedding ? `,VECTOR INDEX idx_sparse (${sparseVectorIndex?.sourceKey}) WITH(distance=inner_product, type=sindi, lib=vsag)` : ""}
+      ${withSparseEmbedding ? `,VECTOR INDEX idx_sparse (${CollectionFieldNames.SPARSE_EMBEDDING}) WITH(distance=inner_product, type=sindi, lib=vsag)` : ""}
     ) ORGANIZATION = HEAP${commentClause}`;
   }
 

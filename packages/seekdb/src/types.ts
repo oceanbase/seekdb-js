@@ -328,7 +328,9 @@ export interface EmbeddingFunction {
 export interface SparseEmbeddingFunction {
   readonly name: string;
   generate(texts: string[]): Promise<SparseVectors>;
+  generateForQueries?(texts: string[]): Promise<SparseVectors>;
   getConfig(): EmbeddingConfig;
+  validateConfigUpdate?(newConfig: Record<string, unknown>): void;
   dispose?(): Promise<void>;
 }
 
@@ -341,4 +343,5 @@ export interface EmbeddingFunctionConstructor {
 export interface SparseEmbeddingFunctionConstructor {
   new (config: EmbeddingConfig): SparseEmbeddingFunction;
   buildFromConfig(config: EmbeddingConfig): SparseEmbeddingFunction;
+  validateConfig?(config: EmbeddingConfig): void;
 }

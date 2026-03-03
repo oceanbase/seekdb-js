@@ -9,6 +9,68 @@ import {
   Simple3DEmbeddingFunction,
 } from "../../test-utils.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
+import {
+  Schema,
+  SparseVectorIndexConfig,
+  VectorIndexConfig,
+  FullTextIndexConfig,
+} from "../../../src/schema.js";
+import { K } from "../../../src/key.js";
+import { SeekdbValueError } from "../../../src/errors.js";
+import { registerSparseEmbeddingFunction } from "../../../src/embedding-function.js";
+import type {
+  EmbeddingConfig,
+  EmbeddingFunction,
+  SparseEmbeddingFunction,
+  SparseVector,
+} from "../../../src/types.js";
+
+// ---- sparse EF fixture for query tests ----
+const SPARSE_EF_NAME_QUERY = "test-sparse-query";
+const DENSE_DIM_QUERY = 3;
+
+class QueryTestSparseEF implements SparseEmbeddingFunction {
+  readonly name = SPARSE_EF_NAME_QUERY;
+  async generate(texts: string[]): Promise<SparseVector[]> {
+    return texts.map((t) => {
+      const v: SparseVector = {};
+      t.split(/\s+/).forEach((w) => {
+        const k = w.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+        v[k] = (v[k] ?? 0) + 1;
+      });
+      return v;
+    });
+  }
+  getConfig(): EmbeddingConfig {
+    return {};
+  }
+  static buildFromConfig(): QueryTestSparseEF {
+    return new QueryTestSparseEF();
+  }
+}
+
+class QueryTestDenseEF implements EmbeddingFunction {
+  readonly name = "test-dense-query";
+  readonly dimension = DENSE_DIM_QUERY;
+  async generate(texts: string[]): Promise<number[][]> {
+    return texts.map((t) => {
+      const h = t.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+      return [(h % 10) / 10, ((h >> 4) % 10) / 10, ((h >> 8) % 10) / 10];
+    });
+  }
+  getConfig(): EmbeddingConfig {
+    return { dimension: DENSE_DIM_QUERY };
+  }
+}
+
+try {
+  registerSparseEmbeddingFunction(
+    SPARSE_EF_NAME_QUERY,
+    QueryTestSparseEF as any
+  );
+} catch {
+  /* already registered */
+}
 
 const TEST_CONFIG = getEmbeddedTestConfig("collection-query.test.ts");
 
@@ -338,6 +400,128 @@ describe("Embedded Mode - Collection Query Operations", () => {
       expect(results.ids[0].length).toBeGreaterThan(0);
 
       await client.deleteCollection(collectionWithEF.name);
+    });
+  });
+
+  // ==================== Schema + Sparse - Query Operations ====================
+
+  describe("Schema + Sparse - query() with sparseEmbedding", () => {
+    let sparseCollection: Collection;
+    let sparseCollectionName: string;
+
+    const DOCS = [
+      "machine learning artificial intelligence",
+      "vector database similarity search",
+      "deep neural network training optimization",
+    ];
+
+    beforeAll(async () => {
+      sparseCollectionName = generateCollectionName("query_sparse");
+      sparseCollection = await client.createCollection({
+        name: sparseCollectionName,
+        schema: new Schema()
+          .createIndex(
+            new VectorIndexConfig({
+              hnsw: { dimension: DENSE_DIM_QUERY, distance: "l2" },
+              embeddingFunction: new QueryTestDenseEF(),
+            })
+          )
+          .createIndex(new FullTextIndexConfig())
+          .createIndex(
+            new SparseVectorIndexConfig({
+              sourceKey: K.DOCUMENT,
+              embeddingFunction: new QueryTestSparseEF(),
+            })
+          ),
+      });
+      await sparseCollection.add({
+        ids: ["sq1", "sq2", "sq3"],
+        documents: DOCS,
+        metadatas: [{ tag: "ml" }, { tag: "db" }, { tag: "dl" }],
+      });
+    });
+
+    afterAll(async () => {
+      try {
+        await client.deleteCollection(sparseCollectionName);
+      } catch {
+        /* ignore */
+      }
+    });
+
+    test("query() with queryKey K.SPARSE_EMBEDDING and queryTexts returns results", async () => {
+      const result = await sparseCollection.query({
+        queryTexts: ["machine learning"],
+        queryKey: K.SPARSE_EMBEDDING,
+        nResults: 3,
+        include: ["documents", "distances"],
+      });
+      expect(result.ids).toHaveLength(1);
+      expect(result.ids[0].length).toBeGreaterThan(0);
+      expect(result.distances).toBeDefined();
+    });
+
+    test("query() with queryKey 'sparseEmbedding' string returns results", async () => {
+      const result = await sparseCollection.query({
+        queryTexts: ["neural network"],
+        queryKey: "sparseEmbedding",
+        nResults: 2,
+      });
+      expect(result.ids).toHaveLength(1);
+    });
+
+    test("query() with direct SparseVector as queryEmbeddings", async () => {
+      const wordKey = "vector"
+        .split("")
+        .reduce((a, c) => a + c.charCodeAt(0), 0);
+      const result = await sparseCollection.query({
+        queryEmbeddings: { [wordKey]: 1.0 } as SparseVector,
+        nResults: 2,
+      });
+      expect(result.ids).toHaveLength(1);
+    });
+
+    test("query() with array of SparseVectors returns multiple result sets", async () => {
+      const k1 = "machine".split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+      const k2 = "neural".split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+      const result = await sparseCollection.query({
+        queryEmbeddings: [{ [k1]: 1.0 }, { [k2]: 1.0 }] as SparseVector[],
+        nResults: 2,
+      });
+      expect(result.ids).toHaveLength(2);
+    });
+
+    test("query() with K.SPARSE_EMBEDDING and metadata where filter", async () => {
+      const result = await sparseCollection.query({
+        queryTexts: ["learning"],
+        queryKey: K.SPARSE_EMBEDDING,
+        where: { tag: { $eq: "ml" } },
+        nResults: 3,
+      });
+      expect(result.ids).toHaveLength(1);
+    });
+
+    test("query() with K.SPARSE_EMBEDDING throws when no sparseEmbeddingFunction", async () => {
+      const noEfName = generateCollectionName("query_sparse_no_ef");
+      const noEfColl = await client.createCollection({
+        name: noEfName,
+        schema: new Schema()
+          .createIndex(
+            new VectorIndexConfig({
+              hnsw: { dimension: DENSE_DIM_QUERY, distance: "l2" },
+            })
+          )
+          .createIndex(new FullTextIndexConfig())
+          .createIndex(new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT })),
+      });
+      await expect(
+        noEfColl.query({
+          queryTexts: ["test"],
+          queryKey: K.SPARSE_EMBEDDING,
+          nResults: 1,
+        })
+      ).rejects.toThrow(SeekdbValueError);
+      await client.deleteCollection(noEfName);
     });
   });
 });

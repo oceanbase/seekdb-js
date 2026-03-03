@@ -84,6 +84,22 @@ importers:
         specifier: workspace:*
         version: link:../../seekdb
 
+  packages/embeddings/bm25:
+    dependencies:
+      '@types/snowball-stemmers':
+        specifier: ^0.6.2
+        version: 0.6.2
+      snowball-stemmers:
+        specifier: ^0.6.0
+        version: 0.6.0
+    devDependencies:
+      '@seekdb/common':
+        specifier: workspace:*
+        version: link:../common
+      seekdb:
+        specifier: workspace:*
+        version: link:../../seekdb
+
   packages/embeddings/cohere:
     dependencies:
       cohere-ai:
@@ -1394,6 +1410,9 @@ packages:
   '@types/request@2.48.13':
     resolution: {integrity: sha512-FGJ6udDNUCjd19pp0Q3iTiDkwhYup7J8hpMW9c4k53NrccQFFWKRho6hvtPPEhnXWKvukfwAlB6DbDz4yhH5Gg==}
 
+  '@types/snowball-stemmers@0.6.2':
+    resolution: {integrity: sha512-ihEXPKPKfIP/Ht8FN+UPqqg1kPNrV+Uo+eQtqB+K4sLmTBll3OM1bKj7OlsN4v12qk4O7D0MjczJG7NPAxgpyQ==}
+
   '@types/tough-cookie@4.0.5':
     resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
 
@@ -2691,6 +2710,9 @@ packages:
   smart-buffer@4.2.0:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
+
+  snowball-stemmers@0.6.0:
+    resolution: {integrity: sha512-47VTJvsZzEme3VxhbUFc9wR0CX8fYKNMgL7AiBdJcHUrwbmN7htFroeX+8ESIAaoNgwEgwI2wnv1HIcqQqAdcA==}
 
   socks-proxy-agent@8.0.5:
     resolution: {integrity: sha512-HehCEsotFqbPW9sJ8WVYB6UbmIMv7kUUORIF2Nncq4VQvBfNBLibW9YZR5dlYCSUhwcD628pRllm7n+E+YTzJw==}
@@ -4526,6 +4548,8 @@ snapshots:
       '@types/tough-cookie': 4.0.5
       form-data: 2.5.5
 
+  '@types/snowball-stemmers@0.6.2': {}
+
   '@types/tough-cookie@4.0.5': {}
 
   '@vitest/expect@2.1.9':
@@ -5920,6 +5944,8 @@ snapshots:
       is-fullwidth-code-point: 5.1.0
 
   smart-buffer@4.2.0: {}
+
+  snowball-stemmers@0.6.0: {}
 
   socks-proxy-agent@8.0.5:
     dependencies:

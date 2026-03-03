@@ -98,11 +98,10 @@ export class Collection {
     queryKey?: QueryKey
   ): "embedding" | "sparseEmbedding" | undefined {
     if (!queryKey) return undefined;
-    if (typeof queryKey === "string") return queryKey;
-    if (queryKey instanceof Key) {
-      if (queryKey.name === "#embedding") return "embedding";
-      if (queryKey.name === "sparseEmbedding") return "sparseEmbedding";
-    }
+    const name = typeof queryKey === "string" ? queryKey : queryKey.name;
+    if (name === Key.EMBEDDING.name || name === "embedding") return "embedding";
+    if (name === Key.SPARSE_EMBEDDING.name || name === "sparseEmbedding")
+      return "sparseEmbedding";
     return undefined;
   }
 

@@ -1,9 +1,5 @@
 /**
- * Key utilities (Chroma-style).
- *
- * Note:
- * - `K.SPARSE_EMBEDDING.name` is the logical key "sparseEmbedding".
- * - It maps to the SQL column name `sparse_embedding` in SeekDB.
+ * Key utilities
  */
 
 export class Key {
@@ -11,7 +7,7 @@ export class Key {
   public static readonly DOCUMENT = new Key("#document");
   public static readonly EMBEDDING = new Key("#embedding");
   public static readonly METADATA = new Key("#metadata");
-  public static readonly SPARSE_EMBEDDING = new Key("sparseEmbedding");
+  public static readonly SPARSE_EMBEDDING = new Key("#sparseEmbedding");
 
   constructor(public readonly name: string) {}
 }
