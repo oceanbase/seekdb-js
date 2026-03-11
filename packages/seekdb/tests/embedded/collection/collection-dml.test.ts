@@ -7,6 +7,65 @@ import { Collection } from "../../../src/collection.js";
 import { generateCollectionName } from "../../test-utils.js";
 import { SeekdbValueError } from "../../../src/errors.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
+import {
+  Schema,
+  SparseVectorIndexConfig,
+  VectorIndexConfig,
+  FullTextIndexConfig,
+} from "../../../src/schema.js";
+import { K } from "../../../src/key.js";
+import { registerSparseEmbeddingFunction } from "../../../src/embedding-function.js";
+import type {
+  EmbeddingConfig,
+  EmbeddingFunction,
+  SparseEmbeddingFunction,
+  SparseVector,
+} from "../../../src/types.js";
+
+// ---- sparse EF fixture for DML tests ----
+const SPARSE_EF_NAME_DML = "test-sparse-dml";
+const DENSE_DIM_DML = 3;
+
+class DmlTestSparseEF implements SparseEmbeddingFunction {
+  readonly name = SPARSE_EF_NAME_DML;
+  async generate(texts: string[]): Promise<SparseVector[]> {
+    const vectors = texts.map((t) => {
+      const v: SparseVector = {};
+      t.split(/\s+/).forEach((w) => {
+        const k = w.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+        v[k] = (v[k] ?? 0) + 1;
+      });
+      return v;
+    });
+    return vectors;
+  }
+  getConfig(): EmbeddingConfig {
+    return {};
+  }
+  static buildFromConfig(): DmlTestSparseEF {
+    return new DmlTestSparseEF();
+  }
+}
+
+class DmlTestDenseEF implements EmbeddingFunction {
+  readonly name = "test-dense-dml";
+  readonly dimension = DENSE_DIM_DML;
+  async generate(texts: string[]): Promise<number[][]> {
+    return texts.map((t) => {
+      const h = t.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+      return [(h % 10) / 10, ((h >> 4) % 10) / 10, ((h >> 8) % 10) / 10];
+    });
+  }
+  getConfig(): EmbeddingConfig {
+    return { dimension: DENSE_DIM_DML };
+  }
+}
+
+try {
+  registerSparseEmbeddingFunction(SPARSE_EF_NAME_DML, DmlTestSparseEF as any);
+} catch {
+  /* already registered */
+}
 
 const TEST_CONFIG = getEmbeddedTestConfig("collection-dml.test.ts");
 
@@ -461,6 +520,135 @@ describe("Embedded Mode - Collection DML Operations", () => {
       } catch {
         // Server mode throws for non-existent ID
       }
+    });
+  });
+
+  // ==================== Schema + Sparse DML ====================
+
+  describe("Schema + Sparse - DML Operations", () => {
+    let sparseCollection: Collection;
+    let sparseCollectionName: string;
+
+    function makeSparseSchemaForDml(sourceKey = K.DOCUMENT) {
+      return new Schema()
+        .createIndex(
+          new VectorIndexConfig({
+            hnsw: { dimension: DENSE_DIM_DML, distance: "l2" },
+            embeddingFunction: new DmlTestDenseEF(),
+          })
+        )
+        .createIndex(new FullTextIndexConfig())
+        .createIndex(
+          new SparseVectorIndexConfig({
+            sourceKey,
+            embeddingFunction: new DmlTestSparseEF(),
+          })
+        );
+    }
+
+    beforeAll(async () => {
+      sparseCollectionName = generateCollectionName("dml_sparse");
+      sparseCollection = await client.createCollection({
+        name: sparseCollectionName,
+        schema: makeSparseSchemaForDml(),
+      });
+    });
+
+    afterAll(async () => {
+      try {
+        await client.deleteCollection(sparseCollectionName);
+      } catch {
+        /* ignore */
+      }
+    });
+
+    test("add() with schema auto-generates sparse embedding from document", async () => {
+      await sparseCollection.add({
+        ids: ["s1", "s2"],
+        documents: ["machine learning pipeline", "vector search index"],
+        metadatas: [{ tag: "ml" }, { tag: "db" }],
+      });
+      const result = await sparseCollection.get({ ids: ["s1", "s2"] });
+      expect(result.ids).toHaveLength(2);
+    });
+
+    test("add() with schema and metadata sourceKey generates sparse embedding", async () => {
+      const metaKeyName = generateCollectionName("dml_sparse_meta");
+      const coll = await client.createCollection({
+        name: metaKeyName,
+        schema: makeSparseSchemaForDml(K("title")),
+      });
+      await coll.add({
+        ids: ["m1"],
+        documents: ["full content here"],
+        metadatas: [{ title: "neural network tutorial" }],
+      });
+      const result = await coll.get({ ids: ["m1"] });
+      expect(result.ids).toHaveLength(1);
+      await client.deleteCollection(metaKeyName);
+    });
+
+    test("add() with missing metadata field does not throw", async () => {
+      const name = generateCollectionName("dml_sparse_nometa");
+      const coll = await client.createCollection({
+        name,
+        schema: makeSparseSchemaForDml(K("title")),
+      });
+      await expect(
+        coll.add({
+          ids: ["no_title"],
+          documents: ["content without title"],
+          metadatas: [{ author: "unknown" }],
+        })
+      ).resolves.not.toThrow();
+      await client.deleteCollection(name);
+    });
+
+    test("update() with schema regenerates sparse embedding when document changes", async () => {
+      await sparseCollection.add({
+        ids: ["s_update"],
+        documents: ["original content before update"],
+      });
+      await sparseCollection.update({
+        ids: ["s_update"],
+        documents: ["updated content after change"],
+      });
+      const result = await sparseCollection.get({
+        ids: ["s_update"],
+        include: ["documents"],
+      });
+      expect(result.documents?.[0]).toContain("updated");
+    });
+
+    test("upsert() inserts new document with sparse embedding", async () => {
+      await sparseCollection.upsert({
+        ids: ["s_upsert_new"],
+        documents: ["fresh document for upsert test"],
+      });
+      const result = await sparseCollection.get({ ids: ["s_upsert_new"] });
+      expect(result.ids).toHaveLength(1);
+    });
+
+    test("upsert() updates existing document and regenerates sparse embedding", async () => {
+      await sparseCollection.upsert({
+        ids: ["s_upsert_new"],
+        documents: ["overwritten document for upsert test"],
+      });
+      const result = await sparseCollection.get({
+        ids: ["s_upsert_new"],
+        include: ["documents"],
+      });
+      expect(result.documents?.[0]).toContain("overwritten");
+    });
+
+    test("delete() removes doc from schema+sparse collection", async () => {
+      await sparseCollection.add({
+        ids: ["s_del"],
+        documents: ["to be deleted"],
+      });
+      await sparseCollection.delete({ ids: ["s_del"] });
+      const result = await sparseCollection.get({ ids: ["s_del"] });
+      expect(result.ids).toHaveLength(0);
     });
   });
 });

@@ -2,38 +2,9 @@
  * Metadata Manager - Manages the sdk_collections metadata table
  * This table stores collection metadata for v2 collections
  */
-
-import type { IInternalClient } from "./types.js";
-import type { EmbeddingConfig, CreateCollectionOptions } from "./types.js";
-
-export type CollectionVersion = "v2";
-export interface CollectionMetadata {
-  collectionId: string;
-  collectionName: string;
-  settings: {
-    configuration?: CreateCollectionOptions["configuration"];
-    version?: CollectionVersion;
-    embeddingFunction?: {
-      name: string;
-      properties: EmbeddingConfig;
-    };
-    [key: string]: any;
-  };
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import type { IInternalClient, CollectionMetadata } from "./types.js";
 
 export const METADATA_TABLE_NAME = "sdk_collections";
-
-/**
- * Get column value from row case-insensitively (embedded/MySQL may return COLLECTION_ID etc.)
- */
-function getColumn(row: Record<string, unknown>, columnName: string): unknown {
-  const key = Object.keys(row).find(
-    (k) => k.toLowerCase() === columnName.toLowerCase()
-  );
-  return key !== undefined ? row[key] : (row as any)[columnName];
-}
 
 /**
  * Ensure metadata table exists, create if not
@@ -82,7 +53,7 @@ export async function insertCollectionMetadata(
     const settingsJson = JSON.stringify({ ...settings, version: "v2" });
     await client.execute(insertSql, [collectionName, settingsJson]);
 
-    // Query the collection_id of the just-inserted record (retry for read-after-write visibility in embedded)
+    // Query the collection_id of the just-inserted record
     const selectSql = `
       SELECT collection_id
       FROM ${METADATA_TABLE_NAME}
@@ -90,49 +61,16 @@ export async function insertCollectionMetadata(
       ORDER BY created_at DESC
       LIMIT 1
     `;
-    const maxRetries = 3;
-    const retryDelayMs = 20;
-    let result: Record<string, unknown>[] | null = null;
-    for (let i = 0; i < maxRetries; i++) {
-      result = (await client.execute(selectSql, [collectionName])) as
-        | Record<string, unknown>[]
-        | null;
-      if (result && result.length > 0) break;
-      if (i < maxRetries - 1) {
-        await new Promise((r) => setTimeout(r, retryDelayMs));
-      }
-    }
 
-    // Fallback: SELECT last row by created_at (handles param binding or visibility issues)
+    const result = await client.execute(selectSql, [collectionName]);
+
     if (!result || result.length === 0) {
-      const fallbackSql = `
-        SELECT collection_id, collection_name
-        FROM ${METADATA_TABLE_NAME}
-        ORDER BY created_at DESC
-        LIMIT 1
-      `;
-      const fallback = (await client.execute(fallbackSql)) as
-        | Record<string, unknown>[]
-        | null;
-      if (fallback && fallback.length > 0) {
-        const row = fallback[0];
-        const name = getColumn(row, "collection_name");
-        if (String(name) === collectionName) {
-          const id = getColumn(row, "collection_id");
-          if (id != null && typeof id === "string") return id;
-        }
-      }
       throw new Error(
         "Failed to retrieve collection_id after inserting metadata"
       );
     }
 
-    const collectionId = getColumn(result[0], "collection_id");
-    if (collectionId == null || typeof collectionId !== "string") {
-      throw new Error(
-        "Failed to retrieve collection_id after inserting metadata"
-      );
-    }
+    const collectionId = result[0].collection_id as string;
     return collectionId;
   } catch (error) {
     if (error instanceof TypeError)

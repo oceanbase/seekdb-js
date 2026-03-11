@@ -6,6 +6,64 @@ import { SeekdbClient } from "../../../src/client.js";
 import { HNSWConfiguration } from "../../../src/types.js";
 import { generateCollectionName } from "../../test-utils.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
+import {
+  Schema,
+  SparseVectorIndexConfig,
+  VectorIndexConfig,
+  FullTextIndexConfig,
+} from "../../../src/schema.js";
+import { K } from "../../../src/key.js";
+import { registerSparseEmbeddingFunction } from "../../../src/embedding-function.js";
+import type {
+  EmbeddingConfig,
+  EmbeddingFunction,
+  SparseEmbeddingFunction,
+  SparseVector,
+} from "../../../src/types.js";
+
+// ---- sparse EF fixture for client-creation tests ----
+const SPARSE_EF_NAME = "test-sparse-client";
+const DENSE_DIM = 3;
+
+class ClientTestSparseEF implements SparseEmbeddingFunction {
+  readonly name = SPARSE_EF_NAME;
+  async generate(texts: string[]): Promise<SparseVector[]> {
+    return texts.map((t) => {
+      const v: SparseVector = {};
+      t.split(/\s+/).forEach((w) => {
+        const k = w.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+        v[k] = (v[k] ?? 0) + 1;
+      });
+      return v;
+    });
+  }
+  getConfig(): EmbeddingConfig {
+    return {};
+  }
+  static buildFromConfig(): ClientTestSparseEF {
+    return new ClientTestSparseEF();
+  }
+}
+
+class ClientTestDenseEF implements EmbeddingFunction {
+  readonly name = "test-dense-client";
+  readonly dimension = DENSE_DIM;
+  async generate(texts: string[]): Promise<number[][]> {
+    return texts.map((t) => {
+      const h = t.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+      return [(h % 10) / 10, ((h >> 4) % 10) / 10, ((h >> 8) % 10) / 10];
+    });
+  }
+  getConfig(): EmbeddingConfig {
+    return { dimension: DENSE_DIM };
+  }
+}
+
+try {
+  registerSparseEmbeddingFunction(SPARSE_EF_NAME, ClientTestSparseEF as any);
+} catch {
+  /* already registered */
+}
 
 const TEST_CONFIG = getEmbeddedTestConfig("client-creation.test.ts");
 
@@ -129,6 +187,39 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
       await client.deleteCollection(collectionName2);
     });
 
+    test("list_collections - without embedding function", async () => {
+      const testCollectionName1 = generateCollectionName("test_collection_1");
+      const testCollectionName2 = generateCollectionName("test_collection_2");
+
+      try {
+        await client.createCollection({
+          name: testCollectionName1,
+          configuration: { dimension: 384, distance: "cosine" },
+        });
+
+        await client.createCollection({
+          name: testCollectionName2,
+          configuration: { dimension: 384, distance: "cosine" },
+        });
+
+        const collections = await client.listCollections({
+          withEmbeddingFunction: false,
+        });
+        expect(Array.isArray(collections)).toBe(true);
+
+        const collectionNames = collections.map((c) => c.name);
+        expect(collectionNames).toContain(testCollectionName1);
+        expect(collectionNames).toContain(testCollectionName2);
+        expect(collections.every((c) => !c.embeddingFunction)).toBe(true);
+      } finally {
+        // Cleanup
+        try {
+          await client.deleteCollection(testCollectionName1);
+          await client.deleteCollection(testCollectionName2);
+        } catch (e) {}
+      }
+    });
+
     test("has_collection - check if collection exists", async () => {
       const collectionName = generateCollectionName("test_has");
       await client.createCollection({
@@ -174,6 +265,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
 
       expect(collection).toBeDefined();
       expect(collection.name).toBe(collectionName);
+      expect(collection.dimension).toBe(3);
 
       // Cleanup
       await client.deleteCollection(collectionName);
@@ -200,6 +292,79 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
 
       // Cleanup
       await client.deleteCollection(collectionName);
+    });
+
+    test("create_collection - create with schema (instead of configuration)", async () => {
+      const name = generateCollectionName("test_schema_create");
+      const schema = new Schema()
+        .createIndex(
+          new VectorIndexConfig({
+            hnsw: { dimension: DENSE_DIM, distance: "cosine" },
+            embeddingFunction: new ClientTestDenseEF(),
+          })
+        )
+        .createIndex(new FullTextIndexConfig())
+        .createIndex(
+          new SparseVectorIndexConfig({
+            sourceKey: K.DOCUMENT,
+            embeddingFunction: new ClientTestSparseEF(),
+          })
+        );
+
+      const collection = await client.createCollection({ name, schema });
+
+      expect(collection.name).toBe(name);
+      expect(collection.dimension).toBe(DENSE_DIM);
+      expect(collection.schema?.sparseVectorIndex).toBeDefined();
+      expect(collection.sparseEmbeddingFunction?.name).toBe(SPARSE_EF_NAME);
+
+      await client.deleteCollection(name);
+    });
+
+    test("get_collection - restores schema with sparseVectorIndex after createCollection", async () => {
+      const name = generateCollectionName("test_schema_get");
+      const schema = new Schema()
+        .createIndex(
+          new VectorIndexConfig({
+            hnsw: { dimension: DENSE_DIM, distance: "l2" },
+            embeddingFunction: new ClientTestDenseEF(),
+          })
+        )
+        .createIndex(new FullTextIndexConfig())
+        .createIndex(
+          new SparseVectorIndexConfig({
+            sourceKey: K.DOCUMENT,
+            embeddingFunction: new ClientTestSparseEF(),
+          })
+        );
+
+      await client.createCollection({ name, schema });
+      const retrieved = await client.getCollection({ name });
+
+      expect(retrieved.schema?.sparseVectorIndex).toBeDefined();
+      // sourceKey serializes as "#document" string after roundtrip
+      const sk = retrieved.schema?.sparseVectorIndex?.sourceKey;
+      expect(typeof sk === "string" ? sk : (sk as any)?.name).toBe("#document");
+      expect(retrieved.sparseEmbeddingFunction?.name).toBe(SPARSE_EF_NAME);
+
+      await client.deleteCollection(name);
+    });
+
+    test("get_or_create_collection - creates with schema when not exists", async () => {
+      const name = generateCollectionName("test_schema_get_or_create");
+      const schema = new Schema()
+        .createIndex(
+          new VectorIndexConfig({
+            hnsw: { dimension: DENSE_DIM, distance: "l2" },
+            embeddingFunction: new ClientTestDenseEF(),
+          })
+        )
+        .createIndex(new FullTextIndexConfig());
+
+      const collection = await client.getOrCreateCollection({ name, schema });
+      expect(collection.name).toBe(name);
+      expect(collection.schema?.fulltextIndex).toBeDefined();
+      await client.deleteCollection(name);
     });
 
     test("count_collection - count collections", async () => {

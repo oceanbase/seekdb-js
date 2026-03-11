@@ -8,6 +8,7 @@ import { EmbeddingFunction, HNSWConfiguration } from "../../src/types.js";
 import { TEST_CONFIG, generateCollectionName } from "../test-utils.js";
 import { SQLBuilder } from "../../src/sql-builder.js";
 import { registerEmbeddingFunction } from "../../src/embedding-function.js";
+import { FullTextIndexConfig, Schema } from "../../src/schema.js";
 
 describe("Client Creation and Collection Management", () => {
   let client: SeekdbClient;
@@ -625,14 +626,12 @@ describe("Client Creation and Collection Management", () => {
     });
 
     test("buildCreateTable - fulltext clause is included", () => {
-      const fulltextConfig = { analyzer: "space" as const };
+      const fulltextConfig = new FullTextIndexConfig("space");
       const sql = SQLBuilder.buildCreateTable(
         "test_coll",
-        3,
-        "cosine",
+        new Schema({ fulltextIndex: fulltextConfig }),
         undefined,
-        undefined,
-        fulltextConfig
+        undefined
       );
       expect(sql).toContain("FULLTEXT INDEX");
       expect(sql).toContain("WITH PARSER space");

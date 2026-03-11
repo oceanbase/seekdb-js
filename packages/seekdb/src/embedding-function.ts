@@ -1,20 +1,19 @@
-import { EmbeddingFunction, EmbeddingFunctionConstructor } from "./types.js";
+import {
+  EmbeddingFunction,
+  EmbeddingFunctionConstructor,
+  SparseEmbeddingFunction,
+  SparseEmbeddingFunctionConstructor,
+} from "./types.js";
 
-const REGISTRY_KEY = "seekdb:embeddingFunctionRegistry";
-const registry: Map<string, EmbeddingFunctionConstructor> =
-  (globalThis as any)[REGISTRY_KEY] ??
-  ((globalThis as any)[REGISTRY_KEY] = new Map());
+const DENSE_REGISTRY_KEY = "seekdb:embeddingFunctionRegistry";
+const denseRegistry: Map<string, EmbeddingFunctionConstructor> =
+  (globalThis as any)[DENSE_REGISTRY_KEY] ??
+  ((globalThis as any)[DENSE_REGISTRY_KEY] = new Map());
 
-/**
- * Check if an embedding function is already registered.
- *
- * @experimental This API is experimental and may change in future versions.
- * @param name - The name of the embedding function
- * @returns true if the embedding function is registered, false otherwise
- */
-export const isEmbeddingFunctionRegistered = (name: string): boolean => {
-  return registry.has(name);
-};
+const SPARSE_REGISTRY_KEY = "seekdb:sparseEmbeddingFunctionRegistry";
+const sparseRegistry: Map<string, SparseEmbeddingFunctionConstructor> =
+  (globalThis as any)[SPARSE_REGISTRY_KEY] ??
+  ((globalThis as any)[SPARSE_REGISTRY_KEY] = new Map());
 
 /**
  * Register a custom embedding function.
@@ -27,12 +26,29 @@ export const registerEmbeddingFunction = (
   name: string,
   fn: EmbeddingFunctionConstructor
 ) => {
-  if (registry.has(name)) {
+  if (denseRegistry.has(name)) {
     throw new Error(
       `Embedding function with name ${name} is already registered.`
     );
   }
-  registry.set(name, fn);
+  denseRegistry.set(name, fn);
+};
+
+/**
+ * Register a custom sparse embedding function.
+ *
+ * @experimental This API is experimental and may change in future versions.
+ */
+export const registerSparseEmbeddingFunction = (
+  name: string,
+  fn: SparseEmbeddingFunctionConstructor
+) => {
+  if (sparseRegistry.has(name)) {
+    throw new Error(
+      `Sparse embedding function with name ${name} is already registered.`
+    );
+  }
+  sparseRegistry.set(name, fn);
 };
 
 /**
@@ -73,6 +89,21 @@ export function supportsPersistence(
   }
 }
 
+export function supportsSparsePersistence(
+  ef: SparseEmbeddingFunction | null | undefined
+): ef is SparseEmbeddingFunction {
+  if (ef == null) return false;
+  if (typeof ef.getConfig !== "function") return false;
+  if (typeof (ef as any).constructor?.buildFromConfig !== "function")
+    return false;
+  try {
+    ef.getConfig();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Get an embedding function by name.
  *
@@ -88,7 +119,7 @@ export async function getEmbeddingFunction(
   const finalConfig = config || ({} as any);
 
   // If the model is not registered, try to register it automatically (for built-in models)
-  if (!registry.has(name)) {
+  if (!denseRegistry.has(name)) {
     try {
       await import(`@seekdb/${name}`);
     } catch (error: any) {
@@ -96,7 +127,7 @@ export async function getEmbeddingFunction(
     }
   }
   try {
-    if (!registry.has(name)) {
+    if (!denseRegistry.has(name)) {
       throw new Error(
         `Embedding function '${name}' is not registered. \n\n` +
           `--- For seekdb built-in embedding function ---\n` +
@@ -108,7 +139,7 @@ export async function getEmbeddingFunction(
           `You can see more details in the README.md of the package.\n\n`
       );
     }
-    const Ctor = registry.get(name)!;
+    const Ctor = denseRegistry.get(name)!;
 
     if (Ctor.buildFromConfig) {
       return Ctor.buildFromConfig(finalConfig);
@@ -120,4 +151,34 @@ export async function getEmbeddingFunction(
       `Failed to instantiate embedding function '${name}': ${error instanceof Error ? error.message : String(error)}`
     );
   }
+}
+
+/**
+ * Get a sparse embedding function by name.
+ *
+ * @experimental This API is experimental and may change in future versions.
+ */
+export async function getSparseEmbeddingFunction(
+  name: string,
+  config?: any
+): Promise<SparseEmbeddingFunction> {
+  const finalConfig = config || ({} as any);
+
+  if (!sparseRegistry.has(name)) {
+    try {
+      await import(`@seekdb/${name}`);
+    } catch (_err) {
+      throw new Error(`Sparse embedding function '${name}' is not registered.`);
+    }
+  }
+
+  if (!sparseRegistry.has(name)) {
+    throw new Error(`Sparse embedding function '${name}' is not registered.`);
+  }
+
+  const Ctor = sparseRegistry.get(name)!;
+  if (Ctor.buildFromConfig) {
+    return Ctor.buildFromConfig(finalConfig);
+  }
+  return new Ctor(finalConfig);
 }

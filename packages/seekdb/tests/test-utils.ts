@@ -4,11 +4,6 @@
  */
 
 import type { EmbeddingFunction, EmbeddingConfig } from "../src/types.js";
-import {
-  registerEmbeddingFunction,
-  isEmbeddingFunctionRegistered,
-} from "../src/embedding-function.js";
-
 /**
  * Get test configuration based on test mode
  */
@@ -153,17 +148,6 @@ export class TestDefaultEmbeddingFunction implements EmbeddingFunction {
 
   static buildFromConfig(): EmbeddingFunction {
     return new TestDefaultEmbeddingFunction();
-  }
-}
-
-/**
- * Register the test default embedding function
- * Call this function at the top of test files that need the default embedding function
- * This function is idempotent - it will skip registration if already registered
- */
-export function registerTestDefaultEmbeddingFunction(): void {
-  if (!isEmbeddingFunctionRegistered("default-embed")) {
-    registerEmbeddingFunction("default-embed", TestDefaultEmbeddingFunction);
   }
 }
 

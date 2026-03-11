@@ -4,6 +4,9 @@
 
 import type { RowDataPacket } from "mysql2/promise";
 import type { SeekdbClient } from "./client.js";
+import type { Key } from "./key.js";
+import type { Schema } from "./schema.js";
+export { Key, K } from "./key.js";
 
 // ==================== Basic Types ====================
 
@@ -21,12 +24,15 @@ export type Metadata = Record<string, MetadataValue>;
 
 export type EmbeddingDocuments = string | string[];
 export type Embeddings = number[][] | number[];
+export type SparseVector = Record<number, number>;
+export type SparseVectors = SparseVector[];
+
+export type ColumnKey = "embedding" | "sparseEmbedding";
+export type QueryKey = ColumnKey | Key;
+export type SourceKey = Key | string | null;
 
 // ==================== Where Filter Types ====================
 
-/**
- * Comparison operators for metadata filtering
- */
 export interface WhereOperator<T = MetadataValue> {
   $eq?: T;
   $ne?: T;
@@ -100,6 +106,11 @@ export interface IInternalClient {
   close(): Promise<void>;
 }
 
+export interface SQLResult {
+  sql: string;
+  params: unknown[];
+}
+
 export interface CollectionContext {
   name: string;
   collectionId?: string;
@@ -109,18 +120,84 @@ export interface CollectionContext {
 
 export interface CollectionConfig {
   name: string;
-  dimension: number;
-  distance: DistanceMetric;
+  schema?: Schema;
+  dimension?: number;
+  distance?: DistanceMetric;
   embeddingFunction?: EmbeddingFunction;
   metadata?: Metadata;
   collectionId?: string; // v2 format collection ID
-  client?: SeekdbClient;
+  client: SeekdbClient;
   internalClient: IInternalClient;
 }
+
+/**
+ * Result of building a filter
+ * Returns SQL WHERE clause and parameters for parameterized queries
+ */
+export interface FilterResult {
+  clause: string;
+  params: unknown[];
+}
+
+export interface SearchFilterCondition {
+  term?: Record<string, { value: any }>;
+  range?: Record<string, Record<string, any>>;
+  bool?: {
+    must?: SearchFilterCondition[];
+    should?: SearchFilterCondition[];
+    must_not?: SearchFilterCondition[];
+  };
+}
+
+export interface ConnectionConfig {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database?: string;
+  charset: string;
+  /** Optional OceanBase/seekdb query timeout in milliseconds (e.g. 60000 = 60s). */
+  queryTimeout?: number;
+}
+
+// ==================== Index Configuration ====================
 
 export interface HNSWConfiguration {
   dimension: number;
   distance?: DistanceMetric;
+}
+
+export interface HnswParams {
+  dimension?: number;
+  distance?: DistanceMetric;
+  type?: "hnsw" | "hnsw_sq" | "hnsw_bq";
+  lib?: "vsag";
+  m?: number;
+  ef_construction?: number;
+  ef_search?: number;
+  extra_info_max_size?: number;
+  refine_k?: number; // hnsw_bq only, ignored otherwise
+  refine_type?: "sq8" | "fp32"; // hnsw_bq only, ignored otherwise
+  bq_bits_query?: 0 | 4 | 32; // hnsw_bq only, ignored otherwise
+  bq_use_fht?: boolean; // hnsw_bq only, ignored otherwise
+}
+
+export interface VectorIndexConfigOptions {
+  hnsw?: HnswParams;
+  embeddingFunction?: EmbeddingFunction | null;
+}
+
+export interface SparseVectorIndexConfigOptions {
+  sourceKey: SourceKey;
+  distance?: "inner_product";
+  type?: "sindi";
+  lib?: "vsag";
+  embeddingFunction?: SparseEmbeddingFunction | null;
+  prune?: boolean;
+  refine?: boolean;
+  drop_ratio_build?: number;
+  drop_ratio_search?: number;
+  refine_k?: number;
 }
 
 export type FulltextAnalyzer = "space" | "ngram" | "ngram2" | "beng" | "ik";
@@ -148,16 +225,18 @@ export interface IkProperties {
   ik_mode?: "smart" | "max_word";
 }
 
-export type FulltextProperties =
-  | SpaceProperties
-  | NgramProperties
-  | Ngram2Properties
-  | BengProperties
-  | IkProperties;
-
-export interface FulltextAnalyzerConfig {
-  analyzer?: FulltextAnalyzer;
-  properties?: FulltextProperties;
+export interface FulltextAnalyzerPropertiesMap {
+  space: SpaceProperties;
+  ngram: NgramProperties;
+  ngram2: Ngram2Properties;
+  beng: BengProperties;
+  ik: IkProperties;
+}
+export interface FulltextAnalyzerConfig<
+  T extends FulltextAnalyzer = FulltextAnalyzer,
+> {
+  analyzer?: T;
+  properties?: FulltextAnalyzerPropertiesMap[T];
 }
 
 export interface Configuration {
@@ -196,12 +275,14 @@ export interface SeekdbAdminClientArgs {
 
 export interface CreateCollectionOptions {
   name: string;
+  schema?: Schema;
   configuration?: ConfigurationParam | null;
   embeddingFunction?: EmbeddingFunction | null;
 }
 
 export interface GetCollectionOptions {
   name: string;
+  // @deprecated
   embeddingFunction?: EmbeddingFunction | null;
 }
 
@@ -243,17 +324,18 @@ export interface GetOptions {
   include?: readonly ("documents" | "metadatas" | "embeddings")[];
 }
 
+export type DenseQueryEmbeddings = number[] | number[][];
+export type SparseQueryEmbeddings = SparseVector | SparseVector[];
+
 export interface QueryOptions {
-  queryEmbeddings?: number[] | number[][];
+  queryKey?: QueryKey;
+  queryEmbeddings?: DenseQueryEmbeddings | SparseQueryEmbeddings;
   queryTexts?: string | string[];
   nResults?: number;
   where?: Where;
   whereDocument?: WhereDocument;
   include?: readonly ("documents" | "metadatas" | "embeddings" | "distances")[];
   distance?: DistanceMetric;
-  /**
-   * Defaults to true.
-   */
   approximate?: boolean;
 }
 
@@ -307,8 +389,52 @@ export interface EmbeddingFunction {
   dimension?: number;
 }
 
+export interface SparseEmbeddingFunction {
+  readonly name: string;
+  generate(texts: string[]): Promise<SparseVectors>;
+  generateForQueries?(texts: string[]): Promise<SparseVectors>;
+  getConfig(): EmbeddingConfig;
+  validateConfigUpdate?(newConfig: Record<string, unknown>): void;
+  dispose?(): Promise<void>;
+}
+
 export interface EmbeddingFunctionConstructor {
   new (config: EmbeddingConfig): EmbeddingFunction;
   buildFromConfig(config: EmbeddingConfig): EmbeddingFunction;
   getModelDimensions?: () => Record<string, number>;
+}
+
+export interface SparseEmbeddingFunctionConstructor {
+  new (config: EmbeddingConfig): SparseEmbeddingFunction;
+  buildFromConfig(config: EmbeddingConfig): SparseEmbeddingFunction;
+  validateConfig?(config: EmbeddingConfig): void;
+}
+
+// ==================== Collection Metadata ====================
+
+export interface KeyFactory {
+  (name: string): Key;
+  ID: Key;
+  DOCUMENT: Key;
+  EMBEDDING: Key;
+  METADATA: Key;
+  SPARSE_EMBEDDING: Key;
+}
+
+export type CollectionVersion = "v2";
+export interface CollectionMetadata {
+  collectionId: string;
+  collectionName: string;
+  settings: {
+    configuration?: CreateCollectionOptions["configuration"];
+    version?: CollectionVersion;
+    embeddingFunction?: {
+      name: string;
+      properties: EmbeddingConfig;
+    };
+    schema?: Schema;
+    [key: string]: any;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
 }
