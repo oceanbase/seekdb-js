@@ -16,7 +16,7 @@ export {
   Schema,
   SparseVectorIndexConfig,
   VectorIndexConfig,
-  FullTextIndexConfig,
+  FulltextIndexConfig,
 } from "./schema.js";
 
 // Admin client factory (returns SeekdbClient for admin operations)

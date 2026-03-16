@@ -188,7 +188,7 @@ export interface VectorIndexConfigOptions {
 }
 
 export interface SparseVectorIndexConfigOptions {
-  sourceKey: SourceKey;
+  sourceKey?: SourceKey;
   distance?: "inner_product";
   type?: "sindi";
   lib?: "vsag";

@@ -56,6 +56,16 @@ describe("validateHnsw", () => {
     ).toThrow(SeekdbValueError);
   });
 
+  test("dimension: 0 throws, 1 and 4096 pass, 4097 throws", () => {
+    expect(() => validateHnsw({ dimension: 0 })).toThrow(SeekdbValueError);
+    expect(() => validateHnsw({ dimension: 0 })).toThrow(
+      /expected \[1, 4096\]/
+    );
+    expect(() => validateHnsw({ dimension: 1 })).not.toThrow();
+    expect(() => validateHnsw({ dimension: 4096 })).not.toThrow();
+    expect(() => validateHnsw({ dimension: 4097 })).toThrow(SeekdbValueError);
+  });
+
   test("throws for out-of-range m", () => {
     expect(() => validateHnsw({ m: 4 })).toThrow(SeekdbValueError);
     expect(() => validateHnsw({ m: 129 })).toThrow(SeekdbValueError);

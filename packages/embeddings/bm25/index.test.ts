@@ -15,6 +15,7 @@ describe("Bm25EmbeddingFunction", () => {
     expect(cfg.b).toBe(0.75);
     expect(cfg.avg_doc_length).toBe(256);
     expect(cfg.token_max_length).toBe(40);
+    expect(cfg.max_dimension).toBe(500_000);
   });
 
   it("should generate sparse vectors", async () => {
@@ -23,9 +24,22 @@ describe("Bm25EmbeddingFunction", () => {
     expect(vectors).toHaveLength(1);
     const vector = vectors[0];
     expect(Object.keys(vector).length).toBeGreaterThan(0);
-    for (const value of Object.values(vector)) {
+    for (const [dim, value] of Object.entries(vector)) {
+      expect(Number(dim)).toBeLessThan(500_000);
       expect(Number.isFinite(value)).toBe(true);
       expect(value).toBeGreaterThan(0);
+    }
+  });
+
+  it("should cap sparse dimension indices to maxDimension", async () => {
+    const ef = new Bm25EmbeddingFunction({ maxDimension: 1000 });
+    const [vector] = await ef.generate([
+      "machine learning neural network database",
+    ]);
+    expect(Object.keys(vector).length).toBeGreaterThan(0);
+    for (const dim of Object.keys(vector)) {
+      expect(Number(dim)).toBeLessThan(1000);
+      expect(Number(dim)).toBeGreaterThanOrEqual(0);
     }
   });
 
@@ -51,6 +65,7 @@ describe("Bm25EmbeddingFunction", () => {
       b: 0.4,
       avgDocLength: 300,
       tokenMaxLength: 32,
+      maxDimension: 100_000,
       stopwords: ["foo", "bar"],
     });
     const cfg = ef1.getConfig();
@@ -76,6 +91,12 @@ describe("Bm25EmbeddingFunction", () => {
     expect(() => new Bm25EmbeddingFunction({ tokenMaxLength: 0 })).toThrow(
       SeekdbValueError
     );
+    expect(() => new Bm25EmbeddingFunction({ maxDimension: 0 })).toThrow(
+      SeekdbValueError
+    );
+    expect(() => new Bm25EmbeddingFunction({ maxDimension: -1 })).toThrow(
+      SeekdbValueError
+    );
   });
 
   it("should reject unsupported config update keys", () => {
@@ -83,6 +104,13 @@ describe("Bm25EmbeddingFunction", () => {
     expect(() =>
       ef.validateConfigUpdate?.({ token_max_length: 64, unknown: true })
     ).toThrow(SeekdbValueError);
+  });
+
+  it("should accept max_dimension in validateConfigUpdate", () => {
+    const ef = new Bm25EmbeddingFunction();
+    expect(() =>
+      ef.validateConfigUpdate?.({ max_dimension: 100_000 })
+    ).not.toThrow();
   });
 
   it("should return empty array for empty input", async () => {
@@ -119,6 +147,12 @@ describe("Bm25EmbeddingFunction", () => {
     expect(() =>
       Bm25EmbeddingFunction.validateConfig({ token_max_length: -1 })
     ).toThrow(SeekdbValueError);
+    expect(() =>
+      Bm25EmbeddingFunction.validateConfig({ max_dimension: 0 })
+    ).toThrow(SeekdbValueError);
+    expect(() =>
+      Bm25EmbeddingFunction.validateConfig({ max_dimension: -1 })
+    ).toThrow(SeekdbValueError);
   });
 
   it("should allow valid optional config via static validateConfig", () => {
@@ -126,5 +160,8 @@ describe("Bm25EmbeddingFunction", () => {
       Bm25EmbeddingFunction.validateConfig({ k: 1.5, b: 0.5 })
     ).not.toThrow();
     expect(() => Bm25EmbeddingFunction.validateConfig({})).not.toThrow();
+    expect(() =>
+      Bm25EmbeddingFunction.validateConfig({ max_dimension: 100_000 })
+    ).not.toThrow();
   });
 });

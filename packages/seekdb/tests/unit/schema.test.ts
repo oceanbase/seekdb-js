@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { K, Key } from "../../src/key.js";
 import {
-  FullTextIndexConfig,
+  FulltextIndexConfig,
   Schema,
   SparseVectorIndexConfig,
   VectorIndexConfig,
@@ -91,69 +91,69 @@ describe("Key", () => {
   });
 });
 
-// ==================== FullTextIndexConfig ====================
+// ==================== FulltextIndexConfig ====================
 
-describe("FullTextIndexConfig", () => {
+describe("FulltextIndexConfig", () => {
   test("defaults to ik analyzer", () => {
-    const cfg = new FullTextIndexConfig();
+    const cfg = new FulltextIndexConfig();
     expect(cfg.analyzer).toBe("ik");
-    expect(cfg._type).toBe("FullTextIndexConfig");
+    expect(cfg._type).toBe("FulltextIndexConfig");
   });
 
   test("accepts other analyzers", () => {
-    expect(new FullTextIndexConfig("ngram").analyzer).toBe("ngram");
-    expect(new FullTextIndexConfig("space").analyzer).toBe("space");
-    expect(new FullTextIndexConfig("beng").analyzer).toBe("beng");
-    expect(new FullTextIndexConfig("ngram2").analyzer).toBe("ngram2");
+    expect(new FulltextIndexConfig("ngram").analyzer).toBe("ngram");
+    expect(new FulltextIndexConfig("space").analyzer).toBe("space");
+    expect(new FulltextIndexConfig("beng").analyzer).toBe("beng");
+    expect(new FulltextIndexConfig("ngram2").analyzer).toBe("ngram2");
   });
 
   test("toMetadataJson returns analyzer and properties", () => {
-    const cfg = new FullTextIndexConfig("space", { min_token_size: 2 });
+    const cfg = new FulltextIndexConfig("space", { min_token_size: 2 });
     const json = cfg.toMetadataJson();
     expect(json.analyzer).toBe("space");
     expect(json.properties).toEqual({ min_token_size: 2 });
   });
 
   test("toMetadataJson returns empty properties when not provided", () => {
-    const json = new FullTextIndexConfig("ik").toMetadataJson();
+    const json = new FulltextIndexConfig("ik").toMetadataJson();
     expect(json.analyzer).toBe("ik");
     expect(json.properties).toEqual({});
   });
 
   test("throws for invalid space analyzer property", () => {
     expect(
-      () => new FullTextIndexConfig("space", { min_token_size: 0 } as any)
+      () => new FulltextIndexConfig("space", { min_token_size: 0 } as any)
     ).toThrow(SeekdbValueError);
     expect(
-      () => new FullTextIndexConfig("space", { max_token_size: 9 } as any)
+      () => new FulltextIndexConfig("space", { max_token_size: 9 } as any)
     ).toThrow(SeekdbValueError);
   });
 
   test("throws for invalid ngram analyzer property", () => {
     expect(
-      () => new FullTextIndexConfig("ngram", { ngram_token_size: 0 } as any)
+      () => new FulltextIndexConfig("ngram", { ngram_token_size: 0 } as any)
     ).toThrow(SeekdbValueError);
     expect(
-      () => new FullTextIndexConfig("ngram", { ngram_token_size: 11 } as any)
+      () => new FulltextIndexConfig("ngram", { ngram_token_size: 11 } as any)
     ).toThrow(SeekdbValueError);
   });
 
   test("throws for invalid ik_mode", () => {
     expect(
-      () => new FullTextIndexConfig("ik", { ik_mode: "invalid" } as any)
+      () => new FulltextIndexConfig("ik", { ik_mode: "invalid" } as any)
     ).toThrow(SeekdbValueError);
   });
 
   test("passes for valid properties", () => {
     expect(
       () =>
-        new FullTextIndexConfig("space", {
+        new FulltextIndexConfig("space", {
           min_token_size: 2,
           max_token_size: 20,
         } as any)
     ).not.toThrow();
     expect(
-      () => new FullTextIndexConfig("ik", { ik_mode: "smart" } as any)
+      () => new FulltextIndexConfig("ik", { ik_mode: "smart" } as any)
     ).not.toThrow();
   });
 });
@@ -304,16 +304,13 @@ describe("VectorIndexConfig", () => {
 // ==================== SparseVectorIndexConfig ====================
 
 describe("SparseVectorIndexConfig", () => {
-  test("throws when sourceKey is null", () => {
-    expect(
-      () => new SparseVectorIndexConfig({ sourceKey: null as any })
-    ).toThrow(SeekdbValueError);
-  });
-
-  test("throws when sourceKey is empty string", () => {
-    expect(() => new SparseVectorIndexConfig({ sourceKey: "" as any })).toThrow(
-      SeekdbValueError
-    );
+  test("when sourceKey is null, undefined, or empty string, defaults to K.DOCUMENT", () => {
+    const cfgNull = new SparseVectorIndexConfig({ sourceKey: null as any });
+    expect(cfgNull.sourceKey).toBe(K.DOCUMENT);
+    const cfgUndef = new SparseVectorIndexConfig({});
+    expect(cfgUndef.sourceKey).toBe(K.DOCUMENT);
+    const cfgEmpty = new SparseVectorIndexConfig({ sourceKey: "" as any });
+    expect(cfgEmpty.sourceKey).toBe(K.DOCUMENT);
   });
 
   test("accepts K.DOCUMENT as sourceKey", () => {
@@ -484,14 +481,14 @@ describe("Schema", () => {
 
   test("Schema.default() has fulltextIndex and vectorIndex only", () => {
     const schema = Schema.default();
-    expect(schema.fulltextIndex).toBeInstanceOf(FullTextIndexConfig);
+    expect(schema.fulltextIndex).toBeInstanceOf(FulltextIndexConfig);
     expect(schema.vectorIndex).toBeInstanceOf(VectorIndexConfig);
     expect(schema.sparseVectorIndex).toBeUndefined();
   });
 
   test("constructor with config sets provided indexes", () => {
     const schema = new Schema({
-      fulltextIndex: new FullTextIndexConfig("ngram"),
+      fulltextIndex: new FulltextIndexConfig("ngram"),
       sparseVectorIndex: new SparseVectorIndexConfig({ sourceKey: "title" }),
     });
     expect(schema.fulltextIndex?.analyzer).toBe("ngram");
@@ -501,13 +498,13 @@ describe("Schema", () => {
 
   test("createIndex returns this (chainable)", () => {
     const schema = new Schema();
-    const ret = schema.createIndex(new FullTextIndexConfig());
+    const ret = schema.createIndex(new FulltextIndexConfig());
     expect(ret).toBe(schema);
   });
 
   test("createIndex sets each index type to correct field", () => {
     const schema = new Schema()
-      .createIndex(new FullTextIndexConfig("space"))
+      .createIndex(new FulltextIndexConfig("space"))
       .createIndex(new VectorIndexConfig({ hnsw: { dimension: 3 } }))
       .createIndex(new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT }));
     expect(schema.fulltextIndex?.analyzer).toBe("space");
@@ -517,8 +514,8 @@ describe("Schema", () => {
 
   test("createIndex overwrites same index type", () => {
     const schema = new Schema()
-      .createIndex(new FullTextIndexConfig("ngram"))
-      .createIndex(new FullTextIndexConfig("ik"));
+      .createIndex(new FulltextIndexConfig("ngram"))
+      .createIndex(new FulltextIndexConfig("ik"));
     expect(schema.fulltextIndex?.analyzer).toBe("ik");
   });
 
@@ -531,7 +528,7 @@ describe("Schema", () => {
 
   test("toMetadataJson includes only defined indexes", () => {
     const schema = new Schema()
-      .createIndex(new FullTextIndexConfig())
+      .createIndex(new FulltextIndexConfig())
       .createIndex(new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT }));
     const json = schema.toMetadataJson();
     expect(json.fulltextIndex).toBeDefined();
@@ -541,7 +538,7 @@ describe("Schema", () => {
 
   test("toMetadataJson returns all three when all indexes are set", () => {
     const schema = new Schema()
-      .createIndex(new FullTextIndexConfig())
+      .createIndex(new FulltextIndexConfig())
       .createIndex(new VectorIndexConfig({ hnsw: { dimension: 3 } }))
       .createIndex(new SparseVectorIndexConfig({ sourceKey: "title" }));
     const json = schema.toMetadataJson();
@@ -554,13 +551,13 @@ describe("Schema", () => {
 
   test("Schema.fromLegacy(null) returns default schema + embeddingFunction", () => {
     const schema = Schema.fromLegacy(null);
-    expect(schema.fulltextIndex).toBeInstanceOf(FullTextIndexConfig);
+    expect(schema.fulltextIndex).toBeInstanceOf(FulltextIndexConfig);
     expect(schema.vectorIndex).toBeInstanceOf(VectorIndexConfig);
   });
 
   test("Schema.fromLegacy(undefined) behaves like null", () => {
     const schema = Schema.fromLegacy(undefined);
-    expect(schema.fulltextIndex).toBeInstanceOf(FullTextIndexConfig);
+    expect(schema.fulltextIndex).toBeInstanceOf(FulltextIndexConfig);
     expect(schema.vectorIndex).toBeInstanceOf(VectorIndexConfig);
   });
 
@@ -568,7 +565,7 @@ describe("Schema", () => {
     const schema = Schema.fromLegacy({ dimension: 128, distance: "cosine" });
     expect(schema.vectorIndex?.hnsw?.dimension).toBe(128);
     expect(schema.vectorIndex?.hnsw?.distance).toBe("cosine");
-    expect(schema.fulltextIndex).toBeInstanceOf(FullTextIndexConfig);
+    expect(schema.fulltextIndex).toBeInstanceOf(FulltextIndexConfig);
   });
 
   test("Schema.fromLegacy with Configuration (hnsw + fulltextConfig)", () => {
@@ -596,7 +593,7 @@ describe("Schema", () => {
   });
 
   test("Schema.fromJSON roundtrip: fulltextIndex analyzer is preserved", async () => {
-    const original = new Schema().createIndex(new FullTextIndexConfig("space"));
+    const original = new Schema().createIndex(new FulltextIndexConfig("space"));
     const restored = await Schema.fromJSON(original.toMetadataJson());
     expect(restored?.fulltextIndex?.analyzer).toBe("space");
   });

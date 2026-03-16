@@ -12,7 +12,7 @@ import {
   Schema,
   SparseVectorIndexConfig,
   VectorIndexConfig,
-  FullTextIndexConfig,
+  FulltextIndexConfig,
 } from "../../../src/schema.js";
 import { K } from "../../../src/key.js";
 import { SeekdbValueError } from "../../../src/errors.js";
@@ -164,7 +164,7 @@ function makeSparseSchema(sourceKey: SourceKey = K.DOCUMENT) {
         embeddingFunction: makeDenseEF(),
       })
     )
-    .createIndex(new FullTextIndexConfig())
+    .createIndex(new FulltextIndexConfig())
     .createIndex(
       new SparseVectorIndexConfig({
         sourceKey,
@@ -219,7 +219,7 @@ describe("Embedded - Sparse Vector Index", () => {
             embeddingFunction: new ClientTestDenseEF(),
           })
         )
-        .createIndex(new FullTextIndexConfig())
+        .createIndex(new FulltextIndexConfig())
         .createIndex(new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT }));
       const collection = await client.createCollection({ name, schema });
       expect(collection.schema?.sparseVectorIndex).toBeDefined();
@@ -417,7 +417,7 @@ describe("Embedded - Sparse Vector Index", () => {
             hnsw: { distance: "l2" },
           })
         )
-        .createIndex(new FullTextIndexConfig())
+        .createIndex(new FulltextIndexConfig())
         .createIndex(new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT }));
 
       const noEfCollection = await client.createCollection({

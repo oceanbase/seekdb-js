@@ -38,6 +38,9 @@ importers:
 
   examples:
     dependencies:
+      '@seekdb/bm25':
+        specifier: workspace:*
+        version: link:../packages/embeddings/bm25
       '@seekdb/default-embed':
         specifier: workspace:*
         version: link:../packages/embeddings/default-embed

@@ -10,7 +10,7 @@ import {
   Schema,
   SparseVectorIndexConfig,
   VectorIndexConfig,
-  FullTextIndexConfig,
+  FulltextIndexConfig,
 } from "../../../src/schema.js";
 import { K } from "../../../src/key.js";
 import { registerSparseEmbeddingFunction } from "../../../src/embedding-function.js";
@@ -303,7 +303,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
             embeddingFunction: new ClientTestDenseEF(),
           })
         )
-        .createIndex(new FullTextIndexConfig())
+        .createIndex(new FulltextIndexConfig())
         .createIndex(
           new SparseVectorIndexConfig({
             sourceKey: K.DOCUMENT,
@@ -330,7 +330,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
             embeddingFunction: new ClientTestDenseEF(),
           })
         )
-        .createIndex(new FullTextIndexConfig())
+        .createIndex(new FulltextIndexConfig())
         .createIndex(
           new SparseVectorIndexConfig({
             sourceKey: K.DOCUMENT,
@@ -359,7 +359,7 @@ describe("Embedded Mode - Client Creation and Collection Management", () => {
             embeddingFunction: new ClientTestDenseEF(),
           })
         )
-        .createIndex(new FullTextIndexConfig());
+        .createIndex(new FulltextIndexConfig());
 
       const collection = await client.getOrCreateCollection({ name, schema });
       expect(collection.name).toBe(name);

@@ -13,6 +13,7 @@ const DEFAULT_K = 1.2;
 const DEFAULT_B = 0.75;
 const DEFAULT_AVG_DOC_LENGTH = 256.0;
 const DEFAULT_TOKEN_MAX_LENGTH = 40;
+const DEFAULT_MAX_DIMENSION = 500_000;
 
 const DEFAULT_STOPWORDS = [
   "a",
@@ -53,6 +54,8 @@ export interface Bm25EmbeddingArgs extends EmbeddingConfig {
   b?: number;
   avgDocLength?: number;
   tokenMaxLength?: number;
+  /** Max sparse dimension index. Default 500000. */
+  maxDimension?: number;
   stopwords?: string[];
 }
 
@@ -61,6 +64,7 @@ export interface Bm25EmbeddingConfig extends EmbeddingConfig {
   b?: number;
   avg_doc_length?: number;
   token_max_length?: number;
+  max_dimension?: number;
   stopwords?: string[];
 }
 
@@ -172,6 +176,7 @@ export class Bm25EmbeddingFunction implements SparseEmbeddingFunction {
   private readonly b: number;
   private readonly avgDocLength: number;
   private readonly tokenMaxLength: number;
+  private readonly maxDimension: number;
   private readonly customStopwords?: string[];
 
   constructor(args: Bm25EmbeddingArgs = {}) {
@@ -180,6 +185,7 @@ export class Bm25EmbeddingFunction implements SparseEmbeddingFunction {
       b = DEFAULT_B,
       avgDocLength = DEFAULT_AVG_DOC_LENGTH,
       tokenMaxLength = DEFAULT_TOKEN_MAX_LENGTH,
+      maxDimension = DEFAULT_MAX_DIMENSION,
       stopwords,
     } = args;
 
@@ -197,11 +203,15 @@ export class Bm25EmbeddingFunction implements SparseEmbeddingFunction {
     if (!Number.isInteger(tokenMaxLength) || tokenMaxLength <= 0) {
       throw new SeekdbValueError("tokenMaxLength must be a positive integer");
     }
+    if (!Number.isInteger(maxDimension) || maxDimension <= 0) {
+      throw new SeekdbValueError("maxDimension must be a positive integer");
+    }
 
     this.k = k;
     this.b = b;
     this.avgDocLength = avgDocLength;
     this.tokenMaxLength = tokenMaxLength;
+    this.maxDimension = maxDimension;
     this.customStopwords = stopwords ? [...stopwords] : undefined;
 
     const stopwordList = this.customStopwords ?? [...DEFAULT_STOPWORDS];
@@ -222,7 +232,7 @@ export class Bm25EmbeddingFunction implements SparseEmbeddingFunction {
     const docLen = tokenList.length;
     const counts = new Map<number, number>();
     for (const token of tokenList) {
-      const tokenId = this.hasher.hash(token);
+      const tokenId = this.hasher.hash(token) % this.maxDimension;
       counts.set(tokenId, (counts.get(tokenId) ?? 0) + 1);
     }
 
@@ -257,6 +267,7 @@ export class Bm25EmbeddingFunction implements SparseEmbeddingFunction {
       b: this.b,
       avg_doc_length: this.avgDocLength,
       token_max_length: this.tokenMaxLength,
+      max_dimension: this.maxDimension,
     };
 
     if (this.customStopwords) {
@@ -272,6 +283,7 @@ export class Bm25EmbeddingFunction implements SparseEmbeddingFunction {
       "b",
       "avg_doc_length",
       "token_max_length",
+      "max_dimension",
       "stopwords",
     ]);
     for (const key of Object.keys(newConfig)) {
@@ -311,6 +323,12 @@ export class Bm25EmbeddingFunction implements SparseEmbeddingFunction {
     ) {
       throw new SeekdbValueError("token_max_length must be a positive integer");
     }
+    if (
+      config.max_dimension !== undefined &&
+      (!Number.isInteger(config.max_dimension) || config.max_dimension <= 0)
+    ) {
+      throw new SeekdbValueError("max_dimension must be a positive integer");
+    }
   }
 
   public static buildFromConfig(
@@ -322,6 +340,7 @@ export class Bm25EmbeddingFunction implements SparseEmbeddingFunction {
       b: config.b,
       avgDocLength: config.avg_doc_length,
       tokenMaxLength: config.token_max_length,
+      maxDimension: config.max_dimension,
       stopwords: config.stopwords,
     });
   }

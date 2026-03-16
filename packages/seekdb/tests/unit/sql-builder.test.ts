@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { SQLBuilder } from "../../src/sql-builder.js";
 import {
-  FullTextIndexConfig,
+  FulltextIndexConfig,
   Schema,
   SparseVectorIndexConfig,
   VectorIndexConfig,
@@ -164,7 +164,7 @@ describe("SQLBuilder.buildCreateTable", () => {
   test("includes fulltext index clause when fulltextIndex is set", () => {
     const schema = new Schema()
       .createIndex(new VectorIndexConfig())
-      .createIndex(new FullTextIndexConfig("ik"));
+      .createIndex(new FulltextIndexConfig("ik"));
     const sql = SQLBuilder.buildCreateTable("t", schema);
     expect(sql).toContain("FULLTEXT INDEX idx_fts");
     expect(sql).toContain("WITH PARSER ik");

@@ -35,7 +35,7 @@ import type {
   Metadata,
   CollectionMetadata,
 } from "./types.js";
-import { FullTextIndexConfig, Schema, VectorIndexConfig } from "./schema.js";
+import { FulltextIndexConfig, Schema, VectorIndexConfig } from "./schema.js";
 
 /**
  * Base class for seekdb clients
@@ -84,7 +84,7 @@ export abstract class BaseSeekdbClient {
     else {
       // When user provides partial schema, fill missing indexes with defaults.
       schemaResolved.createIndex(
-        schema.fulltextIndex ?? new FullTextIndexConfig()
+        schema.fulltextIndex ?? new FulltextIndexConfig()
       );
       schemaResolved.createIndex(schema.vectorIndex ?? new VectorIndexConfig());
       if (schema.sparseVectorIndex)

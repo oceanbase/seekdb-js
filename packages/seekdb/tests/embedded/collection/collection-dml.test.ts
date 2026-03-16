@@ -11,7 +11,7 @@ import {
   Schema,
   SparseVectorIndexConfig,
   VectorIndexConfig,
-  FullTextIndexConfig,
+  FulltextIndexConfig,
 } from "../../../src/schema.js";
 import { K } from "../../../src/key.js";
 import { registerSparseEmbeddingFunction } from "../../../src/embedding-function.js";
@@ -537,7 +537,7 @@ describe("Embedded Mode - Collection DML Operations", () => {
             embeddingFunction: new DmlTestDenseEF(),
           })
         )
-        .createIndex(new FullTextIndexConfig())
+        .createIndex(new FulltextIndexConfig())
         .createIndex(
           new SparseVectorIndexConfig({
             sourceKey,

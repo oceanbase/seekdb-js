@@ -12,7 +12,7 @@ import type {
   SparseVectorIndexConfigOptions,
   VectorIndexConfigOptions,
 } from "./types.js";
-import { Key } from "./key.js";
+import { Key, K } from "./key.js";
 import {
   getEmbeddingFunction,
   getSparseEmbeddingFunction,
@@ -28,8 +28,8 @@ import {
 
 const DEFAULT_FULLTEXT_ANALYZER: FulltextAnalyzer = "ik";
 
-export class FullTextIndexConfig {
-  readonly _type = "FullTextIndexConfig";
+export class FulltextIndexConfig {
+  readonly _type = "FulltextIndexConfig";
   public readonly analyzer: FulltextAnalyzer;
   public readonly properties?: FulltextAnalyzerPropertiesMap[FulltextAnalyzer];
 
@@ -116,9 +116,9 @@ export class SparseVectorIndexConfig {
       drop_ratio_search,
       refine_k,
     } = options;
-    if (!sourceKey) throw new SeekdbValueError("sourceKey is required");
     validateSparseIndex(options);
-    this.sourceKey = sourceKey;
+    this.sourceKey =
+      sourceKey != null && sourceKey !== "" ? sourceKey : K.DOCUMENT;
     this.distance = distance;
     this.type = type;
     this.lib = lib;
@@ -152,7 +152,7 @@ export class SparseVectorIndexConfig {
 }
 
 export type IndexConfig =
-  | FullTextIndexConfig
+  | FulltextIndexConfig
   | VectorIndexConfig
   | SparseVectorIndexConfig;
 
@@ -170,12 +170,12 @@ const resolveSourceKeyName = (sourceKey: SourceKey): string | null => {
  * - Dense vectorIndex + fulltextIndex are enabled by default when schema is omitted.
  */
 export class Schema {
-  fulltextIndex?: FullTextIndexConfig;
+  fulltextIndex?: FulltextIndexConfig;
   vectorIndex?: VectorIndexConfig;
   sparseVectorIndex?: SparseVectorIndexConfig;
 
   constructor(config?: {
-    fulltextIndex?: FullTextIndexConfig;
+    fulltextIndex?: FulltextIndexConfig;
     vectorIndex?: VectorIndexConfig;
     sparseVectorIndex?: SparseVectorIndexConfig;
   }) {
@@ -191,7 +191,7 @@ export class Schema {
   }
 
   createIndex(config: IndexConfig): this {
-    if (config instanceof FullTextIndexConfig) {
+    if (config instanceof FulltextIndexConfig) {
       this.fulltextIndex = config;
       return this;
     }
@@ -209,7 +209,7 @@ export class Schema {
 
   static default(): Schema {
     return new Schema()
-      .createIndex(new FullTextIndexConfig())
+      .createIndex(new FulltextIndexConfig())
       .createIndex(new VectorIndexConfig());
   }
 
@@ -238,7 +238,7 @@ export class Schema {
     return new Schema()
       .createIndex(new VectorIndexConfig({ hnsw, embeddingFunction }))
       .createIndex(
-        new FullTextIndexConfig(
+        new FulltextIndexConfig(
           fulltextConfig?.analyzer,
           fulltextConfig?.properties
         )
@@ -266,7 +266,7 @@ export class Schema {
 
     if (fulltextIndex) {
       schema.createIndex(
-        new FullTextIndexConfig(
+        new FulltextIndexConfig(
           (fulltextIndex.analyzer ??
             DEFAULT_FULLTEXT_ANALYZER) as FulltextAnalyzer,
           fulltextIndex.properties
@@ -296,7 +296,7 @@ export class Schema {
         ));
       schema.createIndex(
         new SparseVectorIndexConfig({
-          sourceKey: sparseVectorIndex.sourceKey ?? null,
+          sourceKey: sparseVectorIndex.sourceKey ?? undefined,
           embeddingFunction,
         })
       );

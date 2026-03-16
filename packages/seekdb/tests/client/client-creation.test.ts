@@ -8,7 +8,7 @@ import { EmbeddingFunction, HNSWConfiguration } from "../../src/types.js";
 import { TEST_CONFIG, generateCollectionName } from "../test-utils.js";
 import { SQLBuilder } from "../../src/sql-builder.js";
 import { registerEmbeddingFunction } from "../../src/embedding-function.js";
-import { FullTextIndexConfig, Schema } from "../../src/schema.js";
+import { FulltextIndexConfig, Schema } from "../../src/schema.js";
 
 describe("Client Creation and Collection Management", () => {
   let client: SeekdbClient;
@@ -626,7 +626,7 @@ describe("Client Creation and Collection Management", () => {
     });
 
     test("buildCreateTable - fulltext clause is included", () => {
-      const fulltextConfig = new FullTextIndexConfig("space");
+      const fulltextConfig = new FulltextIndexConfig("space");
       const sql = SQLBuilder.buildCreateTable(
         "test_coll",
         new Schema({ fulltextIndex: fulltextConfig }),

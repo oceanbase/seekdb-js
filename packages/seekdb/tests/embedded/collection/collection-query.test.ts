@@ -13,7 +13,7 @@ import {
   Schema,
   SparseVectorIndexConfig,
   VectorIndexConfig,
-  FullTextIndexConfig,
+  FulltextIndexConfig,
 } from "../../../src/schema.js";
 import { K } from "../../../src/key.js";
 import { SeekdbValueError } from "../../../src/errors.js";
@@ -426,7 +426,7 @@ describe("Embedded Mode - Collection Query Operations", () => {
               embeddingFunction: new QueryTestDenseEF(),
             })
           )
-          .createIndex(new FullTextIndexConfig())
+          .createIndex(new FulltextIndexConfig())
           .createIndex(
             new SparseVectorIndexConfig({
               sourceKey: K.DOCUMENT,
@@ -511,7 +511,7 @@ describe("Embedded Mode - Collection Query Operations", () => {
               hnsw: { distance: "l2" },
             })
           )
-          .createIndex(new FullTextIndexConfig())
+          .createIndex(new FulltextIndexConfig())
           .createIndex(new SparseVectorIndexConfig({ sourceKey: K.DOCUMENT })),
       });
       await expect(

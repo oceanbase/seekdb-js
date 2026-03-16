@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "seekdb": "workspace:*",
+    "@seekdb/bm25": "workspace:*",
     "@seekdb/default-embed": "workspace:*",
     "@seekdb/openai": "workspace:*"
   },

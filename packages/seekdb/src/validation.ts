@@ -57,7 +57,7 @@ export function assertEnum<T>(
   }
 }
 
-// dimension: [0, 4096]
+// dimension: [1, 4096]
 // distance: "l2" | "cosine" | "inner_product"
 // type: "hnsw" | "hnsw_sq" | "hnsw_bq"
 // lib: "vsag"
@@ -71,7 +71,7 @@ export function assertEnum<T>(
 // bq_use_fht: true | false
 export function validateHnsw(params: HnswParams): void {
   if (params.dimension !== undefined)
-    assertRange("dimension", params.dimension, 0, 4096);
+    assertRange("dimension", params.dimension, 1, 4096);
   if (params.distance !== undefined)
     assertEnum<DistanceMetric>("distance", params.distance, DISTANCE_METRICS);
   if (params.type !== undefined)
