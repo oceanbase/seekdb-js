@@ -42,30 +42,36 @@ pnpm build
 
 ### Run Examples
 
-Examples live in the root `examples/` directory. From the project root:
+**Basic examples** (root `examples/`): run from the `examples` directory:
 
-- **Simple Example**: Basic connection, collection creation, add, and query.
+```bash
+cd examples
+pnpm install
+pnpm run run:simple    # Basic usage
+pnpm run run:complete  # Full feature demo
+pnpm run run:hybrid    # Hybrid search
+```
+
+**ORM integration examples** (each has its own `package.json` under `examples/`):
+
+- **seekdb-drizzle** (Drizzle ORM):
 
   ```bash
-  pnpm --filter seekdb-examples run run:simple
+  pnpm --filter seekdb-drizzle-example run start           # Server mode
+  pnpm --filter seekdb-drizzle-example run start:embedded  # Embedded mode
   ```
 
-- **Complete Example**: Full feature demo (DML, DQL, Hybrid Search, etc.).
-
+- **seekdb-prisma** (Prisma ORM):
   ```bash
-  pnpm --filter seekdb-examples run run:complete
-  ```
-
-- **Hybrid Search Example**: Hybrid search usage.
-
-  ```bash
-  pnpm --filter seekdb-examples run run:hybrid
+  pnpm --filter seekdb-prisma-example run db:generate
+  pnpm --filter seekdb-prisma-example run start           # Server (requires db:push and DATABASE_URL)
+  pnpm --filter seekdb-prisma-example run start:embedded # Embedded (no server)
   ```
 
 **Running mode**:
 
-- Examples use **embedded mode** by default (`path: "./seekdb.db"`); no seekdb server is required.
-- For **server mode**, start seekdb/OceanBase and adjust the `SeekdbClient` config in the example (e.g. `host`, `port`, `user`, `password`); see comments in each example file.
+- Examples use **embedded mode** by default where applicable (`path: "./seekdb.db"`); no seekdb server is required.
+- For **server mode**, start seekdb/OceanBase and set connection config (e.g. `host`, `port`, `DATABASE_URL`); see each example’s README.
 
 ---
 
@@ -87,14 +93,20 @@ pnpm build
 
 ### Run Tests
 
-The project uses Vitest. Run tests for the core `seekdb` package from the project root:
+The project uses Vitest. From the project root:
 
 ```bash
-# Run all tests
+# Run all tests (seekdb + @seekdb/prisma-adapter; runs once and exits)
 pnpm test
 
 # Run only seekdb package tests
 pnpm --filter seekdb run test
+
+# Watch mode for seekdb (during development)
+pnpm --filter seekdb exec vitest
+
+# Run only @seekdb/prisma-adapter tests
+pnpm --filter @seekdb/prisma-adapter run test
 
 # Run only embedded-mode tests (no server required)
 pnpm --filter seekdb exec vitest run tests/embedded/
@@ -102,9 +114,9 @@ pnpm --filter seekdb exec vitest run tests/embedded/
 
 **Tests and running mode**:
 
-- **Embedded-mode tests** live under `packages/seekdb/tests/embedded/` and use a temporary database path per test file. They do not require a seekdb/OceanBase server. Run them with the command above when no server is available.
+- **Embedded-mode tests** live under `packages/seekdb/tests/embedded/` and use a temporary database path per test file. They do not require a seekdb/OceanBase server.
 - **Server-mode tests** (under `packages/seekdb/tests/` but outside `embedded/`) connect to `127.0.0.1:2881` and require a local seekdb or OceanBase instance.
-- **Mode consistency** tests (`tests/embedded/mode-consistency.test.ts`) run both embedded and server modes in the same file; they require the native addon and a server for the server part.
+- **Mode consistency** tests (`tests/embedded/mode-consistency.test.ts`) run both embedded and server modes; they require the native addon and a server for the server part.
 - Embedded test coverage vs server is documented in `packages/seekdb/tests/embedded/COVERAGE_REPORT.md`.
 
 ### Linting & Formatting

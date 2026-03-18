@@ -36,14 +36,15 @@ For complete usage, see the official documentation.
 
 This is a monorepo containing:
 
-| Package                 | Description                                                            |
-| ----------------------- | ---------------------------------------------------------------------- |
-| `seekdb`                | Core SDK for seekdb operations                                         |
-| `@seekdb/default-embed` | Local embedding function using Xenova/all-MiniLM-L6-v2 model (default) |
-| `@seekdb/qwen`          | DashScope/Tongyi Qianwen cloud embedding service                       |
-| `@seekdb/openai`        | OpenAI cloud embedding service                                         |
-| `@seekdb/jina`          | Jina AI multimodal embedding service                                   |
-| `@seekdb/bm25`          | BM25 sparse embedding function for efficient text-based keyword search |
+| Package                  | Description                                                                 |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `seekdb`                 | Core SDK for seekdb operations                                              |
+| `@seekdb/default-embed`  | Local embedding function using Xenova/all-MiniLM-L6-v2 model (default)      |
+| `@seekdb/qwen`           | DashScope/Tongyi Qianwen cloud embedding service                            |
+| `@seekdb/openai`         | OpenAI cloud embedding service                                              |
+| `@seekdb/jina`           | Jina AI multimodal embedding service                                        |
+| `@seekdb/bm25`           | BM25 sparse embedding function for efficient text-based keyword search      |
+| `@seekdb/prisma-adapter` | Prisma driver adapter for seekdb Embedded (use Prisma with seekdb Embedded) |
 
 ## Installation
 
@@ -677,11 +678,18 @@ await admin.close();
 
 Check out the [examples](./examples) directory for complete usage examples:
 
+**Basic examples** (root `examples/`):
+
 - [simple-example.ts](./examples/simple-example.ts) - Basic usage
 - [complete-example.ts](./examples/complete-example.ts) - All features
 - [hybrid-search-example.ts](./examples/hybrid-search-example.ts) - Hybrid search
 
-To run the examples, see [Run Examples](./DEVELOP.md#run-examples).
+**ORM integration** (vector + relational tables):
+
+- [seekdb-drizzle](./examples/seekdb-drizzle) - Drizzle ORM (Server: same DB two connections; Embedded: mysql-proxy)
+- [seekdb-prisma](./examples/seekdb-prisma) - Prisma ORM (Server: DATABASE_URL; Embedded: [@seekdb/prisma-adapter](https://www.npmjs.com/package/@seekdb/prisma-adapter))
+
+# To run the examples, see [Run Examples](./DEVELOP.md#run-examples) in the development guide.
 
 ## Development
 
