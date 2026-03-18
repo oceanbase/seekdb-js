@@ -310,7 +310,10 @@ describe("AdminClient Database Management", () => {
     let obAdminClient: SeekdbAdminClient;
 
     beforeAll(async () => {
-      obAdminClient = new SeekdbAdminClient({ ...TEST_CONFIG, tenant: "sys" });
+      obAdminClient = new SeekdbAdminClient({
+        ...TEST_CONFIG,
+        tenant: DEFAULT_TENANT,
+      });
     });
 
     afterAll(async () => {
