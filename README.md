@@ -57,17 +57,17 @@ npm install seekdb @seekdb/default-embed
 
 ## Running Modes
 
-The SDK supports two modes; the constructor arguments to `SeekdbClient` determine which is used. For database management (create/list/get/delete database), use `AdminClient()` which returns a `SeekdbClient` instance.
+The SDK supports two modes; the constructor arguments to `SeekdbClient` determine which is used. For database management (create/list/get/delete database), use `SeekdbAdminClient()` which returns a `SeekdbClient` instance.
 
 | Mode         | Parameter                                     | Description                                                                                                                                         |
 | ------------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Embedded** | `path` (database directory path)              | Runs locally with no separate seekdb server; data is stored under the given path (e.g. `./seekdb.db`). Requires native addon `@seekdb/js-bindings`. |
 | **Server**   | `host` (and `port`, `user`, `password`, etc.) | Connects to a remote seekdb or OceanBase instance.                                                                                                  |
 
-**OceanBase and seekdb**: OceanBase is compatible with seekdb and can be understood as its distributed, multi-tenant, etc. version. seekdb-js therefore supports **OceanBase server mode** with the same API: use the same `SeekdbClient` / `AdminClient` and connection parameters; when connecting to OceanBase, additionally pass `tenant` (e.g. `"sys"` or your tenant name). See [OceanBase mode](#oceanbase-mode-server-mode-with-tenant) below.
+**OceanBase and seekdb**: OceanBase is compatible with seekdb and can be understood as its distributed, multi-tenant, etc. version. seekdb-js therefore supports **OceanBase server mode** with the same API: use the same `SeekdbClient` / `SeekdbAdminClient` and connection parameters; when connecting to OceanBase, additionally pass `tenant` (e.g. `"sys"` or your tenant name). See [OceanBase mode](#oceanbase-mode-server-mode-with-tenant) below.
 
 - **SeekdbClient**: Pass `path` for embedded mode, or `host` (and port, user, password, etc.) for server mode.
-- **AdminClient()**: For admin operations only; pass `path` for embedded or `host` for server. In embedded mode you do not specify a database name.
+- **SeekdbAdminClient()**: For admin operations only; pass `path` for embedded or `host` for server. In embedded mode you do not specify a database name.
 
 ## Quick Start
 
@@ -773,14 +773,14 @@ Set `DATABASE_URL` to the same host/port/user/password/database (e.g. `mysql://u
 
 ### Database Management
 
-Use `AdminClient()` for database management. It returns a `SeekdbClient` instance. In **embedded mode** you only pass `path`; no database name is required.
+Use `SeekdbAdminClient` for database management. It supports both embedded and server modes.
 
 **Embedded mode** (local database file):
 
 ```typescript
-import { AdminClient } from "seekdb";
+import { SeekdbAdminClient } from "seekdb";
 
-const admin = AdminClient({ path: "./seekdb.db" });
+const admin = new SeekdbAdminClient({ path: "./seekdb.db" });
 await admin.createDatabase("new_database");
 const databases = await admin.listDatabases();
 const db = await admin.getDatabase("new_database");
@@ -791,9 +791,9 @@ await admin.close();
 **Server mode**:
 
 ```typescript
-import { AdminClient } from "seekdb";
+import { SeekdbAdminClient } from "seekdb";
 
-const admin = AdminClient({
+const admin = new SeekdbAdminClient({
   host: "127.0.0.1",
   port: 2881,
   user: "root",
@@ -810,7 +810,7 @@ await admin.close();
 **OceanBase mode** (server mode with tenant): add `tenant` (e.g. `"sys"` or your tenant name) to the config:
 
 ```typescript
-const admin = AdminClient({
+const admin = new SeekdbAdminClient({
   host: "127.0.0.1",
   port: 2881,
   user: "root",
@@ -824,6 +824,8 @@ const db = await admin.getDatabase("new_database");
 await admin.deleteDatabase("new_database");
 await admin.close();
 ```
+
+`AdminClient()` is available as a factory and returns a `SeekdbClient` configured for admin operations.
 
 ## Examples
 

@@ -4,7 +4,6 @@
  */
 
 import { SeekdbClient } from "./client.js";
-import { SeekdbAdminClient } from "./client-admin.js";
 import type { SeekdbClientArgs, SeekdbAdminClientArgs } from "./types.js";
 import { DEFAULT_DATABASE, DEFAULT_PORT, DEFAULT_USER } from "./utils.js";
 import * as path from "node:path";
