@@ -15,7 +15,7 @@
     "test": "echo \"Tests not yet implemented\""
   },
   "dependencies": {
-    "node-addon-api": "^8.3.0"
+    "node-addon-api": "^8.6.0"
   },
   "devDependencies": {
     "node-gyp": "^10.3.1",
