@@ -1,27 +1,35 @@
 import { SeekdbValueError } from "./errors.js";
-import { DEFAULT_TENANT } from "./utils.js";
-import type { SeekdbAdminClientArgs } from "./types.js";
+import { ADMIN_DATABASE, DEFAULT_TENANT } from "./utils.js";
+import type { IInternalClient, SeekdbAdminClientArgs } from "./types.js";
 import { Database, OBDatabase } from "./database.js";
 import { InternalClient } from "./internal-client.js";
+import { InternalEmbeddedClient } from "./internal-client-embedded.js";
+import * as path from "node:path";
 
 export class SeekdbAdminClient {
-  private _internal: InternalClient;
+  private readonly _internal: IInternalClient;
   private readonly tenant?: string;
 
   constructor(args: SeekdbAdminClientArgs) {
     this.tenant = args.tenant;
-    // Initialize connection manager (no database specified for admin client)
-    // Admin client requires host for remote server mode
-    if (!args.host) {
+    const dbPath = args.path;
+
+    // Prefer embedded when path is set (same rule as Client / SeekdbClient).
+    if (dbPath !== undefined) {
+      this._internal = new InternalEmbeddedClient({
+        path: path.resolve(dbPath),
+        database: ADMIN_DATABASE,
+      });
+    } else if (args.host !== undefined) {
+      this._internal = new InternalClient({
+        ...args,
+        database: "information_schema",
+      });
+    } else {
       throw new Error(
-        "SeekdbAdminClient requires host parameter for remote server mode. " +
-          "For embedded mode, use AdminClient() factory function."
+        "SeekdbAdminClient requires either 'path' (embedded mode) or 'host' (remote server mode)."
       );
     }
-    this._internal = new InternalClient({
-      ...args,
-      database: "information_schema",
-    });
   }
 
   private isSeekdbMode(): boolean {
