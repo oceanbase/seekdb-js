@@ -6,8 +6,10 @@
 import {
   CollectionNames,
   CollectionFieldNames,
+  DEFAULT_DISTANCE_METRIC,
   vectorToSqlString,
   serializeMetadata,
+  serializeSparseVector,
 } from "./utils.js";
 import { FilterBuilder } from "./filters.js";
 import type {
@@ -17,12 +19,11 @@ import type {
   DistanceMetric,
   CollectionContext,
   FulltextAnalyzerConfig,
+  HnswParams,
+  SQLResult,
+  SparseVectorIndexConfigOptions,
 } from "./types.js";
-
-export interface SQLResult {
-  sql: string;
-  params: unknown[];
-}
+import { Schema } from "./schema.js";
 
 /**
  * SQL Builder class
@@ -31,27 +32,96 @@ export interface SQLResult {
 export class SQLBuilder {
   static buildCreateTable(
     name: string,
-    dimension: number,
-    distance: DistanceMetric,
+    schema: Schema,
     comment?: string,
-    collectionId?: string,
-    fulltextConfig?: FulltextAnalyzerConfig
+    collectionId?: string
   ): string {
     const tableName = CollectionNames.tableName(name, collectionId);
     const commentClause = comment
       ? ` COMMENT = '${comment.replace(/'/g, "''")}'`
       : "";
 
-    const fulltextClause = this.buildFulltextClause(fulltextConfig);
+    const { fulltextIndex, vectorIndex, sparseVectorIndex } = schema ?? {};
+    const withSparseEmbedding = sparseVectorIndex !== undefined;
+    const fulltextClause = fulltextIndex
+      ? this.buildFulltextClause(fulltextIndex)
+      : null;
+
+    const hnswWithClause = this.buildHnswWithClause(vectorIndex?.hnsw);
+    const sparseWithClause = sparseVectorIndex
+      ? this.buildSparseWithClause(sparseVectorIndex)
+      : "";
 
     return `CREATE TABLE \`${tableName}\` (
       ${CollectionFieldNames.ID} VARBINARY(512) PRIMARY KEY NOT NULL,
       ${CollectionFieldNames.DOCUMENT} STRING,
-      ${CollectionFieldNames.EMBEDDING} VECTOR(${dimension}),
+      ${CollectionFieldNames.EMBEDDING} VECTOR(${vectorIndex?.hnsw?.dimension}),
+      ${withSparseEmbedding ? `${CollectionFieldNames.SPARSE_EMBEDDING} SPARSEVECTOR,` : ""}
       ${CollectionFieldNames.METADATA} JSON,
-      FULLTEXT INDEX idx_fts (${CollectionFieldNames.DOCUMENT}) ${fulltextClause},
-      VECTOR INDEX idx_vec (${CollectionFieldNames.EMBEDDING}) WITH(distance=${distance}, type=hnsw, lib=vsag)
+      ${fulltextClause ? `FULLTEXT INDEX idx_fts (${CollectionFieldNames.DOCUMENT}) ${fulltextClause},` : ""}
+      VECTOR INDEX idx_vec (${CollectionFieldNames.EMBEDDING}) ${hnswWithClause}
+      ${withSparseEmbedding ? `,VECTOR INDEX idx_sparse (${CollectionFieldNames.SPARSE_EMBEDDING}) ${sparseWithClause}` : ""}
     ) ORGANIZATION = HEAP${commentClause}`;
+  }
+
+  /**
+   * Build HNSW WITH clause for VECTOR INDEX, applying defaults for required fields.
+   */
+  private static buildHnswWithClause(hnsw?: HnswParams): string {
+    const type = hnsw?.type ?? "hnsw";
+    const lib = hnsw?.lib ?? "vsag";
+    const distance = hnsw?.distance ?? DEFAULT_DISTANCE_METRIC;
+
+    const parts: string[] = [
+      `distance=${distance}`,
+      `type=${type}`,
+      `lib=${lib}`,
+    ];
+
+    if (hnsw?.m !== undefined) parts.push(`m=${hnsw.m}`);
+    if (hnsw?.ef_construction !== undefined)
+      parts.push(`ef_construction=${hnsw.ef_construction}`);
+    if (hnsw?.ef_search !== undefined)
+      parts.push(`ef_search=${hnsw.ef_search}`);
+    if (hnsw?.extra_info_max_size !== undefined)
+      parts.push(`extra_info_max_size=${hnsw.extra_info_max_size}`);
+
+    if (type === "hnsw_bq") {
+      if (hnsw?.refine_k !== undefined) parts.push(`refine_k=${hnsw.refine_k}`);
+      if (hnsw?.refine_type !== undefined)
+        parts.push(`refine_type=${hnsw.refine_type}`);
+      if (hnsw?.bq_bits_query !== undefined)
+        parts.push(`bq_bits_query=${hnsw.bq_bits_query}`);
+      if (hnsw?.bq_use_fht !== undefined)
+        parts.push(`bq_use_fht=${hnsw.bq_use_fht}`);
+    }
+
+    return `WITH(${parts.join(", ")})`;
+  }
+
+  /**
+   * Build sparse vector WITH clause for VECTOR INDEX.
+   * distance/type/lib are always fixed; user-provided optional params appended.
+   */
+  private static buildSparseWithClause(
+    sparse: SparseVectorIndexConfigOptions
+  ): string {
+    const parts: string[] = [
+      "distance=inner_product",
+      "type=sindi",
+      "lib=vsag",
+    ];
+
+    if (sparse.prune !== undefined) parts.push(`prune=${sparse.prune}`);
+    if (sparse.refine !== undefined) parts.push(`refine=${sparse.refine}`);
+    if (sparse.drop_ratio_build !== undefined)
+      parts.push(`drop_ratio_build=${sparse.drop_ratio_build}`);
+    if (sparse.drop_ratio_search !== undefined)
+      parts.push(`drop_ratio_search=${sparse.drop_ratio_search}`);
+    if (sparse.refine_k !== undefined)
+      parts.push(`refine_k=${sparse.refine_k}`);
+
+    return `WITH(${parts.join(", ")})`;
   }
 
   /**
@@ -131,6 +201,7 @@ export class SQLBuilder {
       ids: string[];
       documents?: (string | null)[];
       embeddings: number[][];
+      sparseEmbeddings?: (Record<number, number> | string | null)[];
       metadatas?: (Metadata | null)[];
     }
   ): SQLResult {
@@ -141,23 +212,46 @@ export class SQLBuilder {
     const valuesList: string[] = [];
     const params: unknown[] = [];
     const numItems = data.ids.length;
+    const hasSparse = Array.isArray(data.sparseEmbeddings);
 
     for (let i = 0; i < numItems; i++) {
       const id = data.ids[i];
       const doc = data.documents?.[i] ?? null;
       const meta = data.metadatas?.[i] ?? null;
       const vec = data.embeddings[i];
+      const sparse = data.sparseEmbeddings?.[i] ?? null;
 
-      valuesList.push(`(CAST(? AS BINARY), ?, ?, ?)`);
+      valuesList.push(
+        hasSparse
+          ? `(CAST(? AS BINARY), ?, ?, ?, ?)`
+          : `(CAST(? AS BINARY), ?, ?, ?)`
+      );
       params.push(
         id,
         doc,
         meta ? serializeMetadata(meta) : null,
         vectorToSqlString(vec)
       );
+      if (hasSparse) {
+        const sparseValue =
+          sparse == null
+            ? null
+            : typeof sparse === "string"
+              ? sparse
+              : serializeSparseVector(sparse);
+        params.push(sparseValue);
+      }
     }
 
-    const sql = `INSERT INTO \`${tableName}\` (${CollectionFieldNames.ID}, ${CollectionFieldNames.DOCUMENT}, ${CollectionFieldNames.METADATA}, ${CollectionFieldNames.EMBEDDING}) VALUES ${valuesList.join(", ")}`;
+    const columns = [
+      CollectionFieldNames.ID,
+      CollectionFieldNames.DOCUMENT,
+      CollectionFieldNames.METADATA,
+      CollectionFieldNames.EMBEDDING,
+    ];
+
+    if (hasSparse) columns.push(CollectionFieldNames.SPARSE_EMBEDDING);
+    const sql = `INSERT INTO \`${tableName}\` (${columns.join(", ")}) VALUES ${valuesList.join(", ")}`;
     return { sql, params };
   }
 
@@ -271,6 +365,7 @@ export class SQLBuilder {
       updates: {
         document?: string;
         embedding?: number[];
+        sparseEmbedding?: Record<number, number> | string | null;
         metadata?: Metadata;
       };
     }
@@ -296,6 +391,17 @@ export class SQLBuilder {
     if (updates.embedding !== undefined) {
       setClauses.push(`${CollectionFieldNames.EMBEDDING} = ?`);
       params.push(vectorToSqlString(updates.embedding));
+    }
+
+    if (updates.sparseEmbedding !== undefined) {
+      setClauses.push(`${CollectionFieldNames.SPARSE_EMBEDDING} = ?`);
+      params.push(
+        updates.sparseEmbedding == null
+          ? null
+          : typeof updates.sparseEmbedding === "string"
+            ? updates.sparseEmbedding
+            : serializeSparseVector(updates.sparseEmbedding)
+      );
     }
 
     // WHERE clause
@@ -364,7 +470,7 @@ export class SQLBuilder {
    */
   static buildVectorQuery(
     context: CollectionContext,
-    queryVector: number[],
+    queryVector: number[] | Record<number, number> | string,
     nResults: number,
     options: {
       where?: Where;
@@ -372,6 +478,7 @@ export class SQLBuilder {
       include?: string[];
       distance?: DistanceMetric;
       approximate?: boolean;
+      column?: "embedding" | "sparse_embedding";
     }
   ): SQLResult {
     const tableName = CollectionNames.tableName(
@@ -382,10 +489,13 @@ export class SQLBuilder {
       where,
       whereDocument,
       include,
-      distance = "l2",
+      distance = DEFAULT_DISTANCE_METRIC,
       approximate = true,
+      column = CollectionFieldNames.EMBEDDING,
     } = options;
     const params: unknown[] = [];
+
+    const isSparseColumn = column === CollectionFieldNames.SPARSE_EMBEDDING;
 
     // Map distance metric to SQL function name
     const distanceFunctionMap: Record<DistanceMetric, string> = {
@@ -394,8 +504,11 @@ export class SQLBuilder {
       inner_product: "inner_product",
     };
 
-    // Get the distance function name, default to 'l2_distance' if distance is not recognized
-    const distanceFunc = distanceFunctionMap[distance];
+    const distanceFunc = isSparseColumn
+      ? "inner_product"
+      : distanceFunctionMap[distance as DistanceMetric];
+    const orderDir =
+      isSparseColumn || distance === "inner_product" ? " DESC" : "";
 
     // Build SELECT clause
     const selectFields = [CollectionFieldNames.ID];
@@ -436,14 +549,18 @@ export class SQLBuilder {
 
     const whereClause =
       whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
-    const vectorStr = vectorToSqlString(queryVector);
+    const vectorStr = isSparseColumn
+      ? typeof queryVector === "string"
+        ? queryVector
+        : serializeSparseVector(queryVector as Record<number, number>)
+      : vectorToSqlString(queryVector as number[]);
 
     const sql = `
       SELECT ${selectFields.join(", ")},
-             ${distanceFunc}(${CollectionFieldNames.EMBEDDING}, '${vectorStr}') AS distance
+             ${distanceFunc}(${column}, '${vectorStr}') AS distance
       FROM \`${tableName}\`
       ${whereClause}
-      ORDER BY ${distanceFunc}(${CollectionFieldNames.EMBEDDING}, '${vectorStr}')
+      ORDER BY ${distanceFunc}(${column}, '${vectorStr}')${orderDir}
       ${approximate ? "APPROXIMATE" : ""}
       LIMIT ?
     `.trim();

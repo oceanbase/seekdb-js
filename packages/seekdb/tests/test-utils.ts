@@ -4,32 +4,21 @@
  */
 
 import type { EmbeddingFunction, EmbeddingConfig } from "../src/types.js";
-import {
-  registerEmbeddingFunction,
-  isEmbeddingFunctionRegistered,
-} from "../src/embedding-function.js";
-
 /**
  * Get test configuration based on test mode
  */
 function getTestConfig() {
-  const baseConfig = {
-    host: process.env.SERVER_HOST || "127.0.0.1",
-    port: parseInt(process.env.SERVER_PORT || "2881"),
-    user: process.env.SERVER_USER || "root",
-    password: process.env.SERVER_PASSWORD || "",
-    database: process.env.SERVER_DATABASE || "test",
+  return {
+    host: process.env.SEEKDB_HOST || "127.0.0.1",
+    port: parseInt(process.env.SEEKDB_PORT || "2881"),
+    user: process.env.SEEKDB_USER || "root",
+    password: process.env.SEEKDB_PASSWORD || "",
+    database: process.env.SEEKDB_DATABASE || "test",
   };
-
-  return baseConfig;
 }
 
-// Test configuration from environment variables
+// Test configuration from environment variables (same names as examples: SEEKDB_HOST, SEEKDB_PORT, etc.)
 export const TEST_CONFIG = getTestConfig();
-export const TEST_CONFIG_OB = {
-  ...TEST_CONFIG,
-  tenant: process.env.SERVER_TENANT || "sys",
-};
 
 /**
  * Generate a unique collection name for testing
@@ -153,17 +142,6 @@ export class TestDefaultEmbeddingFunction implements EmbeddingFunction {
 
   static buildFromConfig(): EmbeddingFunction {
     return new TestDefaultEmbeddingFunction();
-  }
-}
-
-/**
- * Register the test default embedding function
- * Call this function at the top of test files that need the default embedding function
- * This function is idempotent - it will skip registration if already registered
- */
-export function registerTestDefaultEmbeddingFunction(): void {
-  if (!isEmbeddingFunctionRegistered("default-embed")) {
-    registerEmbeddingFunction("default-embed", TestDefaultEmbeddingFunction);
   }
 }
 

@@ -99,12 +99,11 @@ jobs:
       - name: Run server tests
         working-directory: packages/seekdb
         env:
-          SERVER_HOST: 127.0.0.1
-          SERVER_PORT: 2881
-          SERVER_USER: root
-          SERVER_PASSWORD: ""
-          SERVER_DATABASE: test
-          SERVER_TENANT: sys
+          SEEKDB_HOST: 127.0.0.1
+          SEEKDB_PORT: 2881
+          SEEKDB_USER: root
+          SEEKDB_PASSWORD: ""
+          SEEKDB_DATABASE: test
         run: pnpm exec vitest run --exclude 'tests/embedded/**'
 
   # Embedded-mode tests on multiple platforms (requires native bindings build per OS; Docker per job)
@@ -162,12 +161,11 @@ jobs:
       - name: Run embedded tests
         working-directory: packages/seekdb
         env:
-          SERVER_HOST: 127.0.0.1
-          SERVER_PORT: 2881
-          SERVER_USER: root
-          SERVER_PASSWORD: ""
-          SERVER_DATABASE: test
-          SERVER_TENANT: sys
+          SEEKDB_HOST: 127.0.0.1
+          SEEKDB_PORT: 2881
+          SEEKDB_USER: root
+          SEEKDB_PASSWORD: ""
+          SEEKDB_DATABASE: test
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
             pnpm exec vitest run tests/embedded/ 2>&1 | tee /tmp/vitest.log

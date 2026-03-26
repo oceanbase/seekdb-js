@@ -8,7 +8,7 @@ const AdmZip = require("adm-zip");
 
 const SUPPORTED_PLATFORMS = ["darwin-arm64", "linux-x64", "linux-arm64"];
 const DEFAULT_BASE_URL =
-  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/js-bindings/all_commits/10770677d3f2b57dec0e73b208e5fa61b4148091";
+  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/js-bindings/all_commits/7548fd4ac9bb9d8a06621dfb1ade3924a95145d6";
 
 function getPlatformArch() {
   const key = `${process.platform}-${process.arch === "arm64" ? "arm64" : "x64"}`;

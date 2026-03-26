@@ -13,7 +13,6 @@ import {
 } from "../../../src/metadata-manager.js";
 import { registerEmbeddingFunction } from "../../../src/embedding-function.js";
 import { COLLECTION_V1_PREFIX } from "../../../src/utils.js";
-import { Configuration } from "../../../src/types.js";
 import { getEmbeddedTestConfig, cleanupTestDb } from "../test-utils.js";
 
 try {
@@ -81,12 +80,10 @@ describe("Embedded Mode - Collection Metadata V2", () => {
       expect(metadata).toBeDefined();
       expect(metadata?.collectionName).toBe(collectionName);
       expect(metadata?.collectionId).toBeDefined();
-      expect(
-        (metadata?.settings.configuration as Configuration)?.hnsw?.dimension
-      ).toBe(3);
-      expect(
-        (metadata?.settings.configuration as Configuration)?.hnsw?.distance
-      ).toBe("cosine");
+      expect(metadata?.settings.schema?.vectorIndex?.hnsw?.dimension).toBe(3);
+      expect(metadata?.settings.schema?.vectorIndex?.hnsw?.distance).toBe(
+        "cosine"
+      );
     });
 
     test("should retrieve v2 collection with collectionId", async () => {
@@ -382,8 +379,12 @@ describe("Embedded Mode - Collection Metadata V2", () => {
       );
 
       expect(metadata).toBeDefined();
-      expect(metadata?.settings.embeddingFunction).toBeDefined();
-      expect(metadata?.settings.embeddingFunction?.name).toBe("default-embed");
+      expect(
+        metadata?.settings.schema?.vectorIndex?.embeddingFunction
+      ).toBeDefined();
+      expect(
+        metadata?.settings.schema?.vectorIndex?.embeddingFunction?.name
+      ).toBe("default-embed");
     });
 
     test("should store custom embedding function metadata", async () => {
@@ -406,9 +407,19 @@ describe("Embedded Mode - Collection Metadata V2", () => {
       );
 
       expect(metadata).toBeDefined();
-      expect(metadata?.settings.embeddingFunction).toBeDefined();
-      expect(metadata?.settings.embeddingFunction?.name).toBe("mock-embed");
-      expect(metadata?.settings.embeddingFunction?.properties).toEqual({
+      expect(
+        metadata?.settings.schema?.vectorIndex?.embeddingFunction
+      ).toBeDefined();
+      expect(
+        metadata?.settings.schema?.vectorIndex?.embeddingFunction?.name
+      ).toBe("mock-embed");
+      expect(
+        (
+          metadata?.settings.schema?.vectorIndex?.embeddingFunction as {
+            properties?: Record<string, unknown>;
+          }
+        )?.properties
+      ).toEqual({
         dimension: 3,
         model: "test-model",
       });
@@ -489,7 +500,10 @@ describe("Embedded Mode - Collection Metadata V2", () => {
       );
 
       expect(metadata).toBeDefined();
-      expect(metadata?.settings.embeddingFunction).toBeUndefined();
+      // Embedding function metadata should NOT be stored (plain object EF has no persistence)
+      expect(
+        metadata?.settings.schema?.vectorIndex?.embeddingFunction
+      ).toBeUndefined();
     });
   });
 });

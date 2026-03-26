@@ -3,16 +3,22 @@
  *
  * This example demonstrates all available operations:
  * 1. Client connection
- * 2. Collection management
+ * 2. Collection management (Schema API: vector + sparse index)
  * 3. DML operations (add, update, upsert, delete)
- * 4. DQL operations (query, get, hybrid_search)
+ * 4. DQL operations (query, get, hybrid_search, sparse query)
  * 5. Filter operators
  * 6. Collection information methods
- *
- * This is a complete reference for all client capabilities.
  */
 
-import { SeekdbClient } from "seekdb";
+import {
+  SeekdbClient,
+  Schema,
+  FulltextIndexConfig,
+  VectorIndexConfig,
+  SparseVectorIndexConfig,
+  K,
+} from "seekdb";
+import { Bm25EmbeddingFunction } from "@seekdb/bm25";
 import crypto from "crypto";
 
 async function main() {
@@ -21,36 +27,48 @@ async function main() {
   // ============================================================================
 
   // Option 1: Embedded mode (local seekdb)
-  const client = new SeekdbClient({
-    path: "./seekdb.db",
-    database: "test",
-  });
-
-  // Option 2: Connecting to seekdb server or OceanBase
   // const client = new SeekdbClient({
-  //   host: "127.0.0.1",
-  //   port: 2881,
+  //   path: "./seekdb.db",
   //   database: "test",
-  //   user: "root",
-  //   password: "",
-  //   // for OceanBase, set tenant to "sys"
-  //   // tenant: "sys",
   // });
 
+  // Option 2: Connecting to seekdb server or OceanBase
+  const client = new SeekdbClient({
+    host: "127.0.0.1",
+    port: 2881,
+    database: "test",
+    user: "root",
+    password: "",
+    // for OceanBase, set tenant to "sys"
+    // tenant: "sys",
+  });
+
   // ============================================================================
-  // PART 2: COLLECTION MANAGEMENT
+  // PART 2: COLLECTION MANAGEMENT (Schema API)
   // ============================================================================
 
   const COLLECTION_NAME = "comprehensive_example";
   const dimension = 384;
 
+  const bm25 = new Bm25EmbeddingFunction();
+  const schema = new Schema()
+    .createIndex(new FulltextIndexConfig())
+    .createIndex(
+      new VectorIndexConfig({
+        hnsw: { dimension, distance: "cosine" },
+      })
+    )
+    .createIndex(
+      new SparseVectorIndexConfig({
+        sourceKey: K.DOCUMENT,
+        embeddingFunction: bm25,
+      })
+    );
+
   // 2.1 Create a collection
   const collection = await client.getOrCreateCollection({
     name: COLLECTION_NAME,
-    configuration: {
-      dimension,
-      distance: "cosine",
-    },
+    schema,
   });
 
   // 2.2 Check if collection exists
@@ -98,8 +116,9 @@ async function main() {
     embeddings: Array.from({ length: dimension }, () => Math.random()),
     metadatas: { type: "single", category: "test" },
   });
+  console.log("Added single document");
 
-  // 3.2 Add multiple items
+  // 3.2 Add multiple items (documents used for sparse embeddings via BM25)
   await collection.add({
     ids,
     documents,
@@ -128,6 +147,7 @@ async function main() {
     ],
     metadatas: [{ type: "vector_only" }, { type: "vector_only" }],
   });
+  console.log("Added vector-only items");
 
   // ============================================================================
   // PART 4: DML OPERATIONS - UPDATE DATA
@@ -215,6 +235,7 @@ async function main() {
     where: { category: "AI" },
     nResults: 5,
   });
+  console.log(`Query with where (category): ${results.ids[0].length} results`);
 
   // 6.3 Query with comparison operators
   results = await collection.query({
@@ -222,6 +243,7 @@ async function main() {
     where: { score: { $gte: 90 } },
     nResults: 5,
   });
+  console.log(`Query with $gte: ${results.ids[0].length} results`);
 
   // 6.4 Query with $in operator
   results = await collection.query({
@@ -229,6 +251,7 @@ async function main() {
     where: { tag: { $in: ["ml", "python", "neural"] } },
     nResults: 5,
   });
+  console.log(`Query with $in: ${results.ids[0].length} results`);
 
   // 6.5 Query with logical operators ($or)
   results = await collection.query({
@@ -238,6 +261,7 @@ async function main() {
     },
     nResults: 5,
   });
+  console.log(`Query with $or: ${results.ids[0].length} results`);
 
   // 6.6 Query with logical operators ($and)
   results = await collection.query({
@@ -247,6 +271,7 @@ async function main() {
     },
     nResults: 5,
   });
+  console.log(`Query with $and: ${results.ids[0].length} results`);
 
   // 6.7 Query with document filter
   results = await collection.query({
@@ -254,6 +279,7 @@ async function main() {
     whereDocument: { $contains: "machine learning" },
     nResults: 5,
   });
+  console.log(`Query with whereDocument: ${results.ids[0].length} results`);
 
   // 6.8 Query with combined filters
   results = await collection.query({
@@ -262,19 +288,26 @@ async function main() {
     whereDocument: { $contains: "learning" },
     nResults: 5,
   });
+  console.log(`Query with combined filters: ${results.ids[0].length} results`);
 
-  // 6.9 Query with multiple embeddings (batch query)
-  const batchResults = await collection.query({
-    queryEmbeddings: [embeddings[0], embeddings[1]],
-    nResults: 2,
-  });
-
-  // 6.10 Query with specific fields
+  // 6.9 Query with specific fields
   results = await collection.query({
     queryEmbeddings: queryVector,
     include: ["documents", "metadatas", "embeddings"],
     nResults: 2,
   });
+  console.log(`Query with include: ${results.ids[0].length} results`);
+
+  // 6.10 Sparse (BM25) query
+  const sparseResults = await collection.query({
+    queryTexts: "machine learning",
+    queryKey: K.SPARSE_EMBEDDING,
+    nResults: 5,
+    include: ["documents", "metadatas", "distances"],
+  });
+  console.log(
+    `Sparse query results: ${sparseResults.ids?.[0]?.length ?? 0} items`
+  );
 
   // ============================================================================
   // PART 7: DQL OPERATIONS - GET (RETRIEVE BY IDS OR FILTERS)
@@ -282,27 +315,32 @@ async function main() {
 
   // 7.1 Get by single ID
   let getResults = await collection.get({ ids: ids[0] });
+  console.log(`Get by id: ${getResults.ids.length} item(s)`);
 
   // 7.2 Get by multiple IDs
   getResults = await collection.get({ ids: [ids[0], ids[1], ids[2]] });
+  console.log(`Get by ids: ${getResults.ids.length} items`);
 
   // 7.3 Get by metadata filter
   getResults = await collection.get({
     where: { category: "AI" },
     limit: 5,
   });
+  console.log(`Get by where (category): ${getResults.ids.length} items`);
 
   // 7.4 Get with comparison operators
   getResults = await collection.get({
     where: { score: { $gte: 90 } },
     limit: 5,
   });
+  console.log(`Get with $gte: ${getResults.ids.length} items`);
 
   // 7.5 Get with $in operator
   getResults = await collection.get({
     where: { tag: { $in: ["ml", "python"] } },
     limit: 5,
   });
+  console.log(`Get with $in: ${getResults.ids.length} items`);
 
   // 7.6 Get with logical operators
   getResults = await collection.get({
@@ -311,25 +349,32 @@ async function main() {
     },
     limit: 5,
   });
+  console.log(`Get with $or: ${getResults.ids.length} items`);
 
   // 7.7 Get by document filter
   getResults = await collection.get({
     whereDocument: { $contains: "Python" },
     limit: 5,
   });
+  console.log(`Get by whereDocument: ${getResults.ids.length} items`);
 
   // 7.8 Get with pagination
   const resultsPage1 = await collection.get({ limit: 2, offset: 0 });
   const resultsPage2 = await collection.get({ limit: 2, offset: 2 });
+  console.log(
+    `Get with pagination: page1 ${resultsPage1.ids.length}, page2 ${resultsPage2.ids.length} items`
+  );
 
   // 7.9 Get with specific fields
   getResults = await collection.get({
     ids: [ids[0], ids[1]],
     include: ["documents", "metadatas", "embeddings"],
   });
+  console.log(`Get with include: ${getResults.ids.length} items`);
 
   // 7.10 Get all data
   const allResults = await collection.get({ limit: 100 });
+  console.log(`Get all: ${allResults.ids.length} items`);
 
   console.log("Completed get operations");
 
@@ -365,19 +410,21 @@ async function main() {
 
   // 9.1 Delete by IDs
   await collection.delete({ ids: [vectorOnlyIds[0], newId] });
+  console.log("Deleted by IDs");
 
   // 9.2 Delete by metadata filter
   await collection.delete({ where: { type: { $eq: "vector_only" } } });
+  console.log("Deleted by metadata filter");
 
   // 9.3 Delete by document filter
   await collection.delete({ whereDocument: { $contains: "Updated document" } });
+  console.log("Deleted by whereDocument");
 
   // 9.4 Delete with combined filters
   await collection.delete({
     where: { category: { $eq: "CV" } },
     whereDocument: { $contains: "vision" },
   });
-
   console.log("Deleted documents");
 
   // ============================================================================
@@ -407,10 +454,10 @@ async function main() {
   // ============================================================================
 
   await client.deleteCollection(COLLECTION_NAME);
-
-  console.log(`\nCleaned up collection '${COLLECTION_NAME}'`);
+  console.log(`Cleaned up collection '${COLLECTION_NAME}'`);
 
   await client.close();
+  console.log("Client closed");
 }
 
 main().catch(console.error);

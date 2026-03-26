@@ -9,20 +9,7 @@ import type {
   RowDataPacket,
 } from "mysql2/promise";
 import { SeekdbConnectionError } from "./errors.js";
-
-/**
- * Configuration for MySQL connection
- */
-export interface ConnectionConfig {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database?: string;
-  charset: string;
-  /** Optional OceanBase/seekdb query timeout in milliseconds (e.g. 60000 = 60s). */
-  queryTimeout?: number;
-}
+import { ConnectionConfig } from "./types.js";
 
 /**
  * MySQL connection manager

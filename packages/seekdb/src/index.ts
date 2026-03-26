@@ -9,7 +9,15 @@ export { Database, OBDatabase } from "./database.js";
 export {
   registerEmbeddingFunction,
   getEmbeddingFunction,
+  registerSparseEmbeddingFunction,
+  getSparseEmbeddingFunction,
 } from "./embedding-function.js";
+export {
+  Schema,
+  SparseVectorIndexConfig,
+  VectorIndexConfig,
+  FulltextIndexConfig,
+} from "./schema.js";
 
 // Admin client factory (returns SeekdbClient for admin operations)
 export { AdminClient } from "./factory.js";

@@ -1,0 +1,48 @@
+{
+  "name": "@seekdb/bm25",
+  "version": "1.1.1",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest"
+  },
+  "peerDependencies": {
+    "@seekdb/common": "workspace:*",
+    "seekdb": "workspace:*"
+  },
+  "devDependencies": {
+    "@seekdb/common": "workspace:*",
+    "seekdb": "workspace:*"
+  },
+  "dependencies": {
+    "@types/snowball-stemmers": "^0.6.2",
+    "snowball-stemmers": "^0.6.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oceanbase/seekdb-js.git",
+    "directory": "packages/embeddings/bm25"
+  },
+  "homepage": "https://github.com/oceanbase/seekdb-js#readme",
+  "bugs": {
+    "url": "https://github.com/oceanbase/seekdb-js/issues"
+  }
+}

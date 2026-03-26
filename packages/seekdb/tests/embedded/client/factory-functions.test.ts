@@ -5,6 +5,7 @@
 import { describe, test, expect, beforeAll } from "vitest";
 import { Client, AdminClient } from "../../../src/factory.js";
 import { SeekdbClient } from "../../../src/client.js";
+import { SeekdbAdminClient } from "../../../src/client-admin.js";
 import { getTestDbDir, cleanupTestDb } from "../test-utils.js";
 
 const TEST_FILE = "factory-functions.test.ts";
@@ -113,6 +114,15 @@ describe("Embedded Mode - Factory Functions", () => {
       } catch (error) {
         // Ignore if server not available
       }
+    });
+
+    test("SeekdbAdminClient supports embedded path (same as AdminClient factory)", async () => {
+      const admin = new SeekdbAdminClient({ path: TEST_DB_DIR });
+      expect(admin).toBeDefined();
+      expect(admin.isConnected()).toBe(false);
+      const dbs = await admin.listDatabases();
+      expect(Array.isArray(dbs)).toBe(true);
+      await admin.close();
     });
   });
 

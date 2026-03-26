@@ -1,0 +1,57 @@
+{
+  "name": "@seekdb/prisma-adapter",
+  "version": "0.1.0",
+  "description": "Prisma driver adapter for seekdb Embedded — use Prisma with seekdb Embedded",
+  "keywords": [
+    "seekdb",
+    "prisma",
+    "driver-adapter",
+    "embedded",
+    "mysql",
+    "vector"
+  ],
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prisma/driver-adapter-utils": "^6.19.2"
+  },
+  "peerDependencies": {
+    "@prisma/client": ">=6.0.0",
+    "seekdb": ">=1.0.0"
+  },
+  "devDependencies": {
+    "seekdb": "workspace:*",
+    "typescript": "^5.0.0",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oceanbase/seekdb-js.git",
+    "directory": "packages/prisma-adapter"
+  },
+  "homepage": "https://github.com/oceanbase/seekdb-js#readme",
+  "bugs": {
+    "url": "https://github.com/oceanbase/seekdb-js/issues"
+  }
+}

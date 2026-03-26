@@ -77,7 +77,7 @@ describe("Server Mode - Data Normalization Scenarios", () => {
       await collection.add({
         ids: ["id1"],
         embeddings: [[1, 2, 3]],
-        metadatas: [null],
+        metadatas: [null as any],
       });
 
       const results = await collection.get({ ids: ["id1"] });
