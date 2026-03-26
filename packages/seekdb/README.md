@@ -18,14 +18,9 @@ For complete usage, please refer to the official documentation.
 [Installation](#installation)<br/>
 [Quick Start](#quick-start)<br/>
 [Usage Guide](#usage-guide)<br/>
-<<<<<<< HEAD
-[Execute raw SQL](#execute-raw-sql)<br/>
-=======
 [Vector search + relational tables](#vector-search--relational-tables)<br/>
 [Integration with ORM](#integration-with-orm)<br/>
-
-> > > > > > > a8f5a21796706882d4b4159868e450e3c87e53b1
-> > > > > > > [Database Management](#database-management)<br/>
+[Database Management](#database-management)<br/>
 
 ## Why seekdb?
 
