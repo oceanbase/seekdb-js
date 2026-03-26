@@ -1,6 +1,6 @@
 {
   "name": "@seekdb/prisma-adapter",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "description": "Prisma driver adapter for seekdb Embedded — use Prisma with seekdb Embedded",
   "keywords": [
     "seekdb",
@@ -35,7 +35,7 @@
   },
   "peerDependencies": {
     "@prisma/client": ">=6.0.0",
-    "seekdb": ">=1.0.0"
+    "seekdb": ">=1.2.0"
   },
   "devDependencies": {
     "seekdb": "workspace:*",
@@ -53,5 +53,9 @@
   "homepage": "https://github.com/oceanbase/seekdb-js#readme",
   "bugs": {
     "url": "https://github.com/oceanbase/seekdb-js/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   }
 }

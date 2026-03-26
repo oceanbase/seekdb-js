@@ -1,6 +1,6 @@
 {
   "name": "seekdb",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "A unified JavaScript/TypeScript SDK for seekdb that supports Server mode and OceanBase mode",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -49,7 +49,7 @@
     "@seekdb/js-bindings": "workspace:*"
   },
   "peerDependencies": {
-    "@seekdb/default-embed": "^1.1.1"
+    "@seekdb/default-embed": "^1.2.0"
   },
   "peerDependenciesMeta": {
     "@seekdb/default-embed": {

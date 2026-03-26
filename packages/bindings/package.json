@@ -1,7 +1,7 @@
 {
   "name": "@seekdb/js-bindings-build",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.2.0",
   "scripts": {
     "install": "npm run build:package",
     "build": "npm run build:package",
@@ -20,5 +20,9 @@
   "devDependencies": {
     "node-gyp": "^10.3.1",
     "rimraf": "^5.0.10"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   }
 }

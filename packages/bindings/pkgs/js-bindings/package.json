@@ -1,6 +1,6 @@
 {
   "name": "@seekdb/js-bindings",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "license": "Apache-2.0",
   "main": "./seekdb.js",
   "types": "./seekdb.d.ts",
@@ -19,5 +19,9 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   }
 }

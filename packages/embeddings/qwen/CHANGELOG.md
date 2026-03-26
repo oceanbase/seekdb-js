@@ -1,5 +1,18 @@
 # @seekdb/qwen
 
+## 1.2.0
+
+### Minor Changes
+
+- release v1.2.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @seekdb/common@1.2.0
+  - @seekdb/openai@1.2.0
+  - seekdb@1.2.0
+
 ## 1.1.1
 
 ### Patch Changes
@@ -19,7 +32,7 @@
 
 - Updated dependencies
   - @seekdb/common@1.1.0
-  - @seekdb/openai@2.0.0
+  - @seekdb/openai@1.2.0
   - seekdb@1.1.0
 
 ## 1.0.0

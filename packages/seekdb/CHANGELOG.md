@@ -1,5 +1,16 @@
 # seekdb
 
+## 1.2.0
+
+### Minor Changes
+
+- release v1.2.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @seekdb/default-embed@1.2.0
+
 ## 1.1.1
 
 ### Patch Changes
