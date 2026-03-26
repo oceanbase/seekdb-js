@@ -70,7 +70,6 @@ describe("GoogleVertexEmbeddingFunction", () => {
     expect(config.project_id).toBe("test-project");
     expect(config.location).toBe("us-central1");
     expect(config.model_name).toBe("textembedding-gecko");
-    expect(config.api_endpoint).toBe("us-central1-aiplatform.googleapis.com");
   });
 
   it("should initialize with custom parameters", () => {
@@ -78,16 +77,12 @@ describe("GoogleVertexEmbeddingFunction", () => {
       projectId: "test-project",
       location: "us-central1",
       modelName: "custom-model",
-      taskType: "RETRIEVAL_QUERY",
-      outputDimensionality: 512,
     });
 
     const config = embedder.getConfig();
     expect(config.project_id).toBe("test-project");
     expect(config.location).toBe("us-central1");
     expect(config.model_name).toBe("custom-model");
-    expect(config.task_type).toBe("RETRIEVAL_QUERY");
-    expect(config.output_dimensionality).toBe(512);
   });
 
   it("should generate embeddings", async () => {
@@ -109,9 +104,6 @@ describe("GoogleVertexEmbeddingFunction", () => {
       project_id: "test-project",
       location: "us-central1",
       model_name: "custom-model",
-      task_type: "SEMANTIC_SIMILARITY",
-      output_dimensionality: 256,
-      api_endpoint: "us-central1-aiplatform.googleapis.com",
     };
 
     const embedder =

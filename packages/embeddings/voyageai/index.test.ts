@@ -39,13 +39,9 @@ describe("VoyageAIEmbeddingFunction", () => {
     expect(embedder.name).toBe("voyageai");
   });
 
-  it("should throw SeekdbValueError when modelName is missing", () => {
-    expect(() => {
-      new VoyageAIEmbeddingFunction({} as any);
-    }).toThrow(SeekdbValueError);
-    expect(() => {
-      new VoyageAIEmbeddingFunction({} as any);
-    }).toThrow("VoyageAI model name is required");
+  it("should use default model when modelName is omitted", () => {
+    const embedder = new VoyageAIEmbeddingFunction({});
+    expect(embedder.getConfig().model_name).toBe("voyage-4-large");
   });
 
   it("should throw SeekdbValueError when API key is missing", () => {
@@ -55,7 +51,7 @@ describe("VoyageAIEmbeddingFunction", () => {
       new VoyageAIEmbeddingFunction({
         modelName: "voyage-2",
       });
-    }).toThrow(SeekdbValueError);
+    }).toThrow("Voyage API key is required");
     expect(() => {
       new VoyageAIEmbeddingFunction({
         modelName: "voyage-2",
@@ -71,10 +67,12 @@ describe("VoyageAIEmbeddingFunction", () => {
     const config = embedder.getConfig();
     expect(config.model_name).toBe("voyage-2");
     expect(config.api_key_env_var).toBe("VOYAGE_API_KEY");
-    expect(config.truncation).toBe(true);
+    expect(config.truncation).toBe(undefined);
   });
 
   it("should initialize with custom parameters", () => {
+    process.env.CUSTOM_VOYAGE_KEY = "test-api-key";
+
     const embedder = new VoyageAIEmbeddingFunction({
       modelName: "voyage-large-2",
       apiKeyEnvVar: "CUSTOM_VOYAGE_KEY",

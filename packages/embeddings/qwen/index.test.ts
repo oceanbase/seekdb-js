@@ -178,7 +178,6 @@ describe("QwenEmbeddingFunction", () => {
 
     // Verify snake_case keys exist
     expect(config).toHaveProperty("model_name");
-    expect(config).toHaveProperty("api_key");
     expect(config).toHaveProperty("api_key_env_var");
     expect(config).toHaveProperty("dimensions");
 

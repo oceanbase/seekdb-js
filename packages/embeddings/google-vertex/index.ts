@@ -34,7 +34,7 @@ export class GoogleVertexEmbeddingFunction implements EmbeddingFunction {
     this.projectId = config.projectId;
 
     if (!this.projectId) {
-      throw new Error("projectId is required");
+      throw new Error("Google Cloud project ID is required");
     }
 
     this.location = config.location || "us-central1";

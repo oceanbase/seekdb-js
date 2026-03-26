@@ -139,12 +139,6 @@ export class AmazonBedrockEmbeddingFunction implements EmbeddingFunction {
   static buildFromConfig(
     config: EmbeddingConfig
   ): AmazonBedrockEmbeddingFunction {
-    if (!config.api_key_env) {
-      throw new Error(
-        "Building Amazon bedrock embedding function from config: api_key_env is required in config."
-      );
-    }
-
     return new AmazonBedrockEmbeddingFunction({
       apiKeyEnv: config.api_key_env,
       region: config.region,

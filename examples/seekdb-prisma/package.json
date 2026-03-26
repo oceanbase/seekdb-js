@@ -5,7 +5,7 @@
   "scripts": {
     "start": "tsx index.ts",
     "start:embedded": "tsx index-embedded.ts",
-    "db:generate": "prisma generate",
+    "postinstall": "prisma generate",
     "db:push": "prisma db push"
   },
   "dependencies": {

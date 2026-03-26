@@ -101,11 +101,6 @@ export class QwenEmbeddingFunction
   }
 
   static buildFromConfig(config: EmbeddingConfig): QwenEmbeddingFunction {
-    if (!config.api_key_env_var) {
-      throw new Error(
-        "Building Qwen embedding function from config: api_key_env_var is required in config."
-      );
-    }
     return new QwenEmbeddingFunction({
       modelName: config.model_name,
       apiKeyEnvVar: config.api_key_env_var,

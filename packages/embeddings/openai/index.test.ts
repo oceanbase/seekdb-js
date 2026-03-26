@@ -147,11 +147,11 @@ describe("OpenAIEmbeddingFunction", () => {
 
     const config = embedder.getConfig();
     expect(config).toEqual({
-      api_key: "test-api-key",
       model_name: "test-model",
       dimensions: 1536,
       organization_id: "org-test",
       api_key_env_var: "OPENAI_API_KEY",
+      base_url: undefined,
     });
   });
 
@@ -168,7 +168,6 @@ describe("OpenAIEmbeddingFunction", () => {
 
     // Verify snake_case keys exist
     expect(config).toHaveProperty("model_name");
-    expect(config).toHaveProperty("api_key");
     expect(config).toHaveProperty("api_key_env_var");
     expect(config).toHaveProperty("organization_id");
 

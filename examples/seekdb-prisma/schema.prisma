@@ -1,6 +1,7 @@
 // Prisma schema: relational tables only. Vector tables are managed by seekdb Collection.
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated/client"
 }
 
 datasource db {
