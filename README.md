@@ -354,8 +354,8 @@ import { K } from "seekdb";
 
 const results = await collection.query({
   queryTexts: "artificial intelligence",
-  // Use sparse vector index, default by K.DOCUMENT
-  queryKey: K.DOCUMENT,
+  // Use sparse vector index, default by K.EMBEDDING
+  queryKey: K.EMBEDDING,
   nResults: 3,
 });
 ```
@@ -367,7 +367,7 @@ const queryVector: SparseVector = { 1234: 0.5, 5678: 0.8 };
 
 const results = await collection.query({
   queryEmbeddings: queryVector,
-  queryKey: "sparseEmbedding",
+  queryKey: K.SPARSE_EMBEDDING,
   nResults: 5,
 });
 ```
