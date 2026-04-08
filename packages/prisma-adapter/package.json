@@ -31,7 +31,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@prisma/driver-adapter-utils": "^6.19.2"
+    "@prisma/driver-adapter-utils": "^7.7.0"
   },
   "peerDependencies": {
     "@prisma/client": ">=6.0.0",
