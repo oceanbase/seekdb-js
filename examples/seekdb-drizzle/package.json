@@ -14,8 +14,8 @@
     "mysql2": "^3.11.0"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.28.0",
+    "drizzle-kit": "^0.31.10",
     "tsx": "^4.20.0",
-    "typescript": "^5.0.0"
+    "typescript": "^6.0.2"
   }
 }
