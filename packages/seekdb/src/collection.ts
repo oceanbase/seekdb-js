@@ -1290,7 +1290,7 @@ export class Collection {
   /**
    * Refresh vector indexes to make latest writes searchable immediately.
    */
-  flush(): Promise<void> {
+  refresh_index(): Promise<void> {
     return this.#client
       .execute("CALL dbms_index_manager.refresh();")
       .then(() => undefined);
