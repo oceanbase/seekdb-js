@@ -1288,6 +1288,15 @@ export class Collection {
   }
 
   /**
+   * Refresh vector indexes to make latest writes searchable immediately.
+   */
+  flush(): Promise<void> {
+    return this.#client
+      .execute("CALL dbms_index_manager.refresh();")
+      .then(() => undefined);
+  }
+
+  /**
    * Get detailed collection information
    *
    * @returns Object containing collection metadata
