@@ -41,6 +41,7 @@ describe("Server Mode - Query Approximate Parameter", () => {
           [7, 8, 9],
         ],
       });
+      await collection.refresh_index();
 
       // Query with approximate=true (default)
       const results = await collection.query({
@@ -69,6 +70,7 @@ describe("Server Mode - Query Approximate Parameter", () => {
           [7, 8, 9],
         ],
       });
+      await collection.refresh_index();
 
       // Query with approximate=false
       const results = await collection.query({
@@ -98,6 +100,7 @@ describe("Server Mode - Query Approximate Parameter", () => {
           [4, 5, 6],
         ],
       });
+      await collection.refresh_index();
 
       // Query without approximate parameter (should default to true)
       const results = await collection.query({

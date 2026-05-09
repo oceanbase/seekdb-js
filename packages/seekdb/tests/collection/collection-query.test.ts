@@ -55,6 +55,7 @@ describe("Collection Query Operations", () => {
           { category: "AI", score: 85, tag: "neural" },
         ],
       });
+      await collection.refresh_index();
     });
 
     afterAll(async () => {
