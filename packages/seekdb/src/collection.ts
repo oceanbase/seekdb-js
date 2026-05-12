@@ -47,6 +47,7 @@ import { Schema } from "./schema.js";
  * Collection - manages a collection of documents with embeddings
  */
 export class Collection {
+  private static readonly MIN_REFRESH_INDEX_VERSION = [1, 3, 0] as const;
   readonly name: string;
   readonly schema?: Schema;
   readonly dimension: number;
@@ -57,6 +58,8 @@ export class Collection {
   readonly collectionId?: string; // v2 format collection ID
   readonly client: SeekdbClient;
   #client: IInternalClient;
+  #refreshIndexVersionChecked = false;
+  #refreshIndexVersionSupported = false;
 
   constructor(config: CollectionConfig) {
     this.name = config.name;
@@ -1290,10 +1293,125 @@ export class Collection {
   /**
    * Refresh vector indexes to make latest writes searchable immediately.
    */
-  refresh_index(): Promise<void> {
-    return this.#client
-      .execute("CALL dbms_index_manager.refresh();")
-      .then(() => undefined);
+  async refresh_index(): Promise<void> {
+    const supported = await this.isRefreshIndexVersionSupported();
+    if (!supported) {
+      return;
+    }
+    await this.#client.execute("CALL dbms_index_manager.refresh();");
+  }
+
+  private static parseSemver(
+    versionText: string
+  ): [number, number, number] | null {
+    const text = versionText.trim();
+    const hasSeekdbToken = /seekdb/i.test(text);
+
+    // Prefer seekdb-specific version when available, e.g. "seekdb-v1.3.0.0".
+    if (hasSeekdbToken) {
+      const seekdbMatch = text.match(
+        /seekdb(?:[-_\s]*v)?[-_\s]*(\d+)\.(\d+)\.(\d+)/i
+      );
+      if (!seekdbMatch) return null;
+      return [
+        Number(seekdbMatch[1]),
+        Number(seekdbMatch[2]),
+        Number(seekdbMatch[3]),
+      ];
+    }
+
+    // For non-seekdb strings, only accept unambiguous semantic version.
+    const matches = [...text.matchAll(/(\d+)\.(\d+)\.(\d+)/g)];
+    if (matches.length !== 1) return null;
+    const [major, minor, patch] = matches[0].slice(1).map(Number);
+    return [major, minor, patch];
+  }
+
+  private static compareSemver(
+    left: [number, number, number],
+    right: readonly [number, number, number]
+  ): number {
+    for (let i = 0; i < 3; i++) {
+      if (left[i] !== right[i]) return left[i] - right[i];
+    }
+    return 0;
+  }
+
+  private static pickVersionTextFromRows(
+    rows: Array<Record<string, unknown>> | null
+  ): string | null {
+    if (!rows || rows.length === 0) return null;
+
+    const unwrap = (value: unknown): string | null => {
+      if (value == null) return null;
+      if (typeof value === "string" || typeof value === "number") {
+        return String(value);
+      }
+      if (typeof value === "object") {
+        const obj = value as Record<string, unknown>;
+        const wrapped =
+          obj.VARCHAR ??
+          obj.varchar ??
+          obj.TEXT ??
+          obj.text ??
+          obj.MEDIUMTEXT ??
+          obj.mediumtext ??
+          obj.LONGTEXT ??
+          obj.longtext;
+        if (typeof wrapped === "string" || typeof wrapped === "number") {
+          return String(wrapped);
+        }
+      }
+      return null;
+    };
+
+    for (const row of rows) {
+      for (const [key, value] of Object.entries(row)) {
+        if (!key.toLowerCase().includes("version")) continue;
+        const text = unwrap(value);
+        if (text) return text;
+      }
+    }
+
+    for (const row of rows) {
+      for (const value of Object.values(row)) {
+        const text = unwrap(value);
+        if (text && Collection.parseSemver(text)) return text;
+      }
+    }
+
+    return null;
+  }
+
+  private async isRefreshIndexVersionSupported(): Promise<boolean> {
+    if (this.#refreshIndexVersionChecked) {
+      return this.#refreshIndexVersionSupported;
+    }
+
+    let supported = false;
+    try {
+      const rows = (await this.#client.execute(
+        "SELECT VERSION() AS version"
+      )) as Array<Record<string, unknown>> | null;
+      const versionText = Collection.pickVersionTextFromRows(rows);
+      const parsedVersion = versionText
+        ? Collection.parseSemver(versionText)
+        : null;
+      supported =
+        parsedVersion !== null &&
+        Collection.compareSemver(
+          parsedVersion,
+          Collection.MIN_REFRESH_INDEX_VERSION
+        ) >= 0;
+    } catch {
+      // Keep refresh_index best-effort and user-transparent:
+      // if version detection fails, treat as unsupported and no-op.
+      supported = false;
+    }
+
+    this.#refreshIndexVersionChecked = true;
+    this.#refreshIndexVersionSupported = supported;
+    return supported;
   }
 
   /**
