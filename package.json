@@ -6,6 +6,7 @@
     "build": "pnpm --filter seekdb run build && pnpm --filter '@seekdb/*' run build",
     "build:seekdb": "pnpm --filter seekdb run build",
     "build:embeddings": "pnpm --filter '@seekdb/*' run build",
+    "bindings:clean": "pnpm --filter @seekdb/js-bindings-build run clean",
     "test": "pnpm --filter seekdb run test && pnpm --filter @seekdb/prisma-adapter run test",
     "lint": "pnpm -r run lint",
     "type-check": "pnpm -r run type-check",

@@ -121,6 +121,8 @@ jobs:
             runner: ubuntu-22.04-arm
           - platform: darwin-arm64
             runner: macos-14
+          - platform: windows-x64
+            runner: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -149,7 +151,7 @@ jobs:
       - name: Build packages
         run: pnpm run build
 
-      # macOS has no Docker; skip container and exclude mode-consistency (needs seekdb server)
+      # Docker seekdb server is Linux-only; macOS/Windows skip container and exclude mode-consistency (needs server)
       - name: Start seekdb container
         if: runner.os == 'Linux'
         shell: bash
@@ -159,6 +161,7 @@ jobs:
           docker logs seekdb-server
 
       - name: Run embedded tests
+        shell: bash
         working-directory: packages/seekdb
         env:
           SEEKDB_HOST: 127.0.0.1

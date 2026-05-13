@@ -1,6 +1,6 @@
 # Build, pack and upload seekdb JS bindings for multiple platforms to S3
 #
-# Platforms: linux-x64, linux-arm64, darwin-arm64 (macOS x64 not supported)
+# Platforms: linux-x64, linux-arm64, darwin-arm64, win32-x64 (macOS x64 not supported)
 # S3: s3://oceanbase-seekdb-builds/js-bindings/all_commits/<sha>/seekdb-js-bindings-<platform>.zip
 #
 name: Build JS bindings
@@ -138,6 +138,59 @@ jobs:
           name: seekdb-js-bindings-${{ matrix.platform }}
           path: seekdb-js-bindings-${{ matrix.platform }}.zip
 
+  # ---------- Build JS bindings on Windows ----------
+  build-windows:
+    name: Build JS bindings (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: win32-x64
+            runner: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build bindings (Windows)
+        working-directory: packages/bindings
+        run: pnpm run build
+
+      - name: Pack artifact (Windows)
+        working-directory: packages/bindings/pkgs/js-bindings
+        shell: pwsh
+        run: |
+          $root = (Resolve-Path ../../../..).Path
+          $zip = Join-Path $root "seekdb-js-bindings-${{ matrix.platform }}.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path * -DestinationPath $zip -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: seekdb-js-bindings-${{ matrix.platform }}
+          path: seekdb-js-bindings-${{ matrix.platform }}.zip
+
   # ---------- Collect artifacts and upload to S3 ----------
   release-artifacts:
     name: Collect artifacts and upload to S3
@@ -145,6 +198,7 @@ jobs:
     needs:
       - build-linux
       - build-macos
+      - build-windows
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
