@@ -268,6 +268,7 @@ describe("Mode Consistency Tests", () => {
         ],
         documents: ["doc1", "doc2"],
       });
+      await serverCollection.refresh_index();
 
       // Create and add data in embedded mode
       const embeddedCollection = await embeddedClient.createCollection({
