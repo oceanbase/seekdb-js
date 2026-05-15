@@ -97,14 +97,13 @@ jobs:
           docker logs seekdb-server
 
       - name: Run server tests
-        working-directory: packages/seekdb
         env:
           SEEKDB_HOST: 127.0.0.1
           SEEKDB_PORT: 2881
           SEEKDB_USER: root
           SEEKDB_PASSWORD: ""
           SEEKDB_DATABASE: test
-        run: pnpm exec vitest run --exclude 'tests/embedded/**'
+        run: pnpm run test:server
 
   # Embedded-mode tests on multiple platforms (requires native bindings build per OS; Docker per job)
   test-embedded:
@@ -162,7 +161,6 @@ jobs:
 
       - name: Run embedded tests
         shell: bash
-        working-directory: packages/seekdb
         env:
           SEEKDB_HOST: 127.0.0.1
           SEEKDB_PORT: 2881
@@ -171,9 +169,9 @@ jobs:
           SEEKDB_DATABASE: test
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
-            pnpm exec vitest run tests/embedded/ 2>&1 | tee /tmp/vitest.log
+            pnpm run test:embedded 2>&1 | tee /tmp/vitest.log
           else
-            pnpm exec vitest run tests/embedded/ --exclude '**/mode-consistency.test.ts' 2>&1 | tee /tmp/vitest.log
+            pnpm run test:embedded -- --exclude '**/mode-consistency.test.ts' 2>&1 | tee /tmp/vitest.log
           fi
           exit_code=$?
           if [ $exit_code -ne 0 ]; then exit $exit_code; fi
