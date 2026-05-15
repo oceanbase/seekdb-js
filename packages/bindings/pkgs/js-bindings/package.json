@@ -15,7 +15,7 @@
     "url": "https://github.com/oceanbase/seekdb-js.git"
   },
   "dependencies": {
-    "adm-zip": "^0.5.16"
+    "adm-zip": "^0.5.17"
   },
   "engines": {
     "node": ">=18"
