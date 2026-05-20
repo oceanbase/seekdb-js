@@ -18,6 +18,7 @@ For complete usage, see the official documentation.
 [Packages](#packages)<br/>
 [Installation](#installation)<br/>
 [Running Modes](#running-modes)<br/>
+[Embedded mode platform support](#embedded-mode-platform-support)<br/>
 [Quick Start](#quick-start)<br/>
 [Usage Guide](#usage-guide)<br/>
 [Examples](#examples)<br/>
@@ -68,6 +69,19 @@ The SDK supports two modes; the constructor arguments to `SeekdbClient` determin
 
 - **SeekdbClient**: Pass `path` for embedded mode, or `host` (and port, user, password, etc.) for server mode.
 - **SeekdbAdminClient()**: For admin operations only; pass `path` for embedded or `host` for server. In embedded mode you do not specify a database name.
+
+### Embedded mode platform support
+
+Embedded mode uses the native package **`@seekdb/js-bindings`**. Prebuilt binaries are supported on:
+
+| Platform key   | OS / CPU                    |
+| -------------- | --------------------------- |
+| `linux-x64`    | Linux x86_64                |
+| `linux-arm64`  | Linux ARM64                 |
+| `darwin-arm64` | macOS Apple Silicon (ARM64) |
+| `win32-x64`    | Windows x86_64              |
+
+Optional environment variables for the loader: `SEEKDB_BINDINGS_BASE_URL` (artifact directory URL), `SEEKDB_BINDINGS_CACHE_DIR` (download cache). See [`packages/bindings/README.md`](./packages/bindings/README.md).
 
 ## Quick Start
 

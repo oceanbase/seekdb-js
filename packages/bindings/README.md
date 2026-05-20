@@ -13,7 +13,7 @@ The native addon is structured in three layers:
 
 2. **JavaScript Wrapper** (`pkgs/js-bindings/seekdb.js`)
    - Loads native `.node` from same dir (npm package / local build) or on-demand download (Node fetch + adm-zip)
-   - Supports Linux (x64/arm64) and macOS (arm64 only). **Native bindings are not on npm**; built by CI and hosted on S3.
+   - Supports Linux (x64/arm64), macOS (arm64), and Windows (x64). **Native bindings are not on npm**; built by CI and hosted on S3.
 
 3. **TypeScript API Layer** (`../seekdb/src/client-embedded.ts`)
    - High-level TypeScript API
@@ -22,7 +22,7 @@ The native addon is structured in three layers:
 
 ## Distribution (S3, not npm)
 
-Native bindings are **not** published to npm. They are built by [`.github/workflows/build-js-bindings.yml`](../../.github/workflows/build-js-bindings.yml) and uploaded to S3. Each set of artifacts lives in a directory that contains `seekdb-js-bindings-<platform>.zip` for each platform (e.g. linux-x64, linux-arm64, darwin-arm64).
+Native bindings are **not** published to npm. They are built by [`.github/workflows/build-js-bindings.yml`](../../.github/workflows/build-js-bindings.yml) and uploaded to S3. Each set of artifacts lives in a directory that contains `seekdb-js-bindings-<platform>.zip` for each platform (e.g. linux-x64, linux-arm64, darwin-arm64, win32-x64).
 
 **Usage**: When embedded mode is first used, the loader uses same-dir `seekdb.node` (npm package or local build) or downloads bindings on demand. Optional env:
 
@@ -45,7 +45,7 @@ This will:
 
 1. Fetch the libseekdb library for your platform (Python scripts invoked by `binding.gyp`)
 2. If the archive contains a `libs/` directory, copy it to `pkgs/js-bindings/libs/` (e.g. macOS runtime deps)
-3. Compile the C++ bindings with node-gyp and copy `seekdb.node` and `libseekdb.so`/`libseekdb.dylib` into `pkgs/js-bindings/`
+3. Compile the C++ bindings with node-gyp and copy `seekdb.node` and `libseekdb.so` / `libseekdb.dylib` / `seekdb.dll` (as appropriate for the platform) into `pkgs/js-bindings/`
 
 ## Platform Support
 
@@ -54,12 +54,13 @@ The bindings support the following platforms:
 - Linux x64
 - Linux arm64
 - macOS arm64 (Apple Silicon)
+- Windows x64
 
-Note: macOS x64 and Windows are not currently supported.
+Note: macOS x64 (Intel) is not currently supported in CI; local builds may still be possible.
 
 ## C API Integration
 
-The bindings use the seekdb C API (see `seekdb.h` in `libseekdb/` after fetch) and link against `libseekdb.so` / `libseekdb.dylib`. The native library is downloaded and extracted by platform-specific Python scripts in `scripts/` (invoked from `binding.gyp`); see `scripts/README.md` for details.
+The bindings use the seekdb C API (see `seekdb.h` in `libseekdb/` after fetch) and link against `libseekdb.so`, `libseekdb.dylib`, or `seekdb.dll` / import lib on Windows. The native library is downloaded and extracted by platform-specific Python scripts in `scripts/` (invoked from `binding.gyp`); see `scripts/README.md` for details.
 
 ### Current Implementation
 
