@@ -41,6 +41,7 @@ async function runOfficialExample(collection: Collection) {
     metadatas: PRODUCT_METADATA,
     ids: PRODUCT_IDS,
   });
+  await collection.refresh_index();
 
   // Query with filters
   const results = await collection.query({
