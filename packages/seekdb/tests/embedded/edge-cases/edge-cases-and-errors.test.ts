@@ -275,7 +275,6 @@ describe("Embedded Mode - Edge Cases and Error Handling", () => {
         await client.deleteCollection(collectionName);
       });
 
-      // C ABI: metadata with newlines/quotes may be truncated or corrupted, or C layer may throw "Invalid JSON text".
       test("handles special characters in metadata", async () => {
         const collectionName = generateCollectionName("test_special_chars");
         const collection = await client.createCollection({
@@ -295,25 +294,18 @@ describe("Embedded Mode - Edge Cases and Error Handling", () => {
           "key\nwith\nnewlines": "value",
         };
 
-        try {
-          await collection.add({
-            ids: ["id_special"],
-            embeddings: [[1, 2, 3]],
-            metadatas: [specialMetadata],
-          });
-          const results = await collection.get({ ids: ["id_special"] });
-          expect(results.metadatas).toBeDefined();
-          expect(results.metadatas![0]).toEqual(specialMetadata);
-        } catch (e: any) {
-          // Embedded: C/engine may throw "Invalid JSON text" when metadata contains special chars; accept as known limitation.
-          const msg = String(e?.message ?? e ?? "").toLowerCase();
-          expect(msg).toMatch(/invalid json|json text/);
-        } finally {
-          await client.deleteCollection(collectionName).catch(() => {});
-        }
+        await collection.add({
+          ids: ["id_special"],
+          embeddings: [[1, 2, 3]],
+          metadatas: [specialMetadata],
+        });
+
+        const results = await collection.get({ ids: ["id_special"] });
+        expect(results.metadatas![0]).toEqual(specialMetadata);
+
+        await client.deleteCollection(collectionName);
       });
 
-      // Embedded: 100KB supported via STRING→MEDIUMTEXT; session ob_default_lob_inrow_threshold set on connect so LOB in-row; C ABI read_lob_data for out-of-row.
       test("handles very long document", async () => {
         const collectionName = generateCollectionName("test_long_doc");
         const collection = await client.createCollection({
@@ -330,9 +322,8 @@ describe("Embedded Mode - Edge Cases and Error Handling", () => {
         });
 
         const results = await collection.get({ ids: ["id_long"] });
-        expect(results.documents).toBeDefined();
         expect(results.documents![0]).toBe(longDoc);
-        expect((results.documents![0] as string).length).toBe(100000);
+        expect(results.documents![0].length).toBe(100000);
 
         await client.deleteCollection(collectionName);
       });
