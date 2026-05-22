@@ -46,8 +46,13 @@ def fetch_libseekdb(zip_url, output_dir, local_zip_name):
   """
   Download zip from zip_url and extract all contents into output_dir.
   local_zip_name: filename for the local zip (e.g. libseekdb-darwin-arm64.zip).
+  Skips download when the native library is already present (node-gyp / pnpm install).
   """
   _ensure_output_dir_valid(output_dir)
+  if not _need_fetch(output_dir):
+    print("libseekdb native library already present in " + output_dir + ", skipping fetch")
+    copy_libs_to_package(os.path.dirname(output_dir))
+    return
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
