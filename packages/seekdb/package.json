@@ -24,7 +24,7 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:server": "vitest run --exclude \"tests/embedded/**\"",
-    "test:embedded": "bash -c 'set -o pipefail; vitest run tests/embedded 2>&1 | grep -v alloc_log_item'",
+    "test:embedded": "vitest run tests/embedded",
     "type-check": "tsc --noEmit",
     "prettier": "prettier --write .",
     "docs": "typedoc --entryPoints src/index.ts --out docs/v2"
