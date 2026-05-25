@@ -47,10 +47,35 @@ function getCacheDir() {
   return path.join(base, version, getPlatformArch());
 }
 
+/** Copy libs/*.dll next to seekdb.node; Node on Windows does not search libs/ for native deps. */
+function prepareWin32BindingsDir(bindingsDir) {
+  if (process.platform !== "win32") return;
+  const libsDir = path.join(bindingsDir, "libs");
+  if (!fs.existsSync(libsDir)) return;
+  for (const name of fs.readdirSync(libsDir)) {
+    if (!name.toLowerCase().endsWith(".dll")) continue;
+    const dest = path.join(bindingsDir, name);
+    if (!fs.existsSync(dest)) {
+      fs.copyFileSync(path.join(libsDir, name), dest);
+    }
+  }
+}
+
+function isWin32BindingsDirReady(bindingsDir) {
+  if (process.platform !== "win32") return true;
+  return (
+    fs.existsSync(path.join(bindingsDir, "seekdb.node")) &&
+    fs.existsSync(path.join(bindingsDir, "seekdb.dll"))
+  );
+}
+
 async function ensureBindingsDownloaded() {
   const cacheDir = getCacheDir();
   const nodePath = path.join(cacheDir, "seekdb.node");
-  if (fs.existsSync(nodePath)) return cacheDir;
+  if (isWin32BindingsDirReady(cacheDir)) {
+    prepareWin32BindingsDir(cacheDir);
+    return cacheDir;
+  }
 
   const platform = getPlatformArch();
   const zipPath = path.join(cacheDir, `seekdb-js-bindings-${platform}.zip`);
@@ -69,7 +94,17 @@ async function ensureBindingsDownloaded() {
   if (!fs.existsSync(nodePath)) {
     throw new Error(`Zip did not contain seekdb.node: ${zipPath}`);
   }
+  if (!isWin32BindingsDirReady(cacheDir)) {
+    throw new Error(
+      `Zip missing Windows runtime (seekdb.node and seekdb.dll required): ${zipPath}`
+    );
+  }
+  prepareWin32BindingsDir(cacheDir);
   return cacheDir;
 }
 
-module.exports = { ensureBindingsDownloaded, getPlatformArch };
+module.exports = {
+  ensureBindingsDownloaded,
+  getPlatformArch,
+  prepareWin32BindingsDir,
+};

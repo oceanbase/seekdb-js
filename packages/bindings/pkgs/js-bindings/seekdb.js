@@ -1,17 +1,11 @@
 const path = require("path");
-const fs = require("fs");
-const { ensureBindingsDownloaded } = require("./download.js");
+const {
+  ensureBindingsDownloaded,
+  prepareWin32BindingsDir,
+} = require("./download.js");
 
 function requireNativeBinding(bindingsDir) {
-  if (process.platform === "win32") {
-    const sep = path.delimiter;
-    const libsDir = path.join(bindingsDir, "libs");
-    const prefix = fs.existsSync(libsDir)
-      ? `${bindingsDir}${sep}${libsDir}`
-      : bindingsDir;
-    const pathEnv = process.env.PATH || "";
-    process.env.PATH = pathEnv ? `${prefix}${sep}${pathEnv}` : prefix;
-  }
+  prepareWin32BindingsDir(bindingsDir);
   return require(path.join(bindingsDir, "seekdb.node"));
 }
 
