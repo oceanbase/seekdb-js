@@ -1,5 +1,15 @@
 # seekdb
 
+## 1.3.0
+
+Release date: 2026-05-25
+Version: V1.3.0
+
+## New Features
+
+- **refresh_index**: Added `collection.refresh_index()` to refresh vector indexes so the latest writes are searchable immediately. On seekdb versions below 1.3.0, the call is a no-op (best-effort). [@xiebaoma](https://github.com/xiebaoma) in [#39](https://github.com/oceanbase/seekdb-js/pull/39).
+- **Embedded Mode**: Adapt to seekdb 1.3.0 and update to libseekdb 1.3.0 by [@dengfuping][https://github.com/dengfuping] in [#40](https://github.com/oceanbase/seekdb-js/pull/40).
+
 ## 1.2.0
 
 ### Minor Changes
