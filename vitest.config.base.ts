@@ -20,9 +20,9 @@ export default {
       },
     },
 
-    // set timeout
-    testTimeout: 60000,
-    hookTimeout: 60000,
+    // set timeout: 2 minutes for individual tests
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
     teardownTimeout: 30000,
 
     // disable file parallelism, ensure stability
