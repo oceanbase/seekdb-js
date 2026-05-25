@@ -32,8 +32,9 @@ These scripts download libseekdb files for specific platforms. They are automati
 - `fetch_libseekdb_linux_x64.py` - Linux x64
 - `fetch_libseekdb_linux_arm64.py` - Linux arm64
 - `fetch_libseekdb_darwin_arm64.py` - macOS arm64 (Apple Silicon)
+- `fetch_libseekdb_windows_x64.py` - Windows x64
 
-Note: Windows and macOS x64 (Intel Silicon) is not currently supported.
+Note: macOS x64 (Intel) fetch/build is not wired in CI; Windows x64 is built in `build-js-bindings.yml`.
 
 **Manual usage (if needed):**
 

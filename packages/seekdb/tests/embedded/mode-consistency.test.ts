@@ -285,6 +285,7 @@ describe("Mode Consistency Tests", () => {
         ],
         documents: ["doc1", "doc2"],
       });
+      await embeddedCollection.refresh_index();
 
       // Query both modes
       const serverResults = await serverCollection.query({

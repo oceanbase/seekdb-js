@@ -55,6 +55,7 @@ describe("Embedded Mode - Default Embedding Function Tests", () => {
       documents: testDocuments,
       metadatas: testMetadatas,
     });
+    await collection.refresh_index();
 
     // Test query with queryTexts (using the default embedding function)
     const results = await collection.query({

@@ -50,6 +50,7 @@ describe("Embedded Mode - Complex Query Scenarios", () => {
           { nested: { key: "value1" }, score: 95 },
         ],
       });
+      await collection.refresh_index();
 
       const results = await collection.query({
         queryEmbeddings: [[1, 2, 3]],
@@ -82,6 +83,7 @@ describe("Embedded Mode - Complex Query Scenarios", () => {
           { category: "A", score: 95 },
         ],
       });
+      await collection.refresh_index();
 
       const results = await collection.query({
         queryEmbeddings: [[1, 2, 3]],
@@ -116,6 +118,7 @@ describe("Embedded Mode - Complex Query Scenarios", () => {
           { tags: ["tag1", "tag3"] },
         ],
       });
+      await collection.refresh_index();
 
       const results = await collection.query({
         queryEmbeddings: [[1, 2, 3]],
@@ -156,6 +159,8 @@ describe("Embedded Mode - Complex Query Scenarios", () => {
 
       await l2Collection.add(testData);
       await cosineCollection.add(testData);
+      await l2Collection.refresh_index();
+      await cosineCollection.refresh_index();
 
       const queryVector = [[1, 0, 0]];
 
@@ -194,6 +199,7 @@ describe("Embedded Mode - Complex Query Scenarios", () => {
         documents: ["test"],
         metadatas: [{ key: "value" }],
       });
+      await collection.refresh_index();
 
       const results = await collection.query({
         queryEmbeddings: [[1, 2, 3]],
@@ -222,6 +228,7 @@ describe("Embedded Mode - Complex Query Scenarios", () => {
         documents: ["test"],
         metadatas: [{ key: "value" }],
       });
+      await collection.refresh_index();
 
       const results = await collection.query({
         queryEmbeddings: [[1, 2, 3]],
@@ -254,6 +261,7 @@ describe("Embedded Mode - Complex Query Scenarios", () => {
           [7, 8, 9],
         ],
       });
+      await collection.refresh_index();
 
       const results = await collection.query({
         queryEmbeddings: [

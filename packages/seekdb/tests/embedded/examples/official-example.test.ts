@@ -77,6 +77,7 @@ describe("Embedded Mode - Official Example", () => {
       documents: PRODUCT_DOCUMENTS,
       metadatas: PRODUCT_METADATA,
     });
+    await collection.refresh_index();
 
     // Step 3: Query with queryTexts
     const queryResults = await collection.query({

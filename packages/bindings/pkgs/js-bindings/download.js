@@ -6,9 +6,14 @@ const fs = require("fs");
 const os = require("os");
 const AdmZip = require("adm-zip");
 
-const SUPPORTED_PLATFORMS = ["darwin-arm64", "linux-x64", "linux-arm64"];
+const SUPPORTED_PLATFORMS = [
+  "darwin-arm64",
+  "linux-x64",
+  "linux-arm64",
+  "win32-x64",
+];
 const DEFAULT_BASE_URL =
-  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/js-bindings/all_commits/7548fd4ac9bb9d8a06621dfb1ade3924a95145d6";
+  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/js-bindings/all_commits/491beee0a7e67ba004502a83ea2da484f5fd9cdc";
 
 function getPlatformArch() {
   const key = `${process.platform}-${process.arch === "arm64" ? "arm64" : "x64"}`;
@@ -42,10 +47,35 @@ function getCacheDir() {
   return path.join(base, version, getPlatformArch());
 }
 
+/** Copy libs/*.dll next to seekdb.node; Node on Windows does not search libs/ for native deps. */
+function prepareWin32BindingsDir(bindingsDir) {
+  if (process.platform !== "win32") return;
+  const libsDir = path.join(bindingsDir, "libs");
+  if (!fs.existsSync(libsDir)) return;
+  for (const name of fs.readdirSync(libsDir)) {
+    if (!name.toLowerCase().endsWith(".dll")) continue;
+    const dest = path.join(bindingsDir, name);
+    if (!fs.existsSync(dest)) {
+      fs.copyFileSync(path.join(libsDir, name), dest);
+    }
+  }
+}
+
+function isWin32BindingsDirReady(bindingsDir) {
+  if (process.platform !== "win32") return true;
+  return (
+    fs.existsSync(path.join(bindingsDir, "seekdb.node")) &&
+    fs.existsSync(path.join(bindingsDir, "seekdb.dll"))
+  );
+}
+
 async function ensureBindingsDownloaded() {
   const cacheDir = getCacheDir();
   const nodePath = path.join(cacheDir, "seekdb.node");
-  if (fs.existsSync(nodePath)) return cacheDir;
+  if (isWin32BindingsDirReady(cacheDir)) {
+    prepareWin32BindingsDir(cacheDir);
+    return cacheDir;
+  }
 
   const platform = getPlatformArch();
   const zipPath = path.join(cacheDir, `seekdb-js-bindings-${platform}.zip`);
@@ -64,7 +94,17 @@ async function ensureBindingsDownloaded() {
   if (!fs.existsSync(nodePath)) {
     throw new Error(`Zip did not contain seekdb.node: ${zipPath}`);
   }
+  if (!isWin32BindingsDirReady(cacheDir)) {
+    throw new Error(
+      `Zip missing Windows runtime (seekdb.node and seekdb.dll required): ${zipPath}`
+    );
+  }
+  prepareWin32BindingsDir(cacheDir);
   return cacheDir;
 }
 
-module.exports = { ensureBindingsDownloaded, getPlatformArch };
+module.exports = {
+  ensureBindingsDownloaded,
+  getPlatformArch,
+  prepareWin32BindingsDir,
+};

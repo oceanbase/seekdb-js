@@ -23,6 +23,9 @@
     "build:bindings": "cd ../bindings && node-gyp configure && node-gyp build",
     "dev": "tsup --watch",
     "test": "vitest",
+    "test:server": "vitest run --exclude \"tests/embedded/**\"",
+    "test:embedded": "vitest run tests/embedded",
+    "test:embedded:no-consistency": "vitest run tests/embedded --exclude tests/embedded/mode-consistency.test.ts",
     "type-check": "tsc --noEmit",
     "prettier": "prettier --write .",
     "docs": "typedoc --entryPoints src/index.ts --out docs/v2"

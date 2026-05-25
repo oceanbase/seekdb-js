@@ -620,7 +620,7 @@ class ExecuteWorker : public Napi::AsyncWorker {
               size_t str_len = seekdb_row_get_string_len(row, j);
               const size_t max_safe_len = 10 * 1024 * 1024;  // 10MB cap to avoid OOM
               const size_t fallback_buf_size = 2 * 1024 * 1024;  // 2MB when length unknown
-              if (str_len != static_cast<size_t>(-1) && str_len <= max_safe_len) {
+              if (str_len != static_cast<size_t>(-1) && str_len > 0 && str_len <= max_safe_len) {
                 std::vector<char> buf(str_len + 1, 0);
                 int ret = seekdb_row_get_string(row, j, buf.data(), buf.size());
                 if (ret == SEEKDB_SUCCESS) {
@@ -628,8 +628,8 @@ class ExecuteWorker : public Napi::AsyncWorker {
                 } else {
                   row_obj.Set(j, env.Null());
                 }
-              } else if (str_len == static_cast<size_t>(-1)) {
-                // Length unknown (e.g. long TEXT/BLOB): try large buffer so long document/metadata not truncated
+              } else if (str_len == 0 || str_len == static_cast<size_t>(-1)) {
+                // C ABI may report len 0/-1 for out-of-row TEXT; try large buffer before giving up.
                 std::vector<char> buf(fallback_buf_size, 0);
                 int ret = seekdb_row_get_string(row, j, buf.data(), buf.size());
                 if (ret == SEEKDB_SUCCESS) {

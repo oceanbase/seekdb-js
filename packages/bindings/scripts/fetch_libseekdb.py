@@ -36,7 +36,8 @@ def _ensure_output_dir_valid(output_dir):
     return
   has_lib = (
     os.path.isfile(os.path.join(output_dir, "libseekdb.dylib")) or
-    os.path.isfile(os.path.join(output_dir, "libseekdb.so")))
+    os.path.isfile(os.path.join(output_dir, "libseekdb.so")) or
+    os.path.isfile(os.path.join(output_dir, "seekdb.dll")))
   if not has_lib:
     shutil.rmtree(output_dir)
 
@@ -45,8 +46,13 @@ def fetch_libseekdb(zip_url, output_dir, local_zip_name):
   """
   Download zip from zip_url and extract all contents into output_dir.
   local_zip_name: filename for the local zip (e.g. libseekdb-darwin-arm64.zip).
+  Skips download when the native library is already present (node-gyp / pnpm install).
   """
   _ensure_output_dir_valid(output_dir)
+  if not _need_fetch(output_dir):
+    print("libseekdb native library already present in " + output_dir + ", skipping fetch")
+    copy_libs_to_package(os.path.dirname(output_dir))
+    return
   if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
@@ -114,7 +120,8 @@ def _need_fetch(output_dir):
     return True
   has_lib = (
     os.path.isfile(os.path.join(output_dir, "libseekdb.dylib")) or
-    os.path.isfile(os.path.join(output_dir, "libseekdb.so")))
+    os.path.isfile(os.path.join(output_dir, "libseekdb.so")) or
+    os.path.isfile(os.path.join(output_dir, "seekdb.dll")))
   return not has_lib
 
 
@@ -135,6 +142,8 @@ def fetch_if_empty(module_root):
   arch = "arm64" if machine in ("arm64", "aarch64") else "x64"
   if system == "darwin":
     zip_name = "libseekdb-darwin-arm64.zip" if arch == "arm64" else "libseekdb-darwin-x64.zip"
+  elif system == "windows" or sys.platform == "win32":
+    zip_name = "libseekdb-windows-%s.zip" % arch
   else:
     zip_name = "libseekdb-linux-%s.zip" % arch
   from libseekdb_url_config import get_zip_url

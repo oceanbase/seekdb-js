@@ -1,10 +1,18 @@
 const path = require("path");
-const { ensureBindingsDownloaded } = require("./download.js");
+const {
+  ensureBindingsDownloaded,
+  prepareWin32BindingsDir,
+} = require("./download.js");
+
+function requireNativeBinding(bindingsDir) {
+  prepareWin32BindingsDir(bindingsDir);
+  return require(path.join(bindingsDir, "seekdb.node"));
+}
 
 /** Sync load from same dir (npm package / local build). Returns null if not found. */
 function getNativeNodeBindingSync() {
   try {
-    return require(path.join(__dirname, "seekdb.node"));
+    return requireNativeBinding(__dirname);
   } catch {
     return null;
   }
@@ -29,7 +37,7 @@ async function getNativeBindingAsync() {
   _loadPromise = (async () => {
     try {
       const cacheDir = await ensureBindingsDownloaded();
-      _cachedBinding = require(path.join(cacheDir, "seekdb.node"));
+      _cachedBinding = requireNativeBinding(cacheDir);
       return _cachedBinding;
     } catch (err) {
       _loadPromise = null;

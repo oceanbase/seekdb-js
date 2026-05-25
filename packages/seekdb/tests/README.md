@@ -47,19 +47,20 @@ tests/
 ## Running tests
 
 ```bash
-# All tests (from repo root)
+# Full monorepo test script (from repo root): server + embedded + prisma-adapter
 pnpm test
 
-# From packages/seekdb
-pnpm exec vitest run
+# seekdb — server-mode vs embedded (from repo root or from packages/seekdb)
+pnpm run test:server    # excludes tests/embedded/**
+pnpm run test:embedded # only tests/embedded/
 
-# Specific area
+# Watch / ad-hoc (from packages/seekdb)
+pnpm exec vitest
+
+# Specific area (from packages/seekdb)
 pnpm exec vitest run tests/collection/
 
-# Embedded only (requires native addon)
-pnpm exec vitest run tests/embedded/
-
-# Unit tests only (fastest)
+# Unit tests only (fastest; from packages/seekdb)
 pnpm exec vitest run tests/unit/
 ```
 

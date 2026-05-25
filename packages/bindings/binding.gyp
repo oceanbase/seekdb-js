@@ -7,8 +7,8 @@
         ['OS=="linux" and target_arch=="x64"', {
           'actions': [{
             'action_name': 'run_fetch_libseekdb_script',
-            'message': 'Fetching and extracting libseekdb',
-            'inputs': [],
+            'message': 'Ensuring libseekdb is present',
+            'inputs': ['<(module_root_dir)/libseekdb/libseekdb.so'],
             'action': ['sh', '-c', 'cd "<(module_root_dir)" && python3 scripts/fetch_libseekdb_linux_x64.py'],
             'outputs': ['<(module_root_dir)/libseekdb/libseekdb.so'],
           }],
@@ -16,8 +16,8 @@
         ['OS=="linux" and target_arch=="arm64"', {
           'actions': [{
             'action_name': 'run_fetch_libseekdb_script',
-            'message': 'Fetching and extracting libseekdb',
-            'inputs': [],
+            'message': 'Ensuring libseekdb is present',
+            'inputs': ['<(module_root_dir)/libseekdb/libseekdb.so'],
             'action': ['sh', '-c', 'cd "<(module_root_dir)" && python3 scripts/fetch_libseekdb_linux_arm64.py'],
             'outputs': ['<(module_root_dir)/libseekdb/libseekdb.so'],
           }],
@@ -25,10 +25,19 @@
         ['OS=="mac" and target_arch=="arm64"', {
           'actions': [{
             'action_name': 'run_fetch_libseekdb_script',
-            'message': 'Fetching and extracting libseekdb',
-            'inputs': [],
+            'message': 'Ensuring libseekdb is present',
+            'inputs': ['<(module_root_dir)/libseekdb/libseekdb.dylib'],
             'action': ['sh', '-c', 'cd "<(module_root_dir)" && python3 scripts/fetch_libseekdb_darwin_arm64.py'],
             'outputs': ['<(module_root_dir)/libseekdb/libseekdb.dylib'],
+          }],
+        }],
+        ['OS=="win" and target_arch=="x64"', {
+          'actions': [{
+            'action_name': 'run_fetch_libseekdb_script',
+            'message': 'Ensuring libseekdb is present',
+            'inputs': ['<(module_root_dir)/libseekdb/seekdb.dll'],
+            'action': ['python3', '<(module_root_dir)/scripts/fetch_libseekdb_windows_x64.py'],
+            'outputs': ['<(module_root_dir)/libseekdb/seekdb.dll'],
           }],
         }],
       ],
@@ -91,6 +100,20 @@
             },
           ],
         }],
+        ['OS=="win" and target_arch=="x64"', {
+          'win_delay_load_hook': 'true',
+          'link_settings': {
+            'libraries': [
+              '<(module_root_dir)/libseekdb/seekdb.lib',
+            ],
+          },
+          'copies': [
+            {
+              'files': ['<(module_root_dir)/libseekdb/seekdb.dll'],
+              'destination': '<(module_root_dir)/pkgs/js-bindings',
+            },
+          ],
+        }],
       ],
     },
     {
@@ -115,6 +138,14 @@
           ],
         }],
         ['OS=="mac" and target_arch=="arm64"', {
+          'copies': [
+            {
+              'files': ['<(module_root_dir)/build/Release/seekdb.node'],
+              'destination': '<(module_root_dir)/pkgs/js-bindings',
+            },
+          ],
+        }],
+        ['OS=="win" and target_arch=="x64"', {
           'copies': [
             {
               'files': ['<(module_root_dir)/build/Release/seekdb.node'],

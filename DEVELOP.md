@@ -96,21 +96,23 @@ pnpm build
 The project uses Vitest. From the project root:
 
 ```bash
-# Run all tests (seekdb + @seekdb/prisma-adapter; runs once and exits)
+# Full suite: seekdb server tests + embedded tests + @seekdb/prisma-adapter (each runs once)
 pnpm test
 
-# Run only seekdb package tests
-pnpm --filter seekdb run test
+# seekdb only — server-mode tests (paths outside tests/embedded/; need seekdb/OceanBase on SEEKDB_*)
+pnpm run test:server
+
+# seekdb only — embedded-mode tests (under tests/embedded/; native addon required)
+pnpm run test:embedded
 
 # Watch mode for seekdb (during development)
 pnpm --filter seekdb exec vitest
 
 # Run only @seekdb/prisma-adapter tests
 pnpm --filter @seekdb/prisma-adapter run test
-
-# Run only embedded-mode tests (no server required)
-pnpm --filter seekdb exec vitest run tests/embedded/
 ```
+
+From `packages/seekdb`, the same split is available as `pnpm run test:server` and `pnpm run test:embedded`.
 
 **Tests and running mode**:
 

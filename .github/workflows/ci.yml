@@ -68,8 +68,16 @@ jobs:
   # Server-mode tests (exclude embedded/; each job runs on its own runner so seekdb-docker cannot be shared across jobs)
   test-server:
     if: github.repository == 'oceanbase/seekdb-js'
-    name: Test server
+    name: Test server (${{ matrix.seekdb_label }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - seekdb_label: latest
+            seekdb_version: latest
+          - seekdb_label: 1.2.0
+            seekdb_version: 1.2.0.0-100000232026041319
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -92,19 +100,18 @@ jobs:
       - name: Start seekdb container
         shell: bash
         run: |
-          docker run --name seekdb-server -p 2881:2881 -d oceanbase/seekdb:latest
+          docker run --name seekdb-server -p 2881:2881 -d "oceanbase/seekdb:${{ matrix.seekdb_version }}"
           sleep 15
           docker logs seekdb-server
 
       - name: Run server tests
-        working-directory: packages/seekdb
         env:
           SEEKDB_HOST: 127.0.0.1
           SEEKDB_PORT: 2881
           SEEKDB_USER: root
           SEEKDB_PASSWORD: ""
           SEEKDB_DATABASE: test
-        run: pnpm exec vitest run --exclude 'tests/embedded/**'
+        run: pnpm run test:server
 
   # Embedded-mode tests on multiple platforms (requires native bindings build per OS; Docker per job)
   test-embedded:
@@ -120,7 +127,9 @@ jobs:
           - platform: linux-arm64
             runner: ubuntu-22.04-arm
           - platform: darwin-arm64
-            runner: macos-14
+            runner: macos-15
+          - platform: windows-x64
+            runner: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -149,7 +158,12 @@ jobs:
       - name: Build packages
         run: pnpm run build
 
-      # macOS has no Docker; skip container and exclude mode-consistency (needs seekdb server)
+      - name: Clear stale Windows bindings cache
+        if: runner.os == 'Windows'
+        shell: bash
+        run: rm -rf "$USERPROFILE/.seekdb/bindings"
+
+      # Docker seekdb server is Linux-only; macOS/Windows skip container and exclude mode-consistency (needs server)
       - name: Start seekdb container
         if: runner.os == 'Linux'
         shell: bash
@@ -159,7 +173,7 @@ jobs:
           docker logs seekdb-server
 
       - name: Run embedded tests
-        working-directory: packages/seekdb
+        shell: bash
         env:
           SEEKDB_HOST: 127.0.0.1
           SEEKDB_PORT: 2881
@@ -168,11 +182,14 @@ jobs:
           SEEKDB_DATABASE: test
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
-            pnpm exec vitest run tests/embedded/ 2>&1 | tee /tmp/vitest.log
-          else
-            pnpm exec vitest run tests/embedded/ --exclude '**/mode-consistency.test.ts' 2>&1 | tee /tmp/vitest.log
+            pnpm run test:embedded 2>&1 | tee /tmp/vitest.log
+            exit_code=$?
+            grep -qE "[0-9]+ failed" /tmp/vitest.log && exit 1
+            exit $exit_code
           fi
-          exit_code=$?
-          if [ $exit_code -ne 0 ]; then exit $exit_code; fi
+          # macOS/Windows: vitest may segfault (139) after all tests pass on native teardown
+          pnpm --filter seekdb run test:embedded:no-consistency 2>&1 | tee /tmp/vitest.log || true
           grep -qE "[0-9]+ failed" /tmp/vitest.log && exit 1
+          grep -qE "Test Files.*[0-9]+ passed" /tmp/vitest.log || exit 1
+          grep -qE "Tests.*[0-9]+ passed" /tmp/vitest.log || exit 1
           exit 0

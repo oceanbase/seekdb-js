@@ -122,6 +122,7 @@ describe("Embedded Mode - Collection Query Operations", () => {
           { category: "AI", score: 85, tag: "neural" },
         ],
       });
+      await collection.refresh_index();
     });
 
     afterAll(async () => {
@@ -390,6 +391,7 @@ describe("Embedded Mode - Collection Query Operations", () => {
         ids: ["ef1", "ef2"],
         documents: ["test document 1", "test document 2"],
       });
+      await collectionWithEF.refresh_index();
 
       const results = await collectionWithEF.query({
         queryTexts: "test document",

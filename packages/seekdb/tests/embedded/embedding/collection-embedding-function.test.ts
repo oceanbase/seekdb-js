@@ -314,6 +314,7 @@ describe("Embedded Mode - Collection Embedding Function Tests", () => {
         ids: ["ef_q1", "ef_q2"],
         documents: ["Document about AI", "Document about Python"],
       });
+      await collection.refresh_index();
 
       const results = await collection.query({
         queryTexts: "AI",

@@ -44,6 +44,7 @@ describe("Embedded Mode - Query Approximate Parameter", () => {
           [7, 8, 9],
         ],
       });
+      await collection.refresh_index();
 
       const results = await collection.query({
         queryEmbeddings: [[1, 2, 3]],
@@ -103,6 +104,7 @@ describe("Embedded Mode - Query Approximate Parameter", () => {
           [4, 5, 6],
         ],
       });
+      await collection.refresh_index();
 
       const results = await collection.query({
         queryEmbeddings: [[1, 2, 3]],
