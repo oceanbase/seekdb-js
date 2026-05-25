@@ -119,7 +119,7 @@ jobs:
           - platform: linux-arm64
             runner: ubuntu-22.04-arm
           - platform: darwin-arm64
-            runner: macos-14
+            runner: macos-15
           - platform: windows-x64
             runner: windows-latest
     steps:
