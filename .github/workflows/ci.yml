@@ -68,8 +68,16 @@ jobs:
   # Server-mode tests (exclude embedded/; each job runs on its own runner so seekdb-docker cannot be shared across jobs)
   test-server:
     if: github.repository == 'oceanbase/seekdb-js'
-    name: Test server
+    name: Test server (${{ matrix.seekdb_label }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - seekdb_label: latest
+            seekdb_version: latest
+          - seekdb_label: 1.2.0
+            seekdb_version: 1.2.0.0-100000232026041319
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -92,7 +100,7 @@ jobs:
       - name: Start seekdb container
         shell: bash
         run: |
-          docker run --name seekdb-server -p 2881:2881 -d oceanbase/seekdb:latest
+          docker run --name seekdb-server -p 2881:2881 -d "oceanbase/seekdb:${{ matrix.seekdb_version }}"
           sleep 15
           docker logs seekdb-server
 
