@@ -7,18 +7,26 @@ config({
   path: resolve(dirname(fileURLToPath(import.meta.url)), ".env"),
 });
 
+const isWin32 = process.platform === "win32";
+
 export default {
   test: {
-    // use threads mode
-    pool: "threads",
-    poolOptions: {
-      threads: {
-        // use single thread mode
-        singleThread: true,
-        // disable isolation to avoid worker termination problem
-        isolate: false,
-      },
-    },
+    // Windows native addons crash under vitest thread workers; use forks instead.
+    pool: isWin32 ? "forks" : "threads",
+    poolOptions: isWin32
+      ? {
+          forks: {
+            singleFork: true,
+          },
+        }
+      : {
+          threads: {
+            // use single thread mode
+            singleThread: true,
+            // disable isolation to avoid worker termination problem
+            isolate: false,
+          },
+        },
 
     // set timeout: 2 minutes for individual tests
     testTimeout: 300_000,

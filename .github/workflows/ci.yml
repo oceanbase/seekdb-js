@@ -158,6 +158,11 @@ jobs:
       - name: Build packages
         run: pnpm run build
 
+      - name: Clear stale Windows bindings cache
+        if: runner.os == 'Windows'
+        shell: bash
+        run: rm -rf "$USERPROFILE/.seekdb/bindings"
+
       # Docker seekdb server is Linux-only; macOS/Windows skip container and exclude mode-consistency (needs server)
       - name: Start seekdb container
         if: runner.os == 'Linux'
