@@ -179,7 +179,7 @@ jobs:
           if [ "$RUNNER_OS" = "Linux" ]; then
             pnpm run test:embedded 2>&1 | tee /tmp/vitest.log
           else
-            pnpm run test:embedded -- --exclude '**/mode-consistency.test.ts' 2>&1 | tee /tmp/vitest.log
+            pnpm --filter seekdb run test:embedded:no-consistency 2>&1 | tee /tmp/vitest.log
           fi
           exit_code=$?
           if [ $exit_code -ne 0 ]; then exit $exit_code; fi
