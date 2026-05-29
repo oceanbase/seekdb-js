@@ -39,8 +39,8 @@
   },
   "devDependencies": {
     "seekdb": "workspace:*",
-    "typescript": "^5.0.0",
-    "vitest": "^2.1.9"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
   },
   "engines": {
     "node": ">=18"
