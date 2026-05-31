@@ -180,6 +180,7 @@ jobs:
           SEEKDB_USER: root
           SEEKDB_PASSWORD: ""
           SEEKDB_DATABASE: test
+          SEEKDB_DEBUG_SQL: "1"
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
             pnpm run test:embedded 2>&1 | tee /tmp/vitest.log

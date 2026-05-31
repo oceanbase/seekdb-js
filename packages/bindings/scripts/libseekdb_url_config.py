@@ -1,6 +1,6 @@
 # libseekdb zip download URL config
 
-LIBSEEKDB_URL_PREFIX = "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/libseekdb/all_commits/7cdd3bc802ece1d005553ddfbc0d4f3eb6993fe9/"
+LIBSEEKDB_URL_PREFIX = "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/libseekdb/all_commits/252658b83822d6ea065d9d8598520a2fd12d2444/"
 
 # LIBSEEKDB_URL_PREFIX = "https://github.com/oceanbase/seekdb/releases/download/v1.1.0/"
 
