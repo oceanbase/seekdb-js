@@ -102,22 +102,40 @@ export async function cleanupTestDb(testFileName: string): Promise<void> {
 
   // Retry cleanup with exponential backoff
   const maxRetries = 5;
+  let lastError: any;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       await fs.rm(testDbDir, { recursive: true, force: true });
-      // Success, exit retry loop
-      return;
+      // Verify directory is actually gone (fs.rm with force:true silently succeeds when dir
+      // doesn't exist OR when removal partially fails on Windows due to file locks).
+      try {
+        await fs.access(testDbDir);
+        // Directory still exists after rm — treat as failure to trigger retry.
+        throw new Error(
+          `cleanupTestDb: directory still exists after fs.rm: ${testDbDir}`
+        );
+      } catch (accessErr: any) {
+        if (accessErr?.code === "ENOENT") {
+          return; // gone, success
+        }
+        throw accessErr;
+      }
     } catch (error: any) {
-      // If it's the last attempt, ignore the error
+      lastError = error;
       if (attempt === maxRetries - 1) {
-        // Ignore if directory doesn't exist or other errors on final attempt
+        // Final attempt failed: surface the error so CI logs reveal cleanup leakage
+        // instead of silently masking it as "tests pass on retry".
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[cleanupTestDb] failed for ${testFileName} after ${maxRetries} attempts: ${error?.message ?? error}`
+        );
         return;
       }
-      // Wait before retry with exponential backoff
       const delay = Math.min(100 * Math.pow(2, attempt), 1000);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
+  void lastError;
 }
 
 /**
