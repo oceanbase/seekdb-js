@@ -80,7 +80,25 @@ export class InternalEmbeddedClient implements IInternalClient {
   ): Promise<RowDataPacket[] | null> {
     const conn = await this._ensureConnection();
     const addon = this._addon!;
-    const result = await addon.execute(conn, sql, params);
+    let result;
+    try {
+      result = await addon.execute(conn, sql, params);
+    } catch (error: unknown) {
+      // Surface SQL + first 8 params on native execute failure so CI logs can pinpoint the
+      // failing statement instead of just "Update execution failed".
+      if (process.env.SEEKDB_DEBUG_SQL || process.env.SEEKDB_DEBUG) {
+        const err = error as { message?: string };
+        const sqlPreview = sql.length > 500 ? `${sql.slice(0, 500)}...` : sql;
+        const paramsPreview = params
+          ? JSON.stringify(params.slice(0, 8)).slice(0, 500)
+          : "[]";
+        // eslint-disable-next-line no-console
+        console.error(
+          `[seekdb] execute failed: ${err.message ?? error}\n  sql=${sqlPreview}\n  params=${paramsPreview}`
+        );
+      }
+      throw error;
+    }
 
     if (!result || !result.rows) {
       return null;
