@@ -4,6 +4,15 @@
   "license": "Apache-2.0",
   "main": "./seekdb.js",
   "types": "./seekdb.d.ts",
+  "files": [
+    "download.js",
+    "seekdb.js",
+    "seekdb.d.ts",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "prepublishOnly": "node -e \"const fs=require('fs');const p=require('path');const d=__dirname;for(const f of['seekdb.node','libseekdb.dylib','libseekdb.so','seekdb.dll']){try{fs.unlinkSync(p.join(d,f))}catch{}}const libs=p.join(d,'libs');if(fs.existsSync(libs))fs.rmSync(libs,{recursive:true,force:true});\""
+  },
   "exports": {
     ".": {
       "types": "./seekdb.d.ts",
