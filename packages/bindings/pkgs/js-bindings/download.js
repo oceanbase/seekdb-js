@@ -61,18 +61,20 @@ function prepareWin32BindingsDir(bindingsDir) {
   }
 }
 
-function isWin32BindingsDirReady(bindingsDir) {
-  if (process.platform !== "win32") return true;
-  return (
-    fs.existsSync(path.join(bindingsDir, "seekdb.node")) &&
-    fs.existsSync(path.join(bindingsDir, "seekdb.dll"))
-  );
+function isBindingsDirReady(bindingsDir) {
+  if (!fs.existsSync(path.join(bindingsDir, "seekdb.node"))) {
+    return false;
+  }
+  if (process.platform === "win32") {
+    return fs.existsSync(path.join(bindingsDir, "seekdb.dll"));
+  }
+  return true;
 }
 
 async function ensureBindingsDownloaded() {
   const cacheDir = getCacheDir();
   const nodePath = path.join(cacheDir, "seekdb.node");
-  if (isWin32BindingsDirReady(cacheDir)) {
+  if (isBindingsDirReady(cacheDir)) {
     prepareWin32BindingsDir(cacheDir);
     return cacheDir;
   }
@@ -94,7 +96,7 @@ async function ensureBindingsDownloaded() {
   if (!fs.existsSync(nodePath)) {
     throw new Error(`Zip did not contain seekdb.node: ${zipPath}`);
   }
-  if (!isWin32BindingsDirReady(cacheDir)) {
+  if (!isBindingsDirReady(cacheDir)) {
     throw new Error(
       `Zip missing Windows runtime (seekdb.node and seekdb.dll required): ${zipPath}`
     );
