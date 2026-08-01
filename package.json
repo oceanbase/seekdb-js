@@ -14,13 +14,18 @@
     "type-check": "pnpm -r run type-check",
     "prettier": "prettier --write .",
     "prepare": "husky",
-    "publish:all": "node scripts/publish.js"
+    "release:version": "lerna version",
+    "release:baseline-tags": "node scripts/baseline-tags.js",
+    "publish": "pnpm run build && lerna publish",
+    "publish:from-package": "pnpm run build && lerna publish from-package"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.8",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@types/node": "^22.19.7",
     "dotenv": "^16.6.1",
     "husky": "^9.1.7",
+    "lerna": "^8.2.4",
     "lint-staged": "^15.4.3",
     "prettier": "^3.8.1",
     "tsup": "^8.5.1",

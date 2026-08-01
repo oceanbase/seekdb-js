@@ -1,0 +1,48 @@
+{
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
+  "version": "independent",
+  "npmClient": "pnpm",
+  "packages": [
+    "packages/seekdb",
+    "packages/prisma-adapter",
+    "packages/bindings/pkgs/*",
+    "packages/embeddings/*"
+  ],
+  "changelog": {
+    "repo": "oceanbase/seekdb-js",
+    "cacheDir": ".changelog"
+  },
+  "command": {
+    "version": {
+      "conventionalCommits": true,
+      "changelogPreset": "conventionalcommits",
+      "createRelease": "github",
+      "push": true
+    }
+  },
+  "ignoreChanges": [
+    "/package.json",
+    "/pnpm-lock.yaml",
+    "/lerna.json",
+    "/commitlint.config.js",
+    "/scripts/baseline-tags.js",
+    "/tsconfig.json",
+    "/.prettierignore",
+    ".husky/**",
+    ".github/**",
+    "**/*.md",
+    "**/dist/**",
+    "**/*.test.ts",
+    "**/__tests__/**",
+    "examples/**",
+    "packages/bindings/binding.gyp",
+    "packages/bindings/build/**",
+    "packages/bindings/libseekdb/**",
+    "packages/bindings/scripts/**",
+    "packages/bindings/src/**",
+    "packages/bindings/test/**",
+    "packages/bindings/CHANGELOG.md",
+    "packages/bindings/package.json",
+    "packages/bindings/README.md"
+  ]
+}
