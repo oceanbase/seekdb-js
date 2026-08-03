@@ -6,7 +6,6 @@ on:
     paths-ignore:
       - "README.md"
       - "**/*.md"
-      - ".changeset/**"
   push:
     branches: [main, develop]
 
