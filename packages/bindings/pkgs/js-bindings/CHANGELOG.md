@@ -1,5 +1,11 @@
 # @seekdb/js-bindings
 
+## 1.3.1
+
+### Bug Fixes
+
+- fix on-demand download on non-Windows and exclude native binaries from npm ([#42](https://github.com/oceanbase/seekdb-js/pull/42)) ([771f999](https://github.com/oceanbase/seekdb-js/commit/771f999))
+
 ## 1.3.0
 
 Release date: 2026-05-25
