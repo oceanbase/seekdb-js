@@ -128,7 +128,7 @@ jobs:
           - platform: darwin-arm64
             runner: macos-15
           - platform: windows-x64
-            runner: windows-latest
+            runner: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v4
