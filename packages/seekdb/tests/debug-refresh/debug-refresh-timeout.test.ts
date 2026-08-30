@@ -48,7 +48,7 @@ async function printSeekdbLog() {
   try {
     const filteredLines = lines.filter(
       (l) =>
-        /\] CSFetcher|\] CSWorker|CSDispatcher|CSChangeStream|change_stream_mgr|dbms_index|DBMSVector|refresh_index|refresh scn|refresh_scn|wait_refresh|VectorIndexScheduler|vector_index_scheduler|VEC_INDEX|ObVectorRefresh|batch processing failed|global abort|plugin process failed|plugin commit failed|failed to process tablet group|skip tablet group|write_to_vsag|insert_vector_index_log|resolve_table_id_from_tablet|TABLET_NOT_EXIST|replica readable|wait serial commit|batch failure detected|recovery complete|next_commit_sn|ObIDService|get_gts_sync|too slowly/i.test(
+        /\] CSFetcher|\] CSWorker|CSDispatcher|CSChangeStream|change_stream_mgr|dbms_index|DBMSVector|refresh_index|refresh scn|refresh_scn|wait_refresh|VectorIndexScheduler|vector_index_scheduler|VEC_INDEX|ObVectorRefresh|batch processing failed|global abort|plugin process failed|plugin commit failed|failed to process tablet group|skip tablet group|write_to_vsag|insert_vector_index_log|resolve_table_id_from_tablet|TABLET_NOT_EXIST|replica readable|wait serial commit|batch failure detected|recovery complete|next_commit_sn|ObIDService|get_gts_sync|too slowly|create incr index|free memdata|delete vector index|mem_ctx|VsagMem|create_index|fail to create|hnsw param|adapter|Adaptor|adaptor|incr_data|switch_to_leader|resume.*async|async.*resume/i.test(
           l
         ) && !/get_index_prefix\(/.test(l)
     );
@@ -68,7 +68,7 @@ async function printSeekdbLog() {
   const interesting: string[] = [];
   for (const line of lines) {
     if (
-      /\] CSFetcher|\] CSWorker|CSDispatcher|CSChangeStream|change_stream_mgr|dbms_index|DBMSVector|refresh_index|refresh scn|refresh_scn|wait_refresh|VectorIndexScheduler|vector_index_scheduler|VEC_INDEX|ObVectorRefresh|gts service advanced too slowly|ObIDService|get_gts_sync|batch processing failed|global abort|plugin process failed|plugin commit failed|failed to process tablet group|skip tablet group|write_to_vsag|insert_vector_index_log|resolve_table_id_from_tablet|TABLET_NOT_EXIST|replica readable|wait serial commit|batch failure detected|recovery complete|next_commit_sn|progress\(/i.test(
+      /\] CSFetcher|\] CSWorker|CSDispatcher|CSChangeStream|change_stream_mgr|dbms_index|DBMSVector|refresh_index|refresh scn|refresh_scn|wait_refresh|VectorIndexScheduler|vector_index_scheduler|VEC_INDEX|ObVectorRefresh|gts service advanced too slowly|ObIDService|get_gts_sync|batch processing failed|global abort|plugin process failed|plugin commit failed|failed to process tablet group|skip tablet group|write_to_vsag|insert_vector_index_log|resolve_table_id_from_tablet|TABLET_NOT_EXIST|replica readable|wait serial commit|batch failure detected|recovery complete|next_commit_sn|create incr index|free memdata|delete vector index|VsagMem|create_index|fail to create|incr_data|progress\(/i.test(
         line
       )
     ) {
