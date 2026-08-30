@@ -174,11 +174,15 @@ jobs:
       # Debug repro for the refresh_index 30s timeout (Linux). Runs standalone with
       # DEBUG logging so the seekdb.log excerpt is printed on failure. Continue-on-error:
       # it is diagnostic; the main embedded suite still runs below.
+      # LD_PRELOAD: the freshly-built seekdb.node cannot dlopen libseekdb.so on Linux
+      # (glibc "cannot allocate memory in static TLS block"), which silently made the
+      # loader fall back to a stale prebuilt binding. Preload fixes the load.
       - name: Debug refresh_index timeout (linux only)
         if: runner.os == 'Linux'
         shell: bash
         env:
           SEEKDB_LOG_LEVEL: DEBUG
+          LD_PRELOAD: ${{ github.workspace }}/packages/bindings/pkgs/js-bindings/libseekdb.so
         run: |
           cd packages/seekdb
           pnpm exec vitest run tests/debug-refresh/debug-refresh-timeout.test.ts 2>&1 | tee /tmp/debug-refresh.log
@@ -202,6 +206,11 @@ jobs:
           SEEKDB_DATABASE: test
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then
+            # The freshly-built seekdb.node cannot dlopen libseekdb.so on Linux (glibc
+            # "cannot allocate memory in static TLS block"); the loader would silently
+            # fall back to a stale prebuilt binding and test the wrong binary. Preload
+            # the fresh .so so the embedded tests exercise the bumped build.
+            export LD_PRELOAD="$GITHUB_WORKSPACE/packages/bindings/pkgs/js-bindings/libseekdb.so"
             pnpm run test:embedded 2>&1 | tee /tmp/vitest.log
             exit_code=$?
             grep -qE "[0-9]+ failed" /tmp/vitest.log && exit 1
