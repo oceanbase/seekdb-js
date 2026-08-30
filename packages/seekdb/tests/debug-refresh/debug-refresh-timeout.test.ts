@@ -42,13 +42,33 @@ async function printSeekdbLog() {
   }
   const lines = content.split("\n");
   console.log(`[debug-refresh] seekdb.log total lines: ${lines.length}`);
-  // Focused view: only change-stream / refresh / vector-index module markers.
+  // Persist a filtered copy outside the db dir so CI can upload it as an artifact.
+  // Full DEBUG log is ~250MB; keep only lines relevant to the change-stream stall.
+  const outPath = "tests/debug-refresh/seekdb-debug.log";
+  try {
+    const filteredLines = lines.filter(
+      (l) =>
+        /\] CSFetcher|\] CSWorker|CSDispatcher|CSChangeStream|change_stream_mgr|dbms_index|DBMSVector|refresh_index|refresh scn|refresh_scn|wait_refresh|VectorIndexScheduler|vector_index_scheduler|VEC_INDEX|ObVectorRefresh|batch processing failed|global abort|plugin process failed|plugin commit failed|failed to process tablet group|skip tablet group|write_to_vsag|insert_vector_index_log|resolve_table_id_from_tablet|TABLET_NOT_EXIST|replica readable|wait serial commit|batch failure detected|recovery complete|next_commit_sn|ObIDService|get_gts_sync|too slowly/i.test(
+          l
+        ) && !/get_index_prefix\(/.test(l)
+    );
+    await fs.mkdir(path.dirname(outPath), { recursive: true });
+    await fs.writeFile(outPath, filteredLines.join("\n"));
+    console.log(
+      `[debug-refresh] filtered log (${filteredLines.length} lines) copied to ${outPath}`
+    );
+  } catch (err) {
+    console.log(
+      `[debug-refresh] failed to copy log: ${(err as Error).message}`
+    );
+  }
+  // Focused view: change-stream + async-index failure markers.
   // DEBUG volume floods the file with TRACE noise, so match module prefixes tightly.
   const seen = new Map<string, number>();
   const interesting: string[] = [];
   for (const line of lines) {
     if (
-      /\] CSFetcher|\] CSWorker|CSDispatcher|CSChangeStream|change_stream_mgr|dbms_index|DBMSVector|refresh_index|refresh scn|refresh_scn|wait_refresh|VectorIndexScheduler|vector_index_scheduler|VEC_INDEX|ObVectorRefresh|gts service advanced too slowly|ObIDService|get_gts_sync/i.test(
+      /\] CSFetcher|\] CSWorker|CSDispatcher|CSChangeStream|change_stream_mgr|dbms_index|DBMSVector|refresh_index|refresh scn|refresh_scn|wait_refresh|VectorIndexScheduler|vector_index_scheduler|VEC_INDEX|ObVectorRefresh|gts service advanced too slowly|ObIDService|get_gts_sync|batch processing failed|global abort|plugin process failed|plugin commit failed|failed to process tablet group|skip tablet group|write_to_vsag|insert_vector_index_log|resolve_table_id_from_tablet|TABLET_NOT_EXIST|replica readable|wait serial commit|batch failure detected|recovery complete|next_commit_sn|progress\(/i.test(
         line
       )
     ) {

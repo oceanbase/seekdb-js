@@ -184,6 +184,14 @@ jobs:
           pnpm exec vitest run tests/debug-refresh/debug-refresh-timeout.test.ts 2>&1 | tee /tmp/debug-refresh.log
           exit 0
 
+      - name: Upload debug seekdb log
+        if: runner.os == 'Linux' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seekdb-debug-log
+          path: packages/seekdb/tests/debug-refresh/seekdb-debug.log
+          if-no-files-found: ignore
+
       - name: Run embedded tests
         shell: bash
         env:
