@@ -186,10 +186,13 @@ jobs:
             # fall back to a stale prebuilt binding and test the wrong binary. Preload
             # the fresh .so so the embedded tests exercise the bumped build.
             export LD_PRELOAD="$GITHUB_WORKSPACE/packages/bindings/pkgs/js-bindings/libseekdb.so"
-            pnpm run test:embedded 2>&1 | tee /tmp/vitest.log
-            exit_code=$?
+            # vitest may segfault (139) after all tests pass on native teardown (seen on
+            # linux-arm64); judge by the test summary, not the process exit code.
+            pnpm run test:embedded 2>&1 | tee /tmp/vitest.log || true
             grep -qE "[0-9]+ failed" /tmp/vitest.log && exit 1
-            exit $exit_code
+            grep -qE "Test Files.*[0-9]+ passed" /tmp/vitest.log || exit 1
+            grep -qE "Tests.*[0-9]+ passed" /tmp/vitest.log || exit 1
+            exit 0
           fi
           # macOS/Windows: vitest may segfault (139) after all tests pass on native teardown
           pnpm --filter seekdb run test:embedded:no-consistency 2>&1 | tee /tmp/vitest.log || true
