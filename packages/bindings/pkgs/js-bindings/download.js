@@ -13,7 +13,7 @@ const SUPPORTED_PLATFORMS = [
   "win32-x64",
 ];
 const DEFAULT_BASE_URL =
-  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/js-bindings/all_commits/491beee0a7e67ba004502a83ea2da484f5fd9cdc";
+  "https://oceanbase-seekdb-builds.s3.ap-southeast-1.amazonaws.com/js-bindings/all_commits/469a55dc84ea7a9e077161a8b454871a9adaff35";
 
 function getPlatformArch() {
   const key = `${process.platform}-${process.arch === "arm64" ? "arm64" : "x64"}`;
