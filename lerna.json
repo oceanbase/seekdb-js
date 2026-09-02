@@ -15,7 +15,7 @@
   "command": {
     "version": {
       "changelogPreset": "conventionalcommits",
-      "message": "chore(release): publish %s",
+      "message": "chore(release): publish",
       "push": true
     }
   },

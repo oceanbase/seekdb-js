@@ -6,6 +6,7 @@
  *   pnpm run publish
  *   pnpm run publish -- minor
  *   pnpm run publish -- 1.4.0
+ *   pnpm run publish -- 1.4.0 --yes
  */
 const { execSync } = require("child_process");
 const path = require("path");
@@ -16,9 +17,13 @@ function run(cmd) {
   execSync(cmd, { cwd: root, stdio: "inherit" });
 }
 
-const bump = process.argv.slice(2).find((arg) => !arg.startsWith("-"));
-const versionCmd = bump ? `npx lerna version ${bump}` : "npx lerna version";
+const args = process.argv.slice(2).filter((arg) => arg !== "--");
+const bump = args.find((arg) => !arg.startsWith("-"));
+const yesFlag = args.includes("-y") || args.includes("--yes") ? " --yes" : "";
+const versionCmd = bump
+  ? `npx lerna version ${bump}${yesFlag}`
+  : `npx lerna version${yesFlag}`;
 
 run(versionCmd);
-run("npx lerna publish from-git");
+run(`npx lerna publish from-git${yesFlag}`);
 run("node scripts/create-github-release.js");
