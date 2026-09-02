@@ -1,6 +1,6 @@
 {
   "name": "@seekdb/prisma-adapter",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "Prisma driver adapter for seekdb Embedded — use Prisma with seekdb Embedded",
   "keywords": [
     "seekdb",

@@ -1,6 +1,6 @@
 {
   "name": "@seekdb/siliconflow",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -21,14 +21,14 @@
     "test": "vitest"
   },
   "peerDependencies": {
-    "seekdb": "workspace:*",
+    "@seekdb/common": "workspace:*",
     "@seekdb/openai": "workspace:*",
-    "@seekdb/common": "workspace:*"
+    "seekdb": "workspace:*"
   },
   "devDependencies": {
-    "seekdb": "workspace:*",
+    "@seekdb/common": "workspace:*",
     "@seekdb/openai": "workspace:*",
-    "@seekdb/common": "workspace:*"
+    "seekdb": "workspace:*"
   },
   "dependencies": {
     "openai": "^6.9.1"
