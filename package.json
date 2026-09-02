@@ -14,10 +14,12 @@
     "type-check": "pnpm -r run type-check",
     "prettier": "prettier --write .",
     "prepare": "husky",
-    "release:version": "lerna version",
     "release:baseline-tags": "node scripts/baseline-tags.js",
-    "publish": "pnpm run build && lerna publish",
-    "publish:from-package": "pnpm run build && lerna publish from-package"
+    "release:github": "node scripts/create-github-release.js",
+    "publish": "pnpm run build && lerna publish && pnpm run release:github",
+    "publish:dry-run": "lerna changed -l",
+    "publish:bindings-sync": "node scripts/publish-release.js",
+    "publish:bindings-sync:dry-run": "node scripts/publish-release.js --dry-run"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

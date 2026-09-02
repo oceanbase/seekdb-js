@@ -16,7 +16,6 @@
     "version": {
       "conventionalCommits": true,
       "changelogPreset": "conventionalcommits",
-      "createRelease": "github",
       "push": true
     }
   },
@@ -26,6 +25,8 @@
     "lerna.json",
     "commitlint.config.js",
     "scripts/baseline-tags.js",
+    "scripts/create-github-release.js",
+    "scripts/publish-release.js",
     "tsconfig.json",
     ".prettierignore",
     ".husky/**",
