@@ -269,7 +269,10 @@ function printPlan(plans, args) {
     `git tags: ${plans.map((p) => `${p.name}@${p.next}`).join(", ")}`
   );
   console.log(`github release: ${aggregateTag}`);
-  console.log(`push: ${args.noPush || args.dryRun ? "no" : "yes"}`);
+  const willPush = !args.noPush;
+  console.log(
+    `git push: ${willPush ? "yes" : "no"}${args.dryRun ? " (skipped in dry-run)" : ""}`
+  );
   console.log("");
 }
 
