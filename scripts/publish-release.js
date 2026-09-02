@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 /**
- * One-click release for customer-facing packages only:
- *   seekdb + @seekdb/js-bindings
+ * Special release: publish @seekdb/js-bindings and sync seekdb together.
+ *
+ * Use when only embedded/native bindings change. seekdb is customer-facing and
+ * pins @seekdb/js-bindings in optionalDependencies, so it must release with
+ * js-bindings even when seekdb has no SDK code changes.
+ *
+ * For normal monorepo releases (embeddings, prisma-adapter, etc.), use:
+ *   pnpm run release:version && pnpm run publish
  *
  * Usage:
  *   node scripts/publish-release.js [--dry-run] [--bump minor|patch|major|<version>]
