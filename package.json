@@ -16,7 +16,7 @@
     "prepare": "husky",
     "prepublishOnly": "pnpm run build",
     "release:baseline-tags": "node scripts/baseline-tags.js",
-    "publish": "node scripts/publish.js",
+    "publish": "SEEKDB_PUBLISH_ENTRY=1 node scripts/publish.js",
     "publish:dry-run": "lerna changed -l && node scripts/create-github-release.js --dry-run",
     "publish:from-package": "lerna publish from-package && node scripts/create-github-release.js"
   },

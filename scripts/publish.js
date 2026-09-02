@@ -13,8 +13,18 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 
-function run(cmd) {
-  execSync(cmd, { cwd: root, stdio: "inherit" });
+// Root package.json defines a "publish" script for `pnpm run publish`. Lerna also
+// runs the root publish lifecycle after npm publish; skip that recursive invocation.
+if (process.env.SEEKDB_PUBLISH_ENTRY !== "1") {
+  process.exit(0);
+}
+
+function run(cmd, opts = {}) {
+  execSync(cmd, {
+    cwd: root,
+    stdio: "inherit",
+    env: { ...process.env, npm_lifecycle_event: "publish", ...opts.env },
+  });
 }
 
 const args = process.argv.slice(2).filter((arg) => arg !== "--");

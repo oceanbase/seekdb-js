@@ -35,7 +35,8 @@ const META_FILES = new Set([
 const BUMP_ONLY = /version bump only/i;
 
 function run(cmd, opts = {}) {
-  return execSync(cmd, { cwd: root, encoding: "utf8", ...opts }).trim();
+  const result = execSync(cmd, { cwd: root, encoding: "utf8", ...opts });
+  return result == null ? "" : String(result).trim();
 }
 
 function parseArgs(argv) {
