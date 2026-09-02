@@ -15,11 +15,9 @@
     "prettier": "prettier --write .",
     "prepare": "husky",
     "release:baseline-tags": "node scripts/baseline-tags.js",
-    "release:github": "node scripts/create-github-release.js",
-    "publish": "pnpm run build && lerna publish && pnpm run release:github",
-    "publish:dry-run": "lerna changed -l",
-    "publish:bindings-sync": "node scripts/publish-release.js",
-    "publish:bindings-sync:dry-run": "node scripts/publish-release.js --dry-run"
+    "publish": "pnpm run build && lerna version && lerna publish from-git && node scripts/create-github-release.js",
+    "publish:dry-run": "lerna changed -l && node scripts/create-github-release.js --dry-run",
+    "publish:from-package": "lerna publish from-package && node scripts/create-github-release.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
