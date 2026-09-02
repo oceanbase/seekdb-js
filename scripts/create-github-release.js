@@ -181,8 +181,21 @@ function pickAggregateTag(entries, explicitTag) {
   return `v${highest}`;
 }
 
+const RELEASE_NOTE_ORDER = ["seekdb", "@seekdb/js-bindings"];
+
+function sortReleaseEntries(entries) {
+  return [...entries].sort((a, b) => {
+    const aRank = RELEASE_NOTE_ORDER.indexOf(a.name);
+    const bRank = RELEASE_NOTE_ORDER.indexOf(b.name);
+    const aOrder = aRank === -1 ? RELEASE_NOTE_ORDER.length : aRank;
+    const bOrder = bRank === -1 ? RELEASE_NOTE_ORDER.length : bRank;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return a.name.localeCompare(b.name);
+  });
+}
+
 function buildReleaseNotes(entries) {
-  return entries
+  return sortReleaseEntries(entries)
     .map(({ name, version, section }) => {
       return `## ${name}@${version}\n\n${section}`;
     })
