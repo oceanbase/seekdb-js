@@ -7,11 +7,10 @@
  * js-bindings even when seekdb has no SDK code changes.
  *
  * For normal monorepo releases (embeddings, prisma-adapter, etc.), use:
- *   pnpm run release:version && pnpm run publish
+ *   pnpm run publish
  *
  * Usage:
  *   node scripts/publish-release.js [--dry-run] [--bump minor|patch|major|<version>]
- *   node scripts/publish-release.js --version-only [--no-push]
  *
  * Requires: npm login, gh CLI (for GitHub Release)
  */
@@ -59,7 +58,6 @@ function runText(cmd) {
 function parseArgs(argv) {
   const args = {
     dryRun: false,
-    versionOnly: false,
     noPush: false,
     bump: "minor",
     force: false,
@@ -67,7 +65,6 @@ function parseArgs(argv) {
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--dry-run") args.dryRun = true;
-    else if (arg === "--version-only") args.versionOnly = true;
     else if (arg === "--no-push") args.noPush = true;
     else if (arg === "--force") args.force = true;
     else if (arg === "--bump") args.bump = argv[++i];
@@ -239,7 +236,7 @@ function assertCanRelease(plans, args) {
     }
   }
 
-  if (!args.dryRun && !args.versionOnly) {
+  if (!args.dryRun) {
     const dirty = runText("git status --porcelain");
     if (dirty) {
       throw new Error(
@@ -321,11 +318,9 @@ function main() {
   commitAndTag(plans);
   console.log("\nCreated release commit and package tags.\n");
 
-  if (!args.versionOnly) {
-    publishPackages();
-    console.log("\nPublished to npm.\n");
-    runInherit("node scripts/create-github-release.js");
-  }
+  publishPackages();
+  console.log("\nPublished to npm.\n");
+  runInherit("node scripts/create-github-release.js");
 
   if (!args.noPush) {
     runInherit("git push");
