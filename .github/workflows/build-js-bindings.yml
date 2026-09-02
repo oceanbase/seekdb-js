@@ -90,7 +90,7 @@ jobs:
         run: zip -r ../../../../seekdb-js-bindings-${{ matrix.platform }}.zip . -x "seekdb.js" -x "seekdb.d.ts" -x "package.json"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: seekdb-js-bindings-${{ matrix.platform }}
           path: seekdb-js-bindings-${{ matrix.platform }}.zip
@@ -133,7 +133,7 @@ jobs:
         run: zip -r ../../../../seekdb-js-bindings-${{ matrix.platform }}.zip .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: seekdb-js-bindings-${{ matrix.platform }}
           path: seekdb-js-bindings-${{ matrix.platform }}.zip
