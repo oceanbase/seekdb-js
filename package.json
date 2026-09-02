@@ -14,8 +14,9 @@
     "type-check": "pnpm -r run type-check",
     "prettier": "prettier --write .",
     "prepare": "husky",
+    "prepublishOnly": "pnpm run build",
     "release:baseline-tags": "node scripts/baseline-tags.js",
-    "publish": "pnpm run build && lerna version && lerna publish from-git && node scripts/create-github-release.js",
+    "publish": "node scripts/publish.js",
     "publish:dry-run": "lerna changed -l && node scripts/create-github-release.js --dry-run",
     "publish:from-package": "lerna publish from-package && node scripts/create-github-release.js"
   },

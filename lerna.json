@@ -15,6 +15,7 @@
   "command": {
     "version": {
       "changelogPreset": "conventionalcommits",
+      "message": "chore(release): publish %s",
       "push": true
     }
   },
@@ -25,6 +26,7 @@
     "commitlint.config.js",
     "scripts/baseline-tags.js",
     "scripts/create-github-release.js",
+    "scripts/publish.js",
     "tsconfig.json",
     ".prettierignore",
     ".husky/**",

@@ -468,13 +468,10 @@ function main() {
         process.exit(0);
       }
     } else {
-      console.error(
-        `No package tags (name@version) found at commit ${args.commit}.`
+      console.log(
+        `No package tags (name@version) at commit ${args.commit}; skipping GitHub release.`
       );
-      console.error(
-        "Run after lerna version / manual package tag on that commit."
-      );
-      process.exit(1);
+      process.exit(0);
     }
   } else {
     const taggedAtCommit = new Map();
@@ -489,8 +486,10 @@ function main() {
   }
 
   if (!entries || entries.length === 0) {
-    console.error("No packages with substantive changelog entries to release.");
-    process.exit(args.dryRun ? 0 : 1);
+    console.log(
+      "No packages with substantive changelog entries to release; skipping GitHub release."
+    );
+    process.exit(0);
   }
 
   const releaseTag = pickAggregateTag(entries, args.tag);
